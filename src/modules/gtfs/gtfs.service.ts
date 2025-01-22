@@ -26,9 +26,9 @@ export interface TripStopRaw {
   route_name: string
   stop_name: string
   stop_headsign: string
-  arrival_time: string
-  departure_time: string
-  stop_timezone: string
+  arrival_time: Date
+  departure_time: Date
+  start_date: string
 }
 
 export interface FetchConfig {
@@ -129,18 +129,41 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     })
   }
 
+  private removeFromStart(str: string, substrs: string[]): string {
+    for (const substr of substrs) {
+      if (str.startsWith(substr)) {
+        return str.slice(substr.length).trim()
+      }
+    }
+
+    return str
+  }
+
+  private removeRouteNameFromHeadsign(
+    routeShortName: string,
+    headsign: string,
+  ): string {
+    if (!headsign) {
+      return ""
+    }
+
+    return this.removeFromStart(headsign.trim(), [
+      `${routeShortName} `,
+      `${routeShortName} - `,
+      `${routeShortName}: `,
+    ])
+  }
+
   async getScheduleForRouteAtStop(
     routeId: string,
     stopId: string,
-    day: Date = new Date(),
+    dayOffset: number,
   ): Promise<TripStopRaw[]> {
-    const dayMidnight = new Date(day)
-    dayMidnight.setHours(0, 0, 0, 0)
-
-    const cacheKey = `schedule-${routeId}-${stopId}-${dayMidnight.getTime()}`
+    const cacheKey = `schedule-${routeId}-${stopId}-${dayOffset}`
     return this.cached(
       cacheKey,
       async () => {
+        const interval = `${dayOffset} days`
         const result = await this.tx(async (tx) => {
           return await sql<TripStopRaw>`
           WITH agency_timezone AS (
@@ -151,7 +174,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
               LIMIT 1
           ),
           current_day AS (
-              SELECT (${day} AT TIME ZONE (SELECT tz FROM agency_timezone))::date AS today
+              SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), now() + ${interval}::interval)) AS today
           ),
           active_services AS (
               -- Services active according to the calendar table
@@ -233,12 +256,13 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
                   ELSE
                       st.stop_headsign
               END AS stop_headsign,
-              st.arrival_time,
-              st.departure_time,
-              s.stop_timezone
+              TIMEZONE((SELECT tz FROM agency_timezone), current_day.today + st.arrival_time::interval) as arrival_time,
+              TIMEZONE((SELECT tz FROM agency_timezone), current_day.today + st.departure_time::interval) as departure_time,
+              to_char(current_day.today, 'YYYYMMDD') as start_date
           FROM stop_times st
           JOIN route_trips rt ON st.trip_id = rt.trip_id
           JOIN stops s ON st.stop_id = s.stop_id
+          JOIN current_day ON true
           LEFT JOIN last_stops ls ON st.trip_id = ls.trip_id
           WHERE st.stop_id = ${stopId}
           ORDER BY st.arrival_time;
@@ -247,8 +271,8 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
 
         return result.rows
       },
-      86_400_000,
-    ) // 24 hours
+      43_200_000, // 12 hours
+    )
   }
 
   async getStopsInArea(
@@ -273,40 +297,48 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
   }
 
   async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
-    const routes = await this.tx(async (tx) => {
-      return await tx
-        .selectFrom("stop_times")
-        .innerJoin("trips", "stop_times.trip_id", "trips.trip_id")
-        .innerJoin("routes", "trips.route_id", "routes.route_id")
-        .select([
-          "routes.route_id",
-          "routes.route_short_name",
-          "routes.route_long_name",
-          sql<string[]>`
-            JSON_AGG(DISTINCT CASE 
-                WHEN TRIM(stop_times.stop_headsign) = '' THEN trips.trip_headsign
-                ELSE stop_times.stop_headsign
-            END)
-          `.as("headsigns"),
-        ])
-        .where("stop_times.stop_id", "=", stopId)
-        .groupBy([
-          "routes.route_id",
-          "routes.route_short_name",
-          "routes.route_long_name",
-        ])
-        .orderBy("routes.route_short_name")
-        .execute()
-    })
-
-    return routes.map((route) => ({
-      routeId: route.route_id,
-      name:
-        route.route_short_name.trim() === ""
-          ? route.route_long_name
-          : route.route_short_name,
-      headsigns: route.headsigns.filter((headsign) => headsign.trim() !== ""),
-    }))
+    return this.cached(
+      `routesForStop-${stopId}`,
+      async () => {
+        const routes = await this.tx(async (tx) => {
+          return await tx
+            .selectFrom("stop_times")
+            .innerJoin("trips", "stop_times.trip_id", "trips.trip_id")
+            .innerJoin("routes", "trips.route_id", "routes.route_id")
+            .select([
+              "routes.route_id",
+              "routes.route_short_name",
+              "routes.route_long_name",
+              sql<string[]>`
+                JSON_AGG(DISTINCT CASE 
+                    WHEN TRIM(stop_times.stop_headsign) = '' THEN trips.trip_headsign
+                    ELSE stop_times.stop_headsign
+                END)
+              `.as("headsigns"),
+            ])
+            .where("stop_times.stop_id", "=", stopId)
+            .groupBy([
+              "routes.route_id",
+              "routes.route_short_name",
+              "routes.route_long_name",
+            ])
+            .orderBy("routes.route_short_name")
+            .execute()
+        })
+    
+        return routes.map((route) => ({
+          routeId: route.route_id,
+          name:
+            !route.route_short_name || route.route_short_name.trim() === ""
+              ? route.route_long_name
+              : route.route_short_name,
+          headsigns: route.headsigns
+            .filter((headsign) => headsign && headsign.trim() !== "")
+            .map((headsign) => this.removeRouteNameFromHeadsign(route.route_short_name, headsign)),
+        }))
+      },
+      86_400_000,
+    )
   }
 
   async getTripUpdates(
@@ -336,7 +368,11 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     for (const entity of allTripUpdates.entity) {
       const tripId = entity.tripUpdate.trip.tripId
       if (tripIds.includes(tripId)) {
-        filteredTripUpdates[`${tripId}_${entity.tripUpdate.trip.startDate}`] =
+        const key = entity.tripUpdate.trip.startDate ?
+          `${tripId}_${entity.tripUpdate.trip.startDate}` :
+          tripId
+
+        filteredTripUpdates[key] =
           entity.tripUpdate
       }
     }
@@ -344,26 +380,10 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     return filteredTripUpdates
   }
 
-  private parseTripTime(time: string, onDay: Date): Date {
-    const date = new Date(onDay)
-    const [hours, minutes, seconds] = time
-      .split(":")
-      .map((part) => parseInt(part, 10))
-    date.setHours(hours)
-    date.setMinutes(minutes)
-    date.setSeconds(seconds)
-    date.setMilliseconds(0)
-    return date
-  }
-
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
-    const scheduleDates = [
-      new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
-      new Date(),
-      new Date(new Date().getTime() + 24 * 60 * 60 * 1000),
-    ]
+    const scheduleDates = [ -1, 0, 1 ]
 
     const tripStops: TripStop[] = []
     for (const scheduleDate of scheduleDates) {
@@ -379,12 +399,14 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
         trips.map((trip) => trip.trip_id),
       )
 
-      const startDate = `${scheduleDate.getFullYear()}${String(
-        scheduleDate.getMonth() + 1,
-      ).padStart(2, "0")}${String(scheduleDate.getDate()).padStart(2, "0")}`
-
       trips.forEach((trip) => {
-        const tripUpdate = tripUpdates[`${trip.trip_id}_${startDate}`]
+        if (tripStops.some((ts) => ts.tripId === trip.trip_id)) {
+          return
+        }
+
+        const tripUpdate =
+          tripUpdates[`${trip.trip_id}_${trip.start_date}`] ??
+          tripUpdates[trip.trip_id]
 
         const stopTimeUpdate = tripUpdate?.stopTimeUpdate.find(
           (update) => update.stopId === trip.stop_id,
@@ -392,7 +414,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
 
         const arrivalTime = stopTimeUpdate?.arrival?.time
           ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
-          : this.parseTripTime(trip.arrival_time, scheduleDate)
+          : new Date(trip.arrival_time)
 
         if (arrivalTime < new Date()) {
           return
@@ -400,14 +422,14 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
 
         const departureTime = stopTimeUpdate?.departure?.time
           ? new Date((stopTimeUpdate.departure?.time as number) * 1000)
-          : this.parseTripTime(trip.departure_time, scheduleDate)
+          : new Date(trip.departure_time)
 
         tripStops.push({
           tripId: trip.trip_id,
           routeId: trip.route_id,
           stopId: trip.stop_id,
           routeName: trip.route_name,
-          headsign: trip.stop_headsign,
+          headsign: this.removeRouteNameFromHeadsign(trip.route_name, trip.stop_headsign),
           stopName: trip.stop_name,
           arrivalTime,
           departureTime,
