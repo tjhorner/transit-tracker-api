@@ -16,6 +16,9 @@ import GtfsRealtimeBindings from "gtfs-realtime-bindings"
 import { SchedulerRegistry } from "@nestjs/schedule"
 import { CronJob } from "cron"
 import { GtfsSyncService } from "./gtfs-sync.service"
+import { InjectQueue } from "@nestjs/bullmq"
+import { Queue } from "bullmq"
+import { GTFS_SYNC_QUEUE } from "./gtfs.const"
 
 type ITripUpdate = GtfsRealtimeBindings.transit_realtime.ITripUpdate
 
@@ -50,6 +53,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
   constructor(
     @InjectKysely() private readonly db: Kysely<DB>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @InjectQueue(GTFS_SYNC_QUEUE) private readonly syncQueue: Queue,
     private readonly schedulerRegistry: SchedulerRegistry,
     private readonly syncService: GtfsSyncService,
   ) {}
@@ -89,14 +93,11 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     this.feedCode = feedCode
     this.config = config
 
-    const refreshJob = new CronJob("0 0 * * *", async () => {
-      this.logger.log(`Refreshing GTFS feed ${feedCode}`)
-      await this.syncService.importFromUrl(feedCode, config.static.url)
+    this.syncQueue.add(`sync-${feedCode}`, { feedCode, url: config.static.url }, {
+      repeat: {
+        pattern: "0 0 * * *",
+      }
     })
-
-    // @ts-ignore
-    // this.schedulerRegistry.addCronJob(`refresh_static_${feedCode}`, refreshJob)
-    // refreshJob.start()
   }
 
   async sync(): Promise<void> {

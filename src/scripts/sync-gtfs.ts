@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common"
 import { NestFactory } from "@nestjs/core"
 import { AppModule } from "src/app.module"
 import { FeedService } from "src/modules/feed/feed.service"
@@ -7,18 +8,31 @@ async function main() {
   const feedCode = process.argv[2]
   const app = await NestFactory.createApplicationContext(AppModule)
 
-  const provider = app.get(FeedService).getScheduleProvider(feedCode)
-  if (!provider) {
-    console.error("Invalid feed code")
-    process.exit(1)
+  const logger = new Logger("sync-gtfs")
+
+  const feedService = app.get(FeedService)
+  const providers: GtfsService[] = []
+
+  if (feedCode) {
+    const provider = feedService.getScheduleProvider(feedCode)
+    if (!provider) {
+      logger.error("Invalid feed code")
+      process.exit(1)
+    }
+
+    if (!(provider instanceof GtfsService)) {
+      logger.error("Feed is not provided by GTFS")
+      process.exit(1)
+    }
+
+    providers.push(provider)
+  } else {
+    providers.push(...feedService.getScheduleProvidersOfType(GtfsService))
   }
 
-  if (!(provider instanceof GtfsService)) {
-    console.error("Feed is not provided by GTFS")
-    process.exit(1)
+  for (const provider of providers) {
+    await provider.sync()
   }
-
-  await provider.sync()
 
   await app.close()
   process.exit(0)

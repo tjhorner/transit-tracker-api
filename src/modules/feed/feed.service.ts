@@ -62,4 +62,12 @@ export class FeedService implements OnModuleInit {
   getScheduleProvider(feedName: string): ScheduleProvider {
     return this.scheduleProviders.get(feedName)
   }
+
+  getScheduleProvidersOfType<T extends ScheduleProvider>(
+    type: Type<T>,
+  ): T[] {
+    return Array.from(this.scheduleProviders.values()).filter(
+      (provider) => provider instanceof type,
+    ) as T[]
+  }
 }

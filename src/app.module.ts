@@ -11,9 +11,16 @@ import { CacheableMemory } from "cacheable"
 import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { APP_GUARD } from "@nestjs/core"
 import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis"
+import { BullModule } from "@nestjs/bullmq"
 
 @Module({
   imports: [
+    BullModule.forRoot({
+      prefix: "bullmq",
+      connection: {
+        url: process.env.REDIS_URL,
+      }
+    }),
     CacheModule.registerAsync({
       isGlobal: true,
       useFactory: async () => {
