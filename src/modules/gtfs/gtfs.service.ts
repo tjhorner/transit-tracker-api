@@ -13,8 +13,6 @@ import {
   TripStop,
 } from "src/interfaces/schedule-provider.interface"
 import GtfsRealtimeBindings from "gtfs-realtime-bindings"
-import { SchedulerRegistry } from "@nestjs/schedule"
-import { CronJob } from "cron"
 import { GtfsSyncService } from "./gtfs-sync.service"
 import { InjectQueue } from "@nestjs/bullmq"
 import { Queue } from "bullmq"
@@ -54,7 +52,6 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     @InjectKysely() private readonly db: Kysely<DB>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @InjectQueue(GTFS_SYNC_QUEUE) private readonly syncQueue: Queue,
-    private readonly schedulerRegistry: SchedulerRegistry,
     private readonly syncService: GtfsSyncService,
   ) {}
 

@@ -4,7 +4,6 @@ import { CacheModule } from "@nestjs/cache-manager"
 import { StopsController } from "./stops/stops.controller"
 import { ScheduleGateway } from "./schedule/schedule.gateway"
 import { FeedModule } from "./modules/feed/feed.module"
-import { ScheduleModule } from "@nestjs/schedule"
 import { Keyv } from "keyv"
 import { createKeyv } from "@keyv/redis"
 import { CacheableMemory } from "cacheable"
@@ -41,7 +40,6 @@ import { BullModule } from "@nestjs/bullmq"
         ? new ThrottlerStorageRedisService(process.env.REDIS_URL)
         : undefined,
     }),
-    ScheduleModule.forRoot(),
     FeedModule,
   ],
   controllers: [ScheduleController, StopsController],
