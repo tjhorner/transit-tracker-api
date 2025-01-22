@@ -74,6 +74,7 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
     this.obaSdk = new OnebusawaySDK({
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
+      maxRetries: 5,
     })
   }
 
@@ -156,17 +157,22 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
 
           throw new InternalServerErrorException(e)
         }
+        
+        const stopRoutes: StopRoute[] = []
+        for (const route of stop.data.references.routes) {
+          const headsigns = await this.getPossibleHeadsignsForRouteAtStop(
+            route.id,
+            stopId,
+          )
 
-        return Promise.all(
-          stop.data.references.routes.map(async (route) => ({
+          stopRoutes.push({
             routeId: route.id,
             name: route.shortName,
-            headsigns: await this.getPossibleHeadsignsForRouteAtStop(
-              route.id,
-              stopId,
-            ),
-          })),
-        )
+            headsigns,
+          })
+        }
+
+        return stopRoutes
       },
       86_400_000,
     )

@@ -55,8 +55,9 @@ export interface FeedInfo {
 }
 
 export interface ImportMetadata {
+  etag: string | null
   feed_code: string
-  last_modified: Timestamp
+  last_modified: Timestamp | null
 }
 
 export interface Routes {

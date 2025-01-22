@@ -16,26 +16,32 @@ export class GtfsSyncService {
   constructor(@InjectKysely() private readonly db: Kysely<DB>) {}
 
   private async isUrlNewer(feedCode: string, url: string) {
-    const currentFeedLastModified = await this.db
+    const currentImportMetadata = await this.db
       .transaction()
       .execute(async (tx) => {
         await sql`SET LOCAL app.current_feed = '${sql.raw(feedCode)}';`.execute(
           tx,
         )
+
         return await tx
           .selectFrom("import_metadata")
-          .select("last_modified")
+          .select(["last_modified", "etag"])
           .executeTakeFirst()
       })
 
-    if (!currentFeedLastModified) {
+    if (!currentImportMetadata) {
       return true
     }
 
     const response = await axios.head(url)
-    const lastModified = new Date(response.headers["last-modified"])
+    const lastModified = response.headers["last-modified"]
+    const etag = response.headers["etag"]
 
-    return lastModified > currentFeedLastModified.last_modified
+    if (!lastModified) {
+      return currentImportMetadata.etag !== etag
+    }
+
+    return new Date(lastModified) > currentImportMetadata.last_modified
   }
 
   async importFromUrl(feedCode: string, url: string) {
@@ -58,13 +64,16 @@ export class GtfsSyncService {
     this.logger.log("Downloading GTFS feed")
 
     let newLastModified: Date | null = null
+    let newEtag: string | null = null
     await axios({
       url,
       method: "get",
       responseType: "stream",
       responseEncoding: "binary",
     }).then((response) => {
-      newLastModified = new Date(response.headers["last-modified"])
+      newLastModified = new Date(response.headers["last-modified"] ?? Date.now())
+      newEtag = response.headers["etag"]
+
       const writer = fs.createWriteStream(outPath)
 
       return new Promise<void>((resolve, reject) => {
@@ -99,11 +108,20 @@ export class GtfsSyncService {
         tx,
       )
 
-      await tx.deleteFrom("import_metadata").execute()
-
       await tx
         .insertInto("import_metadata")
-        .values({ last_modified: newLastModified, feed_code: feedCode })
+        .values({
+          etag: newEtag,
+          last_modified: newLastModified,
+          feed_code: feedCode
+        })
+        .onConflict((oc) => oc
+          .column("feed_code")
+          .doUpdateSet({
+            etag: newEtag,
+            last_modified: newLastModified,
+          })
+        )
         .execute()
     })
 
@@ -181,6 +199,16 @@ export class GtfsSyncService {
     this.logger.log("Import done")
   }
 
+  private flushEmptyStrings(row: any) {
+    for (const key in row) {
+      if (row[key] === "") {
+        row[key] = null
+      }
+    }
+
+    return row
+  }
+
   private importGtfsFile(
     tx: Transaction<DB>,
     tableName: string,
@@ -193,7 +221,7 @@ export class GtfsSyncService {
         .pipe(csv.parse({ headers: true }))
         .on("error", reject)
         .on("data", async (row) => {
-          allRows.push(mapRow(row))
+          allRows.push(this.flushEmptyStrings(mapRow(row)))
         })
         .on("end", async () => {
           const batch = []
