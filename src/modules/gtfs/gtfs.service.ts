@@ -256,13 +256,14 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
                   ELSE
                       st.stop_headsign
               END AS stop_headsign,
-              TIMEZONE((SELECT tz FROM agency_timezone), current_day.today + st.arrival_time::interval) as arrival_time,
-              TIMEZONE((SELECT tz FROM agency_timezone), current_day.today + st.departure_time::interval) as departure_time,
+              TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time::interval) as arrival_time,
+              TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time::interval) as departure_time,
               to_char(current_day.today, 'YYYYMMDD') as start_date
           FROM stop_times st
           JOIN route_trips rt ON st.trip_id = rt.trip_id
           JOIN stops s ON st.stop_id = s.stop_id
           JOIN current_day ON true
+          JOIN agency_timezone ON true
           LEFT JOIN last_stops ls ON st.trip_id = ls.trip_id
           WHERE st.stop_id = ${stopId}
           ORDER BY st.arrival_time;

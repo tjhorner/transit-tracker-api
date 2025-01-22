@@ -215,6 +215,11 @@ export class GtfsSyncService {
     filePath: string,
     mapRow: (row: any) => any,
   ): Promise<void> {
+    if (!fs.existsSync(filePath)) {
+      this.logger.warn(`Skipping ${path.basename(filePath)}; file not found`)
+      return Promise.resolve()
+    }
+
     return new Promise((resolve, reject) => {
       const allRows = []
       fs.createReadStream(filePath)
