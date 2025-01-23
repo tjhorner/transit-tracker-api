@@ -2,10 +2,21 @@ import { NestFactory } from "@nestjs/core"
 import { AppModule } from "./app.module"
 import { WsAdapter } from "@nestjs/platform-ws"
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger"
+import { NestExpressApplication } from "@nestjs/platform-express"
+
+function configureForFly(app: NestExpressApplication) {
+  if (!process.env.FLY_MACHINE_ID) {
+    return
+  }
+
+  // Fly's reverse proxy is at most 2 hops away
+  app.set("trust proxy", 2)
+}
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
+  configureForFly(app)
   app.useWebSocketAdapter(new WsAdapter(app))
   app.enableCors()
 
