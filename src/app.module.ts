@@ -29,7 +29,10 @@ import { BullModule } from "@nestjs/bullmq"
       }),
     }),
     ThrottlerModule.forRoot({
-      throttlers: [{ ttl: seconds(60), limit: 30 }],
+      throttlers: [
+        { ttl: seconds(60), limit: 60 },
+        { ttl: seconds(1), limit: 3 },
+      ],
       storage: new ThrottlerStorageRedisService(process.env.REDIS_URL),
     }),
     FeedModule,
