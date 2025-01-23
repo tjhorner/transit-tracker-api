@@ -264,6 +264,10 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
           (s) => s.id === stopId,
         )
 
+        const staticRoute = arrivalsAndDeparturesResp.data.references.routes.find(
+          (r) => r.id === ad.routeId,
+        )
+
         const arrivalTime = ad.predicted
           ? new Date(ad.predictedArrivalTime)
           : new Date(ad.scheduledArrivalTime)
@@ -275,11 +279,14 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
           ? new Date(ad.predictedDepartureTime)
           : new Date(ad.scheduledDepartureTime)
 
+        const color = staticRoute.color?.replaceAll("#", "")
+
         tripStops.push({
           tripId: ad.tripId,
           stopId,
           routeId: ad.routeId,
           routeName: ad.routeShortName,
+          routeColor: color?.trim() !== "" ? color : null,
           stopName: staticStop.name,
           headsign: ad.tripHeadsign,
           arrivalTime,

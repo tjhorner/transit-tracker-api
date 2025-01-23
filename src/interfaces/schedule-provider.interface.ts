@@ -8,6 +8,7 @@ export interface TripStop {
   stopId: string
   routeId: string
   routeName: string
+  routeColor: string
   stopName: string
   headsign: string
   arrivalTime: Date

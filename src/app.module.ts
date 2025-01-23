@@ -20,25 +20,17 @@ import { BullModule } from "@nestjs/bullmq"
         url: process.env.REDIS_URL,
       }
     }),
-    CacheModule.registerAsync({
+    CacheModule.register({
       isGlobal: true,
-      useFactory: async () => {
-        return {
-          stores: [
-            process.env.REDIS_URL
-              ? createKeyv(process.env.REDIS_URL, { namespace: "cache" })
-              : new Keyv({
-                  store: new CacheableMemory(),
-                }),
-          ],
-        }
-      },
+      useFactory: () => ({
+        stores: [
+          createKeyv(process.env.REDIS_URL, { namespace: "cache" })
+        ],
+      }),
     }),
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: seconds(60), limit: 30 }],
-      storage: process.env.REDIS_URL
-        ? new ThrottlerStorageRedisService(process.env.REDIS_URL)
-        : undefined,
+      storage: new ThrottlerStorageRedisService(process.env.REDIS_URL),
     }),
     FeedModule,
   ],

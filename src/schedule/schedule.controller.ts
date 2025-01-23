@@ -41,6 +41,14 @@ export class Trip {
 
   @ApiProperty({
     required: true,
+    nullable: true,
+    description: "The color of the route",
+    example: "FF0000",
+  })
+  routeColor: string
+
+  @ApiProperty({
+    required: true,
     description: "The ID of the stop",
     example: "1_123456",
   })

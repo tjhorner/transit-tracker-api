@@ -25,6 +25,7 @@ export interface TripStopRaw {
   stop_id: string
   route_id: string
   route_name: string
+  route_color: string | null
   stop_name: string
   stop_headsign: string
   arrival_time: Date
@@ -244,6 +245,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
                   WHEN TRIM(rt.route_short_name) = '' THEN rt.route_long_name
                   ELSE rt.route_short_name
               END AS route_name,
+              rt.route_color,
               s.stop_name,
               CASE
                   WHEN TRIM(st.stop_headsign) = '' THEN
@@ -428,6 +430,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
           routeId: trip.route_id,
           stopId: trip.stop_id,
           routeName: trip.route_name,
+          routeColor: trip.route_color?.replaceAll("#", "") ?? null,
           headsign: this.removeRouteNameFromHeadsign(trip.route_name, trip.stop_headsign),
           stopName: trip.stop_name,
           arrivalTime,

@@ -28,6 +28,7 @@ interface ScheduleTrip {
   tripId: string
   routeId: string
   routeName: string
+  routeColor: string | null
   stopId: string
   stopName: string
   headsign: string
