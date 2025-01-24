@@ -37,6 +37,8 @@ interface ScheduleTrip {
   isRealtime: boolean
 }
 
+type RouteAtStopWithOffset = RouteAtStop & { offset: number }
+
 export class ScheduleSubscription {
   @IsNotEmpty()
   feedCode: string
@@ -60,17 +62,24 @@ export class ScheduleGateway {
 
   private async getUpcomingTrips(
     provider: ScheduleProvider,
-    routes: RouteAtStop[],
+    routes: RouteAtStopWithOffset[],
     limit: number,
   ): Promise<ScheduleUpdate> {
     let upcomingTrips = await provider.getUpcomingTripsForRoutesAtStops(routes)
 
     const tripDtos: ScheduleTrip[] = upcomingTrips
-      .map((trip) => ({
-        ...trip,
-        arrivalTime: trip.arrivalTime.getTime() / 1000,
-        departureTime: trip.departureTime.getTime() / 1000,
-      }))
+      .map((trip) => {
+        const offset = routes.find(
+          (r) => r.routeId === trip.routeId && r.stopId === trip.stopId,
+        ).offset
+
+        return {
+          ...trip,
+          arrivalTime: (trip.arrivalTime.getTime() / 1000) + (offset ?? 0),
+          departureTime: (trip.departureTime.getTime() / 1000) + (offset ?? 0),
+        }
+      })
+      .filter((trip) => trip.arrivalTime > Date.now() / 1000)
       .sort((a, b) => a.arrivalTime - b.arrivalTime)
       .splice(0, limit)
 
@@ -94,7 +103,13 @@ export class ScheduleGateway {
     const routeStopPairs = subscription.routeStopPairs
       .split(";")
       .map((pair) => pair.split(",").map((part) => part.trim()))
-      .map(([routeId, stopId]) => ({ routeId, stopId }))
+      .map(([routeId, stopId, offset]) => ({ routeId, stopId, offset: parseInt(offset ?? "0") }))
+    
+    for (const pair of routeStopPairs) {
+      if (!pair.routeId || !pair.stopId) {
+        throw new BadRequestException("Invalid route-stop pair; must be in the format routeId,stopId[,offset]")
+      }
+    }
 
     if (routeStopPairs.length > 5) {
       throw new BadRequestException("Too many route-stop pairs; maximum 5")
