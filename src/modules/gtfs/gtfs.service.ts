@@ -56,6 +56,34 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     private readonly syncService: GtfsSyncService,
   ) {}
 
+  init(feedCode: string, config: GtfsConfig): void {
+    this.feedCode = feedCode
+    this.config = config
+
+    this.syncQueue.add(`sync-${feedCode}`, { feedCode, url: config.static.url }, {
+      repeat: {
+        pattern: "0 0 * * *",
+      }
+    })
+  }
+
+  private async cached<T>(
+    key: string,
+    fn: () => Promise<T>,
+    ttl?: number,
+  ): Promise<T> {
+    const cacheKey = `${this.feedCode}-${key}`
+    const cached = await this.cacheManager.get<T>(cacheKey)
+    if (cached) {
+      return cached
+    }
+
+    const data = await fn()
+
+    this.cacheManager.set(cacheKey, data, ttl)
+    return data
+  }
+
   async getAgencyBounds(): Promise<BBox> {
     return this.cached(
       "agencyBounds",
@@ -87,36 +115,8 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     ) // 24 hours
   }
 
-  init(feedCode: string, config: GtfsConfig): void {
-    this.feedCode = feedCode
-    this.config = config
-
-    this.syncQueue.add(`sync-${feedCode}`, { feedCode, url: config.static.url }, {
-      repeat: {
-        pattern: "0 0 * * *",
-      }
-    })
-  }
-
   async sync(): Promise<void> {
     await this.syncService.importFromUrl(this.feedCode, this.config.static.url)
-  }
-
-  private async cached<T>(
-    key: string,
-    fn: () => Promise<T>,
-    ttl?: number,
-  ): Promise<T> {
-    const cacheKey = `${this.feedCode}-${key}`
-    const cached = await this.cacheManager.get<T>(cacheKey)
-    if (cached) {
-      return cached
-    }
-
-    const data = await fn()
-
-    this.cacheManager.set(cacheKey, data, ttl)
-    return data
   }
 
   async tx<T>(fn: (tx: Transaction<DB>) => Promise<T>): Promise<T> {

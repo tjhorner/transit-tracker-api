@@ -13,7 +13,10 @@ After installation, you will need to set up a feeds configuration. This will tel
 - [GTFS / GTFS-realtime](https://gtfs.org/documentation/overview/)
 - [OneBusAway](https://developer.onebusaway.org/)
 
-Most transit agencies will support GTFS. A good website to source GTFS feeds from is [Transitland](https://www.transit.land/operators).
+Most transit agencies will support GTFS. [Transitland](https://www.transit.land/operators) keeps an index of all known GTFS/GTFS-rt feeds, so you can use that to find the feed URL for yours.
+
+> [!NOTE]  
+> Not all parts of the GTFS specification are supported. For example, [`frequencies.txt`](https://gtfs.org/documentation/schedule/reference/#frequenciestxt) is not supported, so if your transit agency uses it you will see incorrect or missing trips. PRs are welcome to add support for more GTFS features.
 
 You can create a `feeds.yaml` in the working directory, or provide it as a `FEEDS_CONFIG` environment variable. Here is an example configuration:
 
@@ -45,9 +48,9 @@ feeds:
 
 To facilitate fast queries of the static GTFS data, the API uses a PostgreSQL database to store and index it.
 
-Since there is no auto-migration mechanism in place yet, you'll need to perform them yourself. Assuming you are running as a Postgres superuser in a database named `gtfs`, run the [init migration script](src/gtfs/migrations/01-init.sql) to create the necessary tables, indices, and `gtfs` role.
+Since there is no auto-migration mechanism in place yet, you'll need to perform them yourself. Assuming you are running as a Postgres superuser in a database named `gtfs`, run the [migration scripts](src/gtfs/migrations) to create the necessary tables, indices, and `gtfs` role.
 
-Once the script is run, set the password for the new `gtfs` role:
+Once the scripts are run, set the password for the new `gtfs` role:
 
 ```sql
 ALTER ROLE gtfs WITH PASSWORD 'your_password';
