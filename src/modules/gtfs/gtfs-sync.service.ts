@@ -71,7 +71,9 @@ export class GtfsSyncService {
       responseType: "stream",
       responseEncoding: "binary",
     }).then((response) => {
-      newLastModified = new Date(response.headers["last-modified"] ?? Date.now())
+      newLastModified = new Date(
+        response.headers["last-modified"] ?? Date.now(),
+      )
       newEtag = response.headers["etag"]
 
       const writer = fs.createWriteStream(outPath)
@@ -113,14 +115,13 @@ export class GtfsSyncService {
         .values({
           etag: newEtag,
           last_modified: newLastModified,
-          feed_code: feedCode
+          feed_code: feedCode,
         })
-        .onConflict((oc) => oc
-          .column("feed_code")
-          .doUpdateSet({
+        .onConflict((oc) =>
+          oc.column("feed_code").doUpdateSet({
             etag: newEtag,
             last_modified: newLastModified,
-          })
+          }),
         )
         .execute()
     })

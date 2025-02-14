@@ -9,6 +9,7 @@ import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { APP_GUARD } from "@nestjs/core"
 import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis"
 import { BullModule } from "@nestjs/bullmq"
+import { OpenTelemetryModule } from "nestjs-otel"
 
 @Module({
   imports: [
@@ -16,21 +17,28 @@ import { BullModule } from "@nestjs/bullmq"
       prefix: "bullmq",
       connection: {
         url: process.env.REDIS_URL,
-      }
+      },
     }),
     CacheModule.register({
       isGlobal: true,
       useFactory: () => ({
-        stores: [
-          createKeyv(process.env.REDIS_URL, { namespace: "cache" })
-        ],
+        stores: [createKeyv(process.env.REDIS_URL, { namespace: "cache" })],
       }),
     }),
     ThrottlerModule.forRoot({
       throttlers: [
-        { ttl: seconds(60), limit: 60 },
+        { name: "short", ttl: seconds(1), limit: 10 },
+        { name: "long", ttl: seconds(60), limit: 60 },
       ],
       storage: new ThrottlerStorageRedisService(process.env.REDIS_URL),
+    }),
+    OpenTelemetryModule.forRoot({
+      metrics: {
+        hostMetrics: false,
+        apiMetrics: {
+          enable: true,
+        },
+      },
     }),
     FeedModule,
   ],

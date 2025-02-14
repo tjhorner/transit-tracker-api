@@ -13,7 +13,9 @@ export class GtfsSyncConsumer extends WorkerHost {
   }
 
   async process(job: Job, token?: string): Promise<any> {
-    this.logger.log(`Running scheduled sync of GTFS feed "${job.data.feedCode}"`)
+    this.logger.log(
+      `Running scheduled sync of GTFS feed "${job.data.feedCode}"`,
+    )
     await this.gtfsSyncService.importFromUrl(job.data.feedCode, job.data.url)
   }
 }

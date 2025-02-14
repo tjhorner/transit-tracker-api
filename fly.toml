@@ -11,6 +11,10 @@ primary_region = 'sea'
   min_machines_running = 0
   processes = ['app']
 
+[metrics]
+  port = 9090
+  path = "/metrics"
+
 [[vm]]
   memory = '1gb'
   cpu_kind = 'shared'

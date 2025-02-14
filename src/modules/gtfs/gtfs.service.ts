@@ -60,11 +60,15 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     this.feedCode = feedCode
     this.config = config
 
-    this.syncQueue.add(`sync-${feedCode}`, { feedCode, url: config.static.url }, {
-      repeat: {
-        pattern: "0 0 * * *",
-      }
-    })
+    this.syncQueue.add(
+      `sync-${feedCode}`,
+      { feedCode, url: config.static.url },
+      {
+        repeat: {
+          pattern: "0 0 * * *",
+        },
+      },
+    )
   }
 
   private async cached<T>(
@@ -326,7 +330,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
             .orderBy("routes.route_short_name")
             .execute()
         })
-    
+
         return routes.map((route) => ({
           routeId: route.route_id,
           name:
@@ -335,7 +339,12 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
               : route.route_short_name,
           headsigns: route.headsigns
             .filter((headsign) => headsign && headsign.trim() !== "")
-            .map((headsign) => this.removeRouteNameFromHeadsign(route.route_short_name, headsign)),
+            .map((headsign) =>
+              this.removeRouteNameFromHeadsign(
+                route.route_short_name,
+                headsign,
+              ),
+            ),
         }))
       },
       86_400_000,
@@ -369,12 +378,11 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     for (const entity of allTripUpdates.entity) {
       const tripId = entity.tripUpdate.trip.tripId
       if (tripIds.includes(tripId)) {
-        const key = entity.tripUpdate.trip.startDate ?
-          `${tripId}_${entity.tripUpdate.trip.startDate}` :
-          tripId
+        const key = entity.tripUpdate.trip.startDate
+          ? `${tripId}_${entity.tripUpdate.trip.startDate}`
+          : tripId
 
-        filteredTripUpdates[key] =
-          entity.tripUpdate
+        filteredTripUpdates[key] = entity.tripUpdate
       }
     }
 
@@ -384,7 +392,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
-    const scheduleDates = [ -1, 0, 1 ]
+    const scheduleDates = [-1, 0, 1]
 
     const tripStops: TripStop[] = []
     for (const scheduleDate of scheduleDates) {
@@ -431,7 +439,10 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
           stopId: trip.stop_id,
           routeName: trip.route_name,
           routeColor: trip.route_color?.replaceAll("#", "") ?? null,
-          headsign: this.removeRouteNameFromHeadsign(trip.route_name, trip.stop_headsign),
+          headsign: this.removeRouteNameFromHeadsign(
+            trip.route_name,
+            trip.stop_headsign,
+          ),
           stopName: trip.stop_name,
           arrivalTime,
           departureTime,

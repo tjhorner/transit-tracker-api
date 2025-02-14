@@ -1,7 +1,10 @@
 import {
   BadRequestException,
+  Ip,
   Logger,
+  Req,
   UseFilters,
+  UseGuards,
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common"
@@ -18,7 +21,10 @@ import { RouteAtStop } from "src/modules/gtfs/gtfs.service"
 import { Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
-import { WebSocketHttpExceptionFilter } from "src/filters/ws-exception-filter"
+import { WebSocketHttpExceptionFilter } from "src/filters/ws-exception.filter"
+import { MetricService, OtelCounter, OtelUpDownCounter } from "nestjs-otel"
+import { Counter, UpDownCounter } from "@opentelemetry/api"
+import { WsThrottlerGuard } from "src/guards/ws-throttler.guard"
 
 interface ScheduleUpdate {
   trips: ScheduleTrip[]
@@ -56,9 +62,32 @@ export class ScheduleSubscription {
 @UseFilters(WebSocketHttpExceptionFilter)
 export class ScheduleGateway {
   private readonly logger = new Logger(ScheduleGateway.name)
-  private subscribers: Set<WebSocket> = new Set()
+  private subscribers: Map<WebSocket, ScheduleSubscription> = new Map()
 
-  constructor(private readonly feedService: FeedService) {}
+  constructor(
+    private readonly feedService: FeedService,
+    metricService: MetricService,
+  ) {
+    metricService
+      .getObservableGauge("schedule_subscriptions", {
+        description: "Number of active schedule subscriptions",
+        unit: "subscriptions",
+      })
+      .addCallback((observable) => {
+        const subscribersByFeedCode = new Map<string, number>(
+          Object.keys(feedService.getAllFeeds()).map((feed) => [feed, 0]),
+        )
+
+        this.subscribers.forEach((subscription) => {
+          const count = subscribersByFeedCode.get(subscription.feedCode) ?? 0
+          subscribersByFeedCode.set(subscription.feedCode, count + 1)
+        })
+
+        for (const [feedCode, count] of subscribersByFeedCode) {
+          observable.observe(count, { feed_code: feedCode })
+        }
+      })
+  }
 
   private async getUpcomingTrips(
     provider: ScheduleProvider,
@@ -75,8 +104,8 @@ export class ScheduleGateway {
 
         return {
           ...trip,
-          arrivalTime: (trip.arrivalTime.getTime() / 1000) + (offset ?? 0),
-          departureTime: (trip.departureTime.getTime() / 1000) + (offset ?? 0),
+          arrivalTime: trip.arrivalTime.getTime() / 1000 + (offset ?? 0),
+          departureTime: trip.departureTime.getTime() / 1000 + (offset ?? 0),
         }
       })
       .filter((trip) => trip.arrivalTime > Date.now() / 1000)
@@ -88,6 +117,7 @@ export class ScheduleGateway {
     }
   }
 
+  @UseGuards(WsThrottlerGuard)
   @UsePipes(new ValidationPipe())
   @SubscribeMessage("schedule:subscribe")
   subscribeToSchedule(
@@ -103,11 +133,17 @@ export class ScheduleGateway {
     const routeStopPairs = subscription.routeStopPairs
       .split(";")
       .map((pair) => pair.split(",").map((part) => part.trim()))
-      .map(([routeId, stopId, offset]) => ({ routeId, stopId, offset: parseInt(offset ?? "0") }))
-    
+      .map(([routeId, stopId, offset]) => ({
+        routeId,
+        stopId,
+        offset: parseInt(offset ?? "0"),
+      }))
+
     for (const pair of routeStopPairs) {
       if (!pair.routeId || !pair.stopId) {
-        throw new BadRequestException("Invalid route-stop pair; must be in the format routeId,stopId[,offset]")
+        throw new BadRequestException(
+          "Invalid route-stop pair; must be in the format routeId,stopId[,offset]",
+        )
       }
     }
 
@@ -122,7 +158,11 @@ export class ScheduleGateway {
       throw new BadRequestException("Invalid feed code")
     }
 
-    this.subscribers.add(socket)
+    this.subscribers.set(socket, subscription)
+
+    this.logger.debug(
+      `Subscribed to schedule updates for ${subscription.feedCode}`,
+    )
 
     const self = this
     return new Observable((observer) => {
@@ -152,6 +192,8 @@ export class ScheduleGateway {
       updateSchedule()
 
       return () => {
+        this.logger.debug("Unsubscribed from schedule updates")
+
         clearInterval(interval)
         self.subscribers.delete(socket)
       }

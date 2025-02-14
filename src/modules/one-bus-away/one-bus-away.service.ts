@@ -157,7 +157,7 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
 
           throw new InternalServerErrorException(e)
         }
-        
+
         const stopRoutes: StopRoute[] = []
         for (const route of stop.data.references.routes) {
           const headsigns = await this.getPossibleHeadsignsForRouteAtStop(
@@ -264,9 +264,10 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
           (s) => s.id === stopId,
         )
 
-        const staticRoute = arrivalsAndDeparturesResp.data.references.routes.find(
-          (r) => r.id === ad.routeId,
-        )
+        const staticRoute =
+          arrivalsAndDeparturesResp.data.references.routes.find(
+            (r) => r.id === ad.routeId,
+          )
 
         const arrivalTime = ad.predicted
           ? new Date(ad.predictedArrivalTime)

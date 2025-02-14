@@ -3,6 +3,7 @@ import { AppModule } from "./app.module"
 import { WsAdapter } from "@nestjs/platform-ws"
 import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger"
 import { NestExpressApplication } from "@nestjs/platform-express"
+import otelSDK from "./tracing"
 
 function configureForFly(app: NestExpressApplication) {
   if (!process.env.FLY_MACHINE_ID) {
@@ -14,6 +15,8 @@ function configureForFly(app: NestExpressApplication) {
 }
 
 async function bootstrap() {
+  otelSDK.start()
+
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
   configureForFly(app)

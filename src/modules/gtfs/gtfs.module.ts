@@ -28,4 +28,3 @@ const gtfsSyncQueue = BullModule.registerQueue({
   exports: [GtfsService, GtfsSyncService, gtfsSyncQueue],
 })
 export class GtfsModule {}
-
