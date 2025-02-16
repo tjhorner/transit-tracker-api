@@ -15,6 +15,9 @@ import {
   StopRoute,
   TripStop,
 } from "src/interfaces/schedule-provider.interface"
+import { MetricService } from "nestjs-otel"
+import { Counter, Histogram, ValueType } from "@opentelemetry/api"
+import { RateLimiter } from "limiter"
 
 export interface OneBusAwayConfig {
   baseUrl: string
@@ -66,33 +69,109 @@ function sumOfAllBboxes(bboxes: BBox[]): BBox {
 export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
   private feedCode: string
   private obaSdk: OnebusawaySDK
+  private obaRateLimiter = new RateLimiter({
+    tokensPerInterval: 1,
+    interval: 200,
+  })
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+  private obaRequestCounter: Counter
+  private obaResponseCounter: Counter
+  private obaRequestDuration: Histogram
+  private obaCacheHits: Counter
+  private obaCacheMisses: Counter
+
+  constructor(
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    metricService: MetricService,
+  ) {
+    this.obaRequestCounter = metricService.getCounter("onebusaway_request_count", {
+      description: "Number of requests made to the OneBusAway API",
+      unit: "requests",
+    })
+
+    this.obaResponseCounter = metricService.getCounter("onebusaway_response_count", {
+      description: "Number of responses received from the OneBusAway API",
+      unit: "responses",
+    })
+
+    this.obaRequestDuration = metricService.getHistogram("onebusaway_request_duration", {
+      description: "Duration of requests made to the OneBusAway API",
+      unit: "ms",
+      valueType: ValueType.DOUBLE,
+    })
+
+    this.obaCacheHits = metricService.getCounter("onebusaway_cache_hits", {
+      description: "Number of cache hits for OneBusAway requests",
+      unit: "hits",
+    })
+
+    this.obaCacheMisses = metricService.getCounter("onebusaway_cache_misses", {
+      description: "Number of cache misses for OneBusAway requests",
+      unit: "misses",
+    })
+  }
 
   init(feedCode: string, config: OneBusAwayConfig) {
     this.feedCode = feedCode
+
     this.obaSdk = new OnebusawaySDK({
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
       maxRetries: 5,
+      fetch: this.instrumentedFetch.bind(this),
     })
+  }
+
+  private async instrumentedFetch(url: any, init?: any): Promise<any> {
+    await this.obaRateLimiter.removeTokens(1)
+
+    this.obaRequestCounter.add(1, {
+      feed_code: this.feedCode,
+    })
+
+    const start = Date.now()
+    const resp = await fetch(url, init)
+    const duration = Date.now() - start
+
+    this.obaResponseCounter.add(1, {
+      feed_code: this.feedCode,
+      status: resp.status,
+    })
+
+    this.obaRequestDuration.record(duration, {
+      feed_code: this.feedCode,
+      status: resp.status,
+    })
+
+    return resp
   }
 
   private async cached<T>(
     key: string,
-    fn: () => Promise<T>,
+    fn: () => Promise<T | { value: T, ttl: number }>,
     ttl?: number,
   ): Promise<T> {
     const cacheKey = `${this.feedCode}-${key}`
     const cached = await this.cacheManager.get<T>(cacheKey)
     if (cached) {
+      this.obaCacheHits.add(1, {
+        feed_code: this.feedCode,
+      })
       return cached
     }
 
-    const data = await fn()
+    this.obaCacheMisses.add(1, {
+      feed_code: this.feedCode,
+    })
 
-    this.cacheManager.set(cacheKey, data, ttl)
-    return data
+    const result = await fn()
+    if (result instanceof Object && "value" in result && "ttl" in result) {
+      this.cacheManager.set(cacheKey, result.value, result.ttl)
+      return result.value
+    }
+
+    this.cacheManager.set(cacheKey, result, ttl)
+    return result
   }
 
   async getAgencyBounds(): Promise<BBox> {
@@ -220,83 +299,107 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
           throw new InternalServerErrorException(e)
         }
 
-        return resp
+        let ttl = 18_000
+        if (resp.data.entry.arrivalsAndDepartures.length === 0) {
+          // no arrivals for the next hour so we can cache for longer
+          ttl = 300_000
+        }
+
+        return { value: resp, ttl }
       },
-      10_000,
     )
   }
 
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
-    const stopRouteMap = routes.reduce(
-      (acc, { routeId, stopId }) => {
-        if (!acc[stopId]) {
-          acc[stopId] = []
+    return this.cached(
+      `upcomingTrips-${routes.map((r) => `${r.routeId}-${r.stopId}`).join(",")}`,
+      async () => {
+        const stopRouteMap = routes.reduce(
+          (acc, { routeId, stopId }) => {
+            if (!acc[stopId]) {
+              acc[stopId] = []
+            }
+            acc[stopId].push(routeId)
+            return acc
+          },
+          {} as Record<string, string[]>,
+        )
+    
+        const tripStops: TripStop[] = []
+        for (const stopId of Object.keys(stopRouteMap)) {
+          const routeIds = stopRouteMap[stopId]
+          const arrivalsAndDeparturesResp =
+            await this.getArrivalsAndDeparturesForStop(stopId)
+    
+          const arrivalsAndDepartures =
+            arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
+              (ad) => routeIds.includes(ad.routeId),
+            )
+    
+          for (const ad of arrivalsAndDepartures) {
+            if (
+              tripStops.some(
+                (ts) => ts.tripId === ad.tripId && ts.stopId === stopId,
+              )
+            ) {
+              continue
+            }
+    
+            const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
+              (s) => s.id === stopId,
+            )
+    
+            const staticRoute =
+              arrivalsAndDeparturesResp.data.references.routes.find(
+                (r) => r.id === ad.routeId,
+              )
+    
+            const arrivalTime = ad.predicted
+              ? new Date(ad.predictedArrivalTime)
+              : new Date(ad.scheduledArrivalTime)
+
+            if (arrivalTime < new Date()) {
+              continue
+            }
+    
+            const departureTime = ad.predicted
+              ? new Date(ad.predictedDepartureTime)
+              : new Date(ad.scheduledDepartureTime)
+    
+            const color = staticRoute.color?.replaceAll("#", "")
+    
+            tripStops.push({
+              tripId: ad.tripId,
+              stopId,
+              routeId: ad.routeId,
+              routeName: ad.routeShortName,
+              routeColor: color?.trim() !== "" ? color : null,
+              stopName: staticStop.name,
+              headsign: ad.tripHeadsign,
+              arrivalTime,
+              departureTime,
+              isRealtime: ad.predicted,
+            })
+          }
         }
-        acc[stopId].push(routeId)
-        return acc
+
+        let ttl = 15_000
+        if (tripStops.length === 0) {
+          ttl = 300_000
+        } else {
+          const earliestArrival = Math.min(
+            ...tripStops.map((ts) => ts.arrivalTime.getTime()),
+          )
+
+          if (earliestArrival > Date.now() + 300_000) {
+            ttl = 30_000
+          }
+        }
+    
+        return { value: tripStops, ttl }
       },
-      {} as Record<string, string[]>,
     )
-
-    const tripStops: TripStop[] = []
-    for (const stopId of Object.keys(stopRouteMap)) {
-      const routeIds = stopRouteMap[stopId]
-      const arrivalsAndDeparturesResp =
-        await this.getArrivalsAndDeparturesForStop(stopId)
-
-      const arrivalsAndDepartures =
-        arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
-          (ad) => routeIds.includes(ad.routeId),
-        )
-
-      for (const ad of arrivalsAndDepartures) {
-        if (
-          tripStops.some(
-            (ts) => ts.tripId === ad.tripId && ts.stopId === stopId,
-          )
-        ) {
-          continue
-        }
-
-        const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
-          (s) => s.id === stopId,
-        )
-
-        const staticRoute =
-          arrivalsAndDeparturesResp.data.references.routes.find(
-            (r) => r.id === ad.routeId,
-          )
-
-        const arrivalTime = ad.predicted
-          ? new Date(ad.predictedArrivalTime)
-          : new Date(ad.scheduledArrivalTime)
-        if (arrivalTime < new Date()) {
-          continue
-        }
-
-        const departureTime = ad.predicted
-          ? new Date(ad.predictedDepartureTime)
-          : new Date(ad.scheduledDepartureTime)
-
-        const color = staticRoute.color?.replaceAll("#", "")
-
-        tripStops.push({
-          tripId: ad.tripId,
-          stopId,
-          routeId: ad.routeId,
-          routeName: ad.routeShortName,
-          routeColor: color?.trim() !== "" ? color : null,
-          stopName: staticStop.name,
-          headsign: ad.tripHeadsign,
-          arrivalTime,
-          departureTime,
-          isRealtime: ad.predicted,
-        })
-      }
-    }
-
-    return tripStops
   }
 }

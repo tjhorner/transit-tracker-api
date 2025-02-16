@@ -175,8 +175,8 @@ export class ScheduleController {
     const tripDtos: Trip[] = upcomingTrips
       .map((trip) => ({
         ...trip,
-        arrivalTime: trip.arrivalTime.getTime() / 1000,
-        departureTime: trip.departureTime.getTime() / 1000,
+        arrivalTime: new Date(trip.arrivalTime).getTime() / 1000,
+        departureTime: new Date(trip.departureTime).getTime() / 1000,
         countdownText: this.getCountdownText(trip.arrivalTime),
       }))
       .sort((a, b) => a.arrivalTime - b.arrivalTime)

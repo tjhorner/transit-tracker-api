@@ -32,7 +32,6 @@ export class StopsController {
     }
 
     const stops = await provider.getStopsInArea([lat1, lon1, lat2, lon2])
-
     return stops
   }
 

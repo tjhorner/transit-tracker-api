@@ -22,8 +22,7 @@ import { Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
 import { WebSocketHttpExceptionFilter } from "src/filters/ws-exception.filter"
-import { MetricService, OtelCounter, OtelUpDownCounter } from "nestjs-otel"
-import { Counter, UpDownCounter } from "@opentelemetry/api"
+import { MetricService } from "nestjs-otel"
 import { WsThrottlerGuard } from "src/guards/ws-throttler.guard"
 
 interface ScheduleUpdate {
@@ -58,11 +57,19 @@ export class ScheduleSubscription {
   limit: number
 }
 
+interface RouteStopMetric {
+  feedCode: string
+  routeId: string
+  stopId: string
+  count: number
+}
+
 @WebSocketGateway()
 @UseFilters(WebSocketHttpExceptionFilter)
 export class ScheduleGateway {
   private readonly logger = new Logger(ScheduleGateway.name)
-  private subscribers: Map<WebSocket, ScheduleSubscription> = new Map()
+  private readonly subscribers: Map<WebSocket, ScheduleSubscription> = new Map()
+  private readonly routeStopMetrics: Map<string, RouteStopMetric> = new Map()
 
   constructor(
     private readonly feedService: FeedService,
@@ -70,7 +77,7 @@ export class ScheduleGateway {
   ) {
     metricService
       .getObservableGauge("schedule_subscriptions", {
-        description: "Number of active schedule subscriptions",
+        description: "Number of active schedule subscriptions per feed",
         unit: "subscriptions",
       })
       .addCallback((observable) => {
@@ -87,6 +94,40 @@ export class ScheduleGateway {
           observable.observe(count, { feed_code: feedCode })
         }
       })
+    
+    metricService
+      .getObservableGauge("route_stop_subscriptions", {
+        description: "Number of active subscriptions for a route-stop pair",
+        unit: "subscriptions",
+      })
+      .addCallback((observable) => {
+        for (const [key, value] of this.routeStopMetrics) {
+          observable.observe(value.count, {
+            feed_code: value.feedCode,
+            route_id: value.routeId,
+            stop_id: value.stopId,
+          })
+
+          if (value.count === 0) {
+            this.routeStopMetrics.delete(key)
+          }
+        }
+      })
+  }
+
+  private incrementMetrics(value: number, feedCode: string, routeStopPairs: RouteAtStop[]) {
+    for (const routeStopPair of routeStopPairs) {
+      const key = `${feedCode}:${routeStopPair.routeId}:${routeStopPair.stopId}`
+      const metric = this.routeStopMetrics.get(key) ?? {
+        feedCode,
+        routeId: routeStopPair.routeId,
+        stopId: routeStopPair.stopId,
+        count: 0,
+      }
+
+      metric.count += value
+      this.routeStopMetrics.set(key, metric)
+    }
   }
 
   private async getUpcomingTrips(
@@ -104,8 +145,8 @@ export class ScheduleGateway {
 
         return {
           ...trip,
-          arrivalTime: trip.arrivalTime.getTime() / 1000 + (offset ?? 0),
-          departureTime: trip.departureTime.getTime() / 1000 + (offset ?? 0),
+          arrivalTime: new Date(trip.arrivalTime).getTime() / 1000 + (offset ?? 0),
+          departureTime: new Date(trip.departureTime).getTime() / 1000 + (offset ?? 0),
         }
       })
       .filter((trip) => trip.arrivalTime > Date.now() / 1000)
@@ -159,9 +200,10 @@ export class ScheduleGateway {
     }
 
     this.subscribers.set(socket, subscription)
+    this.incrementMetrics(1, subscription.feedCode, routeStopPairs)
 
     this.logger.debug(
-      `Subscribed to schedule updates for ${subscription.feedCode}`,
+      `Subscribed to schedule updates for ${subscription.feedCode}, ${subscription.routeStopPairs}`,
     )
 
     const self = this
@@ -188,7 +230,12 @@ export class ScheduleGateway {
         }
       }
 
-      const interval = setInterval(updateSchedule, 15000)
+      let interval: ReturnType<typeof setInterval>
+      setTimeout(() => {
+        const jitter = Math.floor(Math.random() * 1000)
+        interval = setInterval(updateSchedule, 20_000 + jitter)
+      }, Math.floor(Math.random() * 10000))
+
       updateSchedule()
 
       return () => {
@@ -196,6 +243,7 @@ export class ScheduleGateway {
 
         clearInterval(interval)
         self.subscribers.delete(socket)
+        self.incrementMetrics(-1, subscription.feedCode, routeStopPairs)
       }
     })
   }
