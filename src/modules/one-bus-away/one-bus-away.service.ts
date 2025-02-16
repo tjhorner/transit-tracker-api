@@ -300,7 +300,10 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
         }
 
         let ttl = 18_000
-        if (resp.data.entry.arrivalsAndDepartures.length === 0) {
+        if (resp === null) {
+          // doesn't support this stop, I guess? undocumented behavior
+          ttl = 3_600_000
+        } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
           // no arrivals for the next hour so we can cache for longer
           ttl = 300_000
         }
@@ -332,12 +335,16 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
           const routeIds = stopRouteMap[stopId]
           const arrivalsAndDeparturesResp =
             await this.getArrivalsAndDeparturesForStop(stopId)
-    
+            
+          if (!arrivalsAndDeparturesResp) {
+            continue
+          }
+          
           const arrivalsAndDepartures =
             arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
               (ad) => routeIds.includes(ad.routeId),
             )
-    
+
           for (const ad of arrivalsAndDepartures) {
             if (
               tripStops.some(
@@ -346,11 +353,11 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
             ) {
               continue
             }
-    
+
             const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
               (s) => s.id === stopId,
             )
-    
+
             const staticRoute =
               arrivalsAndDeparturesResp.data.references.routes.find(
                 (r) => r.id === ad.routeId,
