@@ -21,7 +21,7 @@ import { RouteAtStop } from "src/modules/gtfs/gtfs.service"
 import { Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
-import { WebSocketHttpExceptionFilter } from "src/filters/ws-exception.filter"
+import { WebSocketExceptionFilter, WebSocketHttpExceptionFilter } from "src/filters/ws-exception.filter"
 import { MetricService } from "nestjs-otel"
 import { WsThrottlerGuard } from "src/guards/ws-throttler.guard"
 
@@ -65,7 +65,7 @@ interface RouteStopMetric {
 }
 
 @WebSocketGateway()
-@UseFilters(WebSocketHttpExceptionFilter)
+@UseFilters(WebSocketHttpExceptionFilter, WebSocketExceptionFilter)
 export class ScheduleGateway {
   private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Map<WebSocket, ScheduleSubscription> = new Map()
