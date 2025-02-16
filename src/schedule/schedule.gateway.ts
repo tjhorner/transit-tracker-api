@@ -65,7 +65,7 @@ interface RouteStopMetric {
 }
 
 @WebSocketGateway()
-@UseFilters(WebSocketHttpExceptionFilter, WebSocketExceptionFilter)
+@UseFilters(WebSocketExceptionFilter, WebSocketHttpExceptionFilter)
 export class ScheduleGateway {
   private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Map<WebSocket, ScheduleSubscription> = new Map()
