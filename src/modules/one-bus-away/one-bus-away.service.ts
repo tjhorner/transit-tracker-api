@@ -125,8 +125,11 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
   private async instrumentedFetch(url: any, init?: any): Promise<any> {
     await this.obaRateLimiter.removeTokens(1)
 
+    const methodName = new URL(url).pathname.split("/")[3].split(".")[0]
+
     this.obaRequestCounter.add(1, {
       feed_code: this.feedCode,
+      method: methodName,
     })
 
     const start = Date.now()
@@ -135,11 +138,13 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
 
     this.obaResponseCounter.add(1, {
       feed_code: this.feedCode,
+      method: methodName,
       status: resp.status,
     })
 
     this.obaRequestDuration.record(duration, {
       feed_code: this.feedCode,
+      method: methodName,
       status: resp.status,
     })
 
