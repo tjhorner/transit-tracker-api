@@ -292,7 +292,7 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
             minutesAfter: 60,
           })
         } catch (e: any) {
-          if (e.code === 404) {
+          if (e?.error?.code === 404) {
             throw new NotFoundException(`Stop ${stopId} not found`)
           }
 

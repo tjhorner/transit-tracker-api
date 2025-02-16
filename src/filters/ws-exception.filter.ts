@@ -6,7 +6,7 @@ import { WebSocket } from "ws"
 export class WebSocketHttpExceptionFilter extends BaseWsExceptionFilter {
   catch(exception: HttpException, host: ArgumentsHost) {
     const client = host.switchToWs().getClient<WebSocket>()
-    client.send(JSON.stringify(exception.getResponse()))
+    client.send(JSON.stringify({ error: exception.message, code: exception.getStatus() }))
     super.catch(exception, host)
   }
 }
