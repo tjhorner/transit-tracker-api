@@ -84,21 +84,30 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     metricService: MetricService,
   ) {
-    this.obaRequestCounter = metricService.getCounter("onebusaway_request_count", {
-      description: "Number of requests made to the OneBusAway API",
-      unit: "requests",
-    })
+    this.obaRequestCounter = metricService.getCounter(
+      "onebusaway_request_count",
+      {
+        description: "Number of requests made to the OneBusAway API",
+        unit: "requests",
+      },
+    )
 
-    this.obaResponseCounter = metricService.getCounter("onebusaway_response_count", {
-      description: "Number of responses received from the OneBusAway API",
-      unit: "responses",
-    })
+    this.obaResponseCounter = metricService.getCounter(
+      "onebusaway_response_count",
+      {
+        description: "Number of responses received from the OneBusAway API",
+        unit: "responses",
+      },
+    )
 
-    this.obaRequestDuration = metricService.getHistogram("onebusaway_request_duration", {
-      description: "Duration of requests made to the OneBusAway API",
-      unit: "ms",
-      valueType: ValueType.DOUBLE,
-    })
+    this.obaRequestDuration = metricService.getHistogram(
+      "onebusaway_request_duration",
+      {
+        description: "Duration of requests made to the OneBusAway API",
+        unit: "ms",
+        valueType: ValueType.DOUBLE,
+      },
+    )
 
     this.obaCacheHits = metricService.getCounter("onebusaway_cache_hits", {
       description: "Number of cache hits for OneBusAway requests",
@@ -153,7 +162,7 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
 
   private async cached<T>(
     key: string,
-    fn: () => Promise<T | { value: T, ttl: number }>,
+    fn: () => Promise<T | { value: T; ttl: number }>,
     ttl?: number,
   ): Promise<T> {
     const cacheKey = `${this.feedCode}-${key}`
@@ -284,38 +293,62 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
     }))
   }
 
-  async getArrivalsAndDeparturesForStop(
-    stopId: string,
-  ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse> {
+  async getStop(stopId: string): Promise<Stop> {
     return this.cached(
-      `arrivalsAndDepartures-${stopId}`,
+      `stop-${stopId}`,
       async () => {
-        let resp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse
+        let stop: OnebusawaySDK.Stop.StopRetrieveResponse
         try {
-          resp = await this.obaSdk.arrivalAndDeparture.list(stopId, {
-            minutesBefore: 0,
-            minutesAfter: 60,
-          })
+          stop = await this.obaSdk.stop.retrieve(stopId)
         } catch (e: any) {
-          if (e?.error?.code === 404) {
+          if (e.code === 404) {
             throw new NotFoundException(`Stop ${stopId} not found`)
           }
 
           throw new InternalServerErrorException(e)
         }
 
-        let ttl = 18_000
-        if (resp === null) {
-          // doesn't support this stop, I guess? undocumented behavior
-          ttl = 3_600_000
-        } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
-          // no arrivals for the next hour so we can cache for longer
-          ttl = 300_000
+        return {
+          stopId: stop.data.entry.id,
+          stopCode: stop.data.entry.code,
+          name: stop.data.entry.name,
+          lat: stop.data.entry.lat,
+          lon: stop.data.entry.lon,
+        }
+      },
+      86_400_000,
+    )
+  }
+
+  async getArrivalsAndDeparturesForStop(
+    stopId: string,
+  ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse> {
+    return this.cached(`arrivalsAndDepartures-${stopId}`, async () => {
+      let resp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse
+      try {
+        resp = await this.obaSdk.arrivalAndDeparture.list(stopId, {
+          minutesBefore: 0,
+          minutesAfter: 60,
+        })
+      } catch (e: any) {
+        if (e?.error?.code === 404) {
+          throw new NotFoundException(`Stop ${stopId} not found`)
         }
 
-        return { value: resp, ttl }
-      },
-    )
+        throw new InternalServerErrorException(e)
+      }
+
+      let ttl = 18_000
+      if (resp === null) {
+        // doesn't support this stop, I guess? undocumented behavior
+        ttl = 3_600_000
+      } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
+        // no arrivals for the next hour so we can cache for longer
+        ttl = 300_000
+      }
+
+      return { value: resp, ttl }
+    })
   }
 
   async getUpcomingTripsForRoutesAtStops(
@@ -334,17 +367,17 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
           },
           {} as Record<string, string[]>,
         )
-    
+
         const tripStops: TripStop[] = []
         for (const stopId of Object.keys(stopRouteMap)) {
           const routeIds = stopRouteMap[stopId]
           const arrivalsAndDeparturesResp =
             await this.getArrivalsAndDeparturesForStop(stopId)
-            
+
           if (!arrivalsAndDeparturesResp) {
             continue
           }
-          
+
           const arrivalsAndDepartures =
             arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
               (ad) => routeIds.includes(ad.routeId),
@@ -359,15 +392,16 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
               continue
             }
 
-            const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
-              (s) => s.id === stopId,
-            )
+            const staticStop =
+              arrivalsAndDeparturesResp.data.references.stops.find(
+                (s) => s.id === stopId,
+              )
 
             const staticRoute =
               arrivalsAndDeparturesResp.data.references.routes.find(
                 (r) => r.id === ad.routeId,
               )
-    
+
             const arrivalTime = ad.predicted
               ? new Date(ad.predictedArrivalTime)
               : new Date(ad.scheduledArrivalTime)
@@ -375,13 +409,13 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
             if (arrivalTime < new Date()) {
               continue
             }
-    
+
             const departureTime = ad.predicted
               ? new Date(ad.predictedDepartureTime)
               : new Date(ad.scheduledDepartureTime)
-    
+
             const color = staticRoute.color?.replaceAll("#", "")
-    
+
             tripStops.push({
               tripId: ad.tripId,
               stopId,
@@ -409,7 +443,7 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
             ttl = 30_000
           }
         }
-    
+
         return { value: tripStops, ttl }
       },
     )

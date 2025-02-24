@@ -246,15 +246,15 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
               st.stop_id,
               rt.route_id,
               CASE
-                  WHEN TRIM(rt.route_short_name) = '' THEN rt.route_long_name
+                  WHEN coalesce(TRIM(rt.route_short_name), '') = '' THEN rt.route_long_name
                   ELSE rt.route_short_name
               END AS route_name,
-              rt.route_color,
+              r.route_color,
               s.stop_name,
               CASE
-                  WHEN TRIM(st.stop_headsign) = '' THEN
+                  WHEN coalesce(TRIM(st.stop_headsign), '') = '' THEN
                       CASE
-                          WHEN TRIM(rt.trip_headsign) = '' THEN ls.last_stop_name
+                          WHEN coalesce(TRIM(rt.trip_headsign), '') = '' THEN ls.last_stop_name
                           ELSE rt.trip_headsign
                       END
                   ELSE
@@ -265,6 +265,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
               to_char(current_day.today, 'YYYYMMDD') as start_date
           FROM stop_times st
           JOIN route_trips rt ON st.trip_id = rt.trip_id
+          JOIN routes r ON rt.route_id = r.route_id
           JOIN stops s ON st.stop_id = s.stop_id
           JOIN current_day ON true
           JOIN agency_timezone ON true
@@ -299,6 +300,36 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
       lat: stop.stop_lat,
       lon: stop.stop_lon,
     }))
+  }
+
+  async getStop(stopId: string): Promise<Stop> {
+    return this.cached(
+      `stop-${stopId}`,
+      async () => {
+        const stop = await this.tx(async (tx) => {
+          return await tx
+            .selectFrom("stops")
+            .select([
+              "stop_id",
+              "stop_name",
+              "stop_code",
+              "stop_lat",
+              "stop_lon",
+            ])
+            .where("stop_id", "=", stopId)
+            .execute()
+        })
+
+        return {
+          stopId: stop[0].stop_id,
+          stopCode: stop[0].stop_code,
+          name: stop[0].stop_name,
+          lat: stop[0].stop_lat,
+          lon: stop[0].stop_lon,
+        }
+      },
+      86_400_000,
+    )
   }
 
   async getRoutesForStop(stopId: string): Promise<StopRoute[]> {

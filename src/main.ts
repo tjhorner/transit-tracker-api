@@ -29,7 +29,9 @@ async function bootstrap() {
     .build()
 
   const documentFactory = () => SwaggerModule.createDocument(app, openApiConfig)
-  SwaggerModule.setup("openapi", app, documentFactory)
+  SwaggerModule.setup("openapi", app, documentFactory, {
+    jsonDocumentUrl: "openapi/json",
+  })
 
   await app.listen(3000)
 }

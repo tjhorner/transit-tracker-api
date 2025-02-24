@@ -37,6 +37,7 @@ export interface ScheduleProvider<TConfig = unknown> {
 
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>
 
+  getStop(stopId: string): Promise<Stop>
   getRoutesForStop(stopId: string): Promise<StopRoute[]>
   getStopsInArea(bbox: BBox): Promise<Stop[]>
 

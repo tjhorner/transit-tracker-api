@@ -1,8 +1,6 @@
 import {
   BadRequestException,
-  Ip,
   Logger,
-  Req,
   UseFilters,
   UseGuards,
   UsePipes,
@@ -21,7 +19,10 @@ import { RouteAtStop } from "src/modules/gtfs/gtfs.service"
 import { Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
-import { WebSocketExceptionFilter, WebSocketHttpExceptionFilter } from "src/filters/ws-exception.filter"
+import {
+  WebSocketExceptionFilter,
+  WebSocketHttpExceptionFilter,
+} from "src/filters/ws-exception.filter"
 import { MetricService } from "nestjs-otel"
 import { WsThrottlerGuard } from "src/guards/ws-throttler.guard"
 
@@ -94,7 +95,7 @@ export class ScheduleGateway {
           observable.observe(count, { feed_code: feedCode })
         }
       })
-    
+
     metricService
       .getObservableGauge("route_stop_subscriptions", {
         description: "Number of active subscriptions for a route-stop pair",
@@ -115,7 +116,11 @@ export class ScheduleGateway {
       })
   }
 
-  private incrementMetrics(value: number, feedCode: string, routeStopPairs: RouteAtStop[]) {
+  private incrementMetrics(
+    value: number,
+    feedCode: string,
+    routeStopPairs: RouteAtStop[],
+  ) {
     for (const routeStopPair of routeStopPairs) {
       const key = `${feedCode}:${routeStopPair.routeId}:${routeStopPair.stopId}`
       const metric = this.routeStopMetrics.get(key) ?? {
@@ -135,7 +140,8 @@ export class ScheduleGateway {
     routes: RouteAtStopWithOffset[],
     limit: number,
   ): Promise<ScheduleUpdate> {
-    let upcomingTrips = await provider.getUpcomingTripsForRoutesAtStops(routes)
+    const upcomingTrips =
+      await provider.getUpcomingTripsForRoutesAtStops(routes)
 
     const tripDtos: ScheduleTrip[] = upcomingTrips
       .map((trip) => {
@@ -145,8 +151,10 @@ export class ScheduleGateway {
 
         return {
           ...trip,
-          arrivalTime: new Date(trip.arrivalTime).getTime() / 1000 + (offset ?? 0),
-          departureTime: new Date(trip.departureTime).getTime() / 1000 + (offset ?? 0),
+          arrivalTime:
+            new Date(trip.arrivalTime).getTime() / 1000 + (offset ?? 0),
+          departureTime:
+            new Date(trip.departureTime).getTime() / 1000 + (offset ?? 0),
         }
       })
       .filter((trip) => trip.arrivalTime > Date.now() / 1000)
@@ -206,6 +214,7 @@ export class ScheduleGateway {
       `Subscribed to schedule updates for ${subscription.feedCode}, ${subscription.routeStopPairs}`,
     )
 
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
     return new Observable((observer) => {
       let currentSchedule: ScheduleUpdate | null = null
@@ -231,10 +240,13 @@ export class ScheduleGateway {
       }
 
       let interval: ReturnType<typeof setInterval>
-      setTimeout(() => {
-        const jitter = Math.floor(Math.random() * 1000)
-        interval = setInterval(updateSchedule, 20_000 + jitter)
-      }, Math.floor(Math.random() * 10000))
+      setTimeout(
+        () => {
+          const jitter = Math.floor(Math.random() * 1000)
+          interval = setInterval(updateSchedule, 20_000 + jitter)
+        },
+        Math.floor(Math.random() * 10000),
+      )
 
       updateSchedule()
 
