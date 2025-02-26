@@ -258,9 +258,12 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
             stopId,
           )
 
+          const color = route.color?.replaceAll("#", "")
+
           stopRoutes.push({
             routeId: route.id,
             name: route.shortName,
+            color: color?.trim() !== "" ? color : null,
             headsigns,
           })
         }

@@ -177,7 +177,7 @@ export class ScheduleController {
         ...trip,
         arrivalTime: new Date(trip.arrivalTime).getTime() / 1000,
         departureTime: new Date(trip.departureTime).getTime() / 1000,
-        countdownText: this.getCountdownText(trip.arrivalTime),
+        countdownText: this.getCountdownText(new Date(trip.arrivalTime)),
       }))
       .sort((a, b) => a.arrivalTime - b.arrivalTime)
       .splice(0, limit)

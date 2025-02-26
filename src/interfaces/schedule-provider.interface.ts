@@ -27,6 +27,7 @@ export interface Stop {
 export interface StopRoute {
   routeId: string
   name: string
+  color: string | null
   headsigns: string[]
 }
 

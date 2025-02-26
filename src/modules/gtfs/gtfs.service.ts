@@ -345,6 +345,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
               "routes.route_id",
               "routes.route_short_name",
               "routes.route_long_name",
+              "routes.route_color",
               sql<string[]>`
                 JSON_AGG(DISTINCT CASE 
                     WHEN TRIM(stop_times.stop_headsign) = '' THEN trips.trip_headsign
@@ -357,6 +358,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
               "routes.route_id",
               "routes.route_short_name",
               "routes.route_long_name",
+              "routes.route_color",
             ])
             .orderBy("routes.route_short_name")
             .execute()
@@ -364,6 +366,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
 
         return routes.map((route) => ({
           routeId: route.route_id,
+          color: route.route_color?.replaceAll("#", "") ?? null,
           name:
             !route.route_short_name || route.route_short_name.trim() === ""
               ? route.route_long_name
