@@ -172,7 +172,7 @@ export class ScheduleGateway {
   subscribeToSchedule(
     @MessageBody() subscription: ScheduleSubscription,
     @ConnectedSocket() socket: WebSocket,
-  ): Observable<WsResponse<ScheduleUpdate>> {
+  ): Observable<WsResponse<ScheduleUpdate | null>> {
     if (this.subscribers.has(socket)) {
       throw new BadRequestException(
         "Only one schedule subscription per connection allowed",
@@ -237,6 +237,8 @@ export class ScheduleGateway {
           currentSchedule = trips
           observer.next({ event: "schedule", data: trips })
         }
+
+        observer.next({ event: "heartbeat", data: null })
       }
 
       let interval: ReturnType<typeof setInterval>

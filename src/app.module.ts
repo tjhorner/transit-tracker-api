@@ -26,10 +26,13 @@ import { OpenTelemetryModule } from "nestjs-otel"
       }),
     }),
     ThrottlerModule.forRoot({
-      throttlers: [
-        { name: "short", ttl: seconds(1), limit: 10 },
-        { name: "long", ttl: seconds(60), limit: 60 },
-      ],
+      throttlers:
+        process.env.DISABLE_RATE_LIMITS === "true"
+          ? []
+          : [
+              { name: "short", ttl: seconds(1), limit: 10 },
+              { name: "long", ttl: seconds(60), limit: 60 },
+            ],
       storage: new ThrottlerStorageRedisService(process.env.REDIS_URL),
     }),
     OpenTelemetryModule.forRoot({
