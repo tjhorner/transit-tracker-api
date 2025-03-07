@@ -245,7 +245,7 @@ export class ScheduleGateway {
       setTimeout(
         () => {
           const jitter = Math.floor(Math.random() * 1000)
-          interval = setInterval(updateSchedule, 20_000 + jitter)
+          interval = setInterval(updateSchedule, 30_000 + jitter)
         },
         Math.floor(Math.random() * 10000),
       )

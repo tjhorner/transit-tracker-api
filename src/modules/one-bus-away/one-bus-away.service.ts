@@ -331,7 +331,7 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
       try {
         resp = await this.obaSdk.arrivalAndDeparture.list(stopId, {
           minutesBefore: 0,
-          minutesAfter: 60,
+          minutesAfter: 120,
         })
       } catch (e: any) {
         if (e?.error?.code === 404) {
