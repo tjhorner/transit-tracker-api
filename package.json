@@ -6,7 +6,7 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "nest build",
+    "build": "nest build && pnpm sentry:sourcemaps",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
@@ -19,7 +19,8 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "kysely-codegen": "kysely-codegen --out-file src/modules/gtfs/db.d.ts",
-    "sync-gtfs": "node dist/scripts/sync-gtfs.js"
+    "sync-gtfs": "node dist/scripts/sync-gtfs.js",
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist"
   },
   "dependencies": {
     "@keyv/redis": "4.2.0",
@@ -36,6 +37,8 @@
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-prometheus": "^0.57.2",
     "@opentelemetry/sdk-node": "^0.57.2",
+    "@sentry/cli": "^2.42.2",
+    "@sentry/nestjs": "^9.5.0",
     "@turf/turf": "^7.2.0",
     "axios": "^1.7.9",
     "bullmq": "^5.41.0",

@@ -45,7 +45,7 @@ export interface GtfsConfig {
 
 @Injectable()
 export class GtfsService implements ScheduleProvider<GtfsConfig> {
-  private readonly logger = new Logger(GtfsService.name)
+  private logger = new Logger(GtfsService.name)
   private feedCode: string
   private config: GtfsConfig
 
@@ -57,6 +57,8 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
   ) {}
 
   init(feedCode: string, config: GtfsConfig): void {
+    this.logger = new Logger(`GtfsService[${feedCode}]`)
+
     this.feedCode = feedCode
     this.config = config
 
@@ -438,9 +440,14 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
         )
       ).flat()
 
-      const tripUpdates = await this.getTripUpdates(
-        trips.map((trip) => trip.trip_id),
-      )
+      let tripUpdates: { [tripId: string]: ITripUpdate } = {}
+      try {
+        tripUpdates = await this.getTripUpdates(
+          trips.map((trip) => trip.trip_id),
+        )
+      } catch (e: any) {
+        this.logger.warn("Failed to fetch trip updates, using schedule", e)
+      }
 
       trips.forEach((trip) => {
         if (tripStops.some((ts) => ts.tripId === trip.trip_id)) {

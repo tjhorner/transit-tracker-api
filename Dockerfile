@@ -1,23 +1,25 @@
-# Use the official Node.js image as the base image
-FROM node:22-slim
+FROM node:22-alpine AS base
 
-# Set the working directory inside the container
-WORKDIR /usr/src/app
+RUN npm i -g pnpm
 
-# Copy package.json and package-lock.json to the working directory
-COPY package*.json ./
+FROM base AS dependencies
 
-# Install the application dependencies
-RUN npm install --legacy-peer-deps
+WORKDIR /app
+COPY package.json pnpm-lock.yaml ./
+RUN pnpm install
 
-# Copy the rest of the application files
+FROM base AS build
+
+WORKDIR /app
 COPY . .
+COPY --from=dependencies /app/node_modules ./node_modules
+RUN pnpm build
+RUN pnpm prune --prod
 
-# Build the NestJS application
-RUN npm run build
+FROM base AS deploy
 
-# Expose the application port
-EXPOSE 3000
+WORKDIR /app
+COPY --from=build /app/dist/ ./dist/
+COPY --from=build /app/node_modules ./node_modules
 
-# Command to run the application
-CMD ["node", "dist/main"]
+CMD [ "node", "dist/main.js" ]

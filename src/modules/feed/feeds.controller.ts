@@ -48,7 +48,7 @@ export class FeedsController {
   async getFeeds(): Promise<Feed[]> {
     const feeds = this.feedService.getAllFeeds()
 
-    let resp: Feed[] = []
+    const resp: Feed[] = []
     for (const [feedCode, feed] of Object.entries(feeds)) {
       const provider = this.feedService.getScheduleProvider(feedCode)
       resp.push({

@@ -1,5 +1,6 @@
 import { ArgumentsHost, Catch, HttpException } from "@nestjs/common"
 import { BaseWsExceptionFilter } from "@nestjs/websockets"
+import { SentryExceptionCaptured } from "@sentry/nestjs"
 import { WebSocket } from "ws"
 
 @Catch(HttpException)
@@ -15,6 +16,7 @@ export class WebSocketHttpExceptionFilter extends BaseWsExceptionFilter {
 
 @Catch()
 export class WebSocketExceptionFilter extends BaseWsExceptionFilter {
+  @SentryExceptionCaptured()
   catch(exception: Error, host: ArgumentsHost) {
     const client = host.switchToWs().getClient<WebSocket>()
     client.send(JSON.stringify({ error: "Internal error, disconnecting" }))

@@ -6,10 +6,11 @@ import { ScheduleGateway } from "./schedule/schedule.gateway"
 import { FeedModule } from "./modules/feed/feed.module"
 import { createKeyv } from "@keyv/redis"
 import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
-import { APP_GUARD } from "@nestjs/core"
+import { APP_FILTER, APP_GUARD } from "@nestjs/core"
 import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis"
 import { BullModule } from "@nestjs/bullmq"
 import { OpenTelemetryModule } from "nestjs-otel"
+import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 
 @Module({
   imports: [
@@ -43,6 +44,7 @@ import { OpenTelemetryModule } from "nestjs-otel"
         },
       },
     }),
+    SentryModule.forRoot(),
     FeedModule,
   ],
   controllers: [ScheduleController, StopsController],
@@ -51,6 +53,10 @@ import { OpenTelemetryModule } from "nestjs-otel"
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: SentryGlobalFilter,
     },
   ],
 })
