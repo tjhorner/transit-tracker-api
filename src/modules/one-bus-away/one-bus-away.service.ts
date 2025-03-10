@@ -2,6 +2,7 @@ import {
   Inject,
   Injectable,
   InternalServerErrorException,
+  Logger,
   NotFoundException,
 } from "@nestjs/common"
 import OnebusawaySDK from "onebusaway-sdk"
@@ -67,6 +68,7 @@ function sumOfAllBboxes(bboxes: BBox[]): BBox {
 
 @Injectable()
 export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
+  private logger = new Logger(OneBusAwayService.name)
   private feedCode: string
   private obaSdk: OnebusawaySDK
   private obaRateLimiter = new RateLimiter({
@@ -121,6 +123,7 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
   }
 
   init(feedCode: string, config: OneBusAwayConfig) {
+    this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
     this.feedCode = feedCode
 
     this.obaSdk = new OnebusawaySDK({
@@ -335,7 +338,10 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
         })
       } catch (e: any) {
         if (e?.error?.code === 404) {
-          throw new NotFoundException(`Stop ${stopId} not found`)
+          this.logger.warn(
+            `getArrivalsAndDeparturesForStop: Requested stop ${stopId} not found`,
+          )
+          return { value: null, ttl: 3_600_000 }
         }
 
         throw new InternalServerErrorException(e)

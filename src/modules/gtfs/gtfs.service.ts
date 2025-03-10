@@ -57,7 +57,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
   ) {}
 
   init(feedCode: string, config: GtfsConfig): void {
-    this.logger = new Logger(`GtfsService[${feedCode}]`)
+    this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
 
     this.feedCode = feedCode
     this.config = config
@@ -409,6 +409,10 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
       },
       15_000,
     )
+
+    if (typeof allTripUpdates?.entity?.[Symbol.iterator] !== "function") {
+      return {}
+    }
 
     const filteredTripUpdates: { [tripId: string]: ITripUpdate } = {}
     for (const entity of allTripUpdates.entity) {

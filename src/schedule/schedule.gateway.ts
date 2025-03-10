@@ -2,7 +2,6 @@ import {
   BadRequestException,
   Logger,
   UseFilters,
-  UseGuards,
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common"
@@ -24,7 +23,6 @@ import {
   WebSocketHttpExceptionFilter,
 } from "src/filters/ws-exception.filter"
 import { MetricService } from "nestjs-otel"
-import { WsThrottlerGuard } from "src/guards/ws-throttler.guard"
 
 interface ScheduleUpdate {
   trips: ScheduleTrip[]
@@ -166,7 +164,6 @@ export class ScheduleGateway {
     }
   }
 
-  @UseGuards(WsThrottlerGuard)
   @UsePipes(new ValidationPipe())
   @SubscribeMessage("schedule:subscribe")
   subscribeToSchedule(
