@@ -466,17 +466,17 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
           (update) => update.stopId === trip.stop_id,
         )
 
-        const arrivalTime = stopTimeUpdate?.arrival?.time
-          ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
-          : new Date(trip.arrival_time)
-
-        if (arrivalTime < new Date()) {
-          return
-        }
-
         const departureTime = stopTimeUpdate?.departure?.time
           ? new Date((stopTimeUpdate.departure?.time as number) * 1000)
           : new Date(trip.departure_time)
+
+        if (departureTime < new Date()) {
+          return
+        }
+
+        const arrivalTime = stopTimeUpdate?.arrival?.time
+          ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
+          : new Date(trip.arrival_time)
 
         tripStops.push({
           tripId: trip.trip_id,

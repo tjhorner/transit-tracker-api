@@ -411,17 +411,19 @@ export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
                 (r) => r.id === ad.routeId,
               )
 
-            const arrivalTime = ad.predicted
-              ? new Date(ad.predictedArrivalTime)
-              : new Date(ad.scheduledArrivalTime)
+            const departureTime =
+              ad.predicted && ad.predictedDepartureTime
+                ? new Date(ad.predictedDepartureTime)
+                : new Date(ad.scheduledDepartureTime)
 
-            if (arrivalTime < new Date()) {
+            if (departureTime < new Date()) {
               continue
             }
 
-            const departureTime = ad.predicted
-              ? new Date(ad.predictedDepartureTime)
-              : new Date(ad.scheduledDepartureTime)
+            const arrivalTime =
+              ad.predicted && ad.predictedArrivalTime
+                ? new Date(ad.predictedArrivalTime)
+                : new Date(ad.scheduledArrivalTime)
 
             const color = staticRoute.color?.replaceAll("#", "")
 

@@ -13,7 +13,14 @@ import {
   WsResponse,
 } from "@nestjs/websockets"
 import { WebSocket } from "ws"
-import { IsInt, IsNotEmpty, Max, Min } from "class-validator"
+import {
+  IsBoolean,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  Max,
+  Min,
+} from "class-validator"
 import { RouteAtStop } from "src/modules/gtfs/gtfs.service"
 import { Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
@@ -54,6 +61,10 @@ export class ScheduleSubscription {
   @Min(1)
   @Max(10)
   limit: number
+
+  @IsBoolean()
+  @IsOptional()
+  sortByDeparture?: boolean
 }
 
 interface RouteStopMetric {
@@ -137,10 +148,12 @@ export class ScheduleGateway {
     provider: ScheduleProvider,
     routes: RouteAtStopWithOffset[],
     limit: number,
+    sortByDeparture = false,
   ): Promise<ScheduleUpdate> {
     const upcomingTrips =
       await provider.getUpcomingTripsForRoutesAtStops(routes)
 
+    const sortKey = sortByDeparture ? "departureTime" : "arrivalTime"
     const tripDtos: ScheduleTrip[] = upcomingTrips
       .map((trip) => {
         const offset = routes.find(
@@ -155,8 +168,8 @@ export class ScheduleGateway {
             new Date(trip.departureTime).getTime() / 1000 + (offset ?? 0),
         }
       })
-      .filter((trip) => trip.arrivalTime > Date.now() / 1000)
-      .sort((a, b) => a.arrivalTime - b.arrivalTime)
+      .filter((trip) => trip[sortKey] > Date.now() / 1000)
+      .sort((a, b) => a[sortKey] - b[sortKey])
       .splice(0, limit)
 
     return {
@@ -222,6 +235,7 @@ export class ScheduleGateway {
             scheduleProvider,
             routeStopPairs,
             subscription.limit,
+            subscription.sortByDeparture ?? false,
           )
         } catch (e: any) {
           observer.error(e)
