@@ -4,7 +4,6 @@ import {
   Get,
   Param,
   Query,
-  UseInterceptors,
 } from "@nestjs/common"
 import {
   ApiBadRequestResponse,
@@ -12,9 +11,7 @@ import {
   ApiParam,
   ApiProperty,
 } from "@nestjs/swagger"
-import { ScheduleProviderParam } from "src/decorators/schedule-provider"
-import { ScheduleProviderInterceptor } from "src/interceptors/schedule-provider"
-import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
+import { ScheduleService } from "./schedule.service"
 
 export class Trip {
   @ApiProperty({
@@ -108,9 +105,8 @@ export class Trips {
 }
 
 @Controller("schedule/:feedCode")
-@UseInterceptors(ScheduleProviderInterceptor)
 export class ScheduleController {
-  constructor() {}
+  constructor(private readonly scheduleService: ScheduleService) {}
 
   private getCountdownText(arrivalTime: Date): string {
     const now = new Date()
@@ -153,26 +149,26 @@ export class ScheduleController {
     required: false,
   })
   async getArrivals(
-    @ScheduleProviderParam() scheduleProvider: ScheduleProvider,
+    @Param("feedCode") feedCode: string,
     @Param("routeStopPairs") routeStopPairsRaw: string,
     @Query("limit") limit: number = 10,
   ): Promise<Trips> {
     limit = Math.min(limit, 10)
 
-    const routeStopPairs = routeStopPairsRaw
-      .split(";")
-      .map((pair) => pair.split(",").map((part) => part.trim()))
+    const routeStopPairs =
+      this.scheduleService.parseRouteStopPairs(routeStopPairsRaw)
 
     if (routeStopPairs.length > 5) {
       throw new BadRequestException("Too many route-stop pairs; maximum 5")
     }
 
-    const upcomingTrips =
-      await scheduleProvider.getUpcomingTripsForRoutesAtStops(
-        routeStopPairs.map(([routeId, stopId]) => ({ routeId, stopId })),
-      )
+    const schedule = await this.scheduleService.getSchedule({
+      feedCode,
+      routes: routeStopPairs,
+      limit,
+    })
 
-    const tripDtos: Trip[] = upcomingTrips
+    const tripDtos: Trip[] = schedule.trips
       .map((trip) => ({
         ...trip,
         arrivalTime: new Date(trip.arrivalTime).getTime() / 1000,

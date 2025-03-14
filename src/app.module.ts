@@ -11,6 +11,8 @@ import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis"
 import { BullModule } from "@nestjs/bullmq"
 import { OpenTelemetryModule } from "nestjs-otel"
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
+import { ScheduleService } from "./schedule/schedule.service"
+import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
 
 @Module({
   imports: [
@@ -49,6 +51,8 @@ import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
   ],
   controllers: [ScheduleController, StopsController],
   providers: [
+    ScheduleMetricsService,
+    ScheduleService,
     ScheduleGateway,
     {
       provide: APP_GUARD,

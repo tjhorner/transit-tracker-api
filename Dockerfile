@@ -13,7 +13,7 @@ FROM base AS build
 WORKDIR /app
 COPY . .
 COPY --from=dependencies /app/node_modules ./node_modules
-RUN pnpm build
+RUN pnpm build:prod
 RUN pnpm prune --prod
 
 FROM base AS deploy

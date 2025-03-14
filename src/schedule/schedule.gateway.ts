@@ -1,6 +1,5 @@
 import {
   BadRequestException,
-  Logger,
   UseFilters,
   UsePipes,
   ValidationPipe,
@@ -8,49 +7,35 @@ import {
 import {
   ConnectedSocket,
   MessageBody,
+  OnGatewayConnection,
   SubscribeMessage,
   WebSocketGateway,
   WsResponse,
 } from "@nestjs/websockets"
-import { WebSocket } from "ws"
 import {
   IsBoolean,
+  IsIn,
   IsInt,
   IsNotEmpty,
   IsOptional,
+  IsString,
   Max,
   Min,
 } from "class-validator"
-import { RouteAtStop } from "src/modules/gtfs/gtfs.service"
-import { Observable } from "rxjs"
-import { FeedService } from "src/modules/feed/feed.service"
-import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
+import { finalize, interval, map, merge, Observable } from "rxjs"
 import {
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
 } from "src/filters/ws-exception.filter"
-import { MetricService } from "nestjs-otel"
+import { WebSocket as BaseWebSocket } from "ws"
+import {
+  ScheduleOptions,
+  ScheduleService,
+  ScheduleUpdate,
+} from "./schedule.service"
+import { randomUUID, UUID } from "crypto"
 
-interface ScheduleUpdate {
-  trips: ScheduleTrip[]
-}
-
-interface ScheduleTrip {
-  tripId: string
-  routeId: string
-  routeName: string
-  routeColor: string | null
-  stopId: string
-  stopName: string
-  headsign: string
-  arrivalTime: number
-  departureTime: number
-  isRealtime: boolean
-}
-
-type RouteAtStopWithOffset = RouteAtStop & { offset: number }
-
-export class ScheduleSubscription {
+export class ScheduleSubscriptionDto {
   @IsNotEmpty()
   feedCode: string
 
@@ -65,211 +50,69 @@ export class ScheduleSubscription {
   @IsBoolean()
   @IsOptional()
   sortByDeparture?: boolean
+
+  @IsString()
+  @IsIn(["sequential", "nextPerRoute"])
+  @IsOptional()
+  listMode?: "sequential" | "nextPerRoute"
 }
 
-interface RouteStopMetric {
-  feedCode: string
-  routeId: string
-  stopId: string
-  count: number
-}
+type WebSocket = BaseWebSocket & { id: UUID }
 
 @WebSocketGateway()
 @UseFilters(WebSocketExceptionFilter, WebSocketHttpExceptionFilter)
-export class ScheduleGateway {
-  private readonly logger = new Logger(ScheduleGateway.name)
-  private readonly subscribers: Map<WebSocket, ScheduleSubscription> = new Map()
-  private readonly routeStopMetrics: Map<string, RouteStopMetric> = new Map()
+export class ScheduleGateway implements OnGatewayConnection {
+  private readonly subscribers: Set<UUID> = new Set()
 
-  constructor(
-    private readonly feedService: FeedService,
-    metricService: MetricService,
-  ) {
-    metricService
-      .getObservableGauge("schedule_subscriptions", {
-        description: "Number of active schedule subscriptions per feed",
-        unit: "subscriptions",
-      })
-      .addCallback((observable) => {
-        const subscribersByFeedCode = new Map<string, number>(
-          Object.keys(feedService.getAllFeeds()).map((feed) => [feed, 0]),
-        )
+  constructor(private readonly scheduleService: ScheduleService) {}
 
-        this.subscribers.forEach((subscription) => {
-          const count = subscribersByFeedCode.get(subscription.feedCode) ?? 0
-          subscribersByFeedCode.set(subscription.feedCode, count + 1)
-        })
-
-        for (const [feedCode, count] of subscribersByFeedCode) {
-          observable.observe(count, { feed_code: feedCode })
-        }
-      })
-
-    metricService
-      .getObservableGauge("route_stop_subscriptions", {
-        description: "Number of active subscriptions for a route-stop pair",
-        unit: "subscriptions",
-      })
-      .addCallback((observable) => {
-        for (const [key, value] of this.routeStopMetrics) {
-          observable.observe(value.count, {
-            feed_code: value.feedCode,
-            route_id: value.routeId,
-            stop_id: value.stopId,
-          })
-
-          if (value.count === 0) {
-            this.routeStopMetrics.delete(key)
-          }
-        }
-      })
-  }
-
-  private incrementMetrics(
-    value: number,
-    feedCode: string,
-    routeStopPairs: RouteAtStop[],
-  ) {
-    for (const routeStopPair of routeStopPairs) {
-      const key = `${feedCode}:${routeStopPair.routeId}:${routeStopPair.stopId}`
-      const metric = this.routeStopMetrics.get(key) ?? {
-        feedCode,
-        routeId: routeStopPair.routeId,
-        stopId: routeStopPair.stopId,
-        count: 0,
-      }
-
-      metric.count += value
-      this.routeStopMetrics.set(key, metric)
-    }
-  }
-
-  private async getUpcomingTrips(
-    provider: ScheduleProvider,
-    routes: RouteAtStopWithOffset[],
-    limit: number,
-    sortByDeparture = false,
-  ): Promise<ScheduleUpdate> {
-    const upcomingTrips =
-      await provider.getUpcomingTripsForRoutesAtStops(routes)
-
-    const sortKey = sortByDeparture ? "departureTime" : "arrivalTime"
-    const tripDtos: ScheduleTrip[] = upcomingTrips
-      .map((trip) => {
-        const offset = routes.find(
-          (r) => r.routeId === trip.routeId && r.stopId === trip.stopId,
-        ).offset
-
-        return {
-          ...trip,
-          arrivalTime:
-            new Date(trip.arrivalTime).getTime() / 1000 + (offset ?? 0),
-          departureTime:
-            new Date(trip.departureTime).getTime() / 1000 + (offset ?? 0),
-        }
-      })
-      .filter((trip) => trip[sortKey] > Date.now() / 1000)
-      .sort((a, b) => a[sortKey] - b[sortKey])
-      .splice(0, limit)
-
-    return {
-      trips: tripDtos,
-    }
+  handleConnection(client: WebSocket) {
+    client.id = randomUUID()
   }
 
   @UsePipes(new ValidationPipe())
   @SubscribeMessage("schedule:subscribe")
   subscribeToSchedule(
-    @MessageBody() subscription: ScheduleSubscription,
+    @MessageBody() subscriptionDto: ScheduleSubscriptionDto,
     @ConnectedSocket() socket: WebSocket,
   ): Observable<WsResponse<ScheduleUpdate | null>> {
-    if (this.subscribers.has(socket)) {
+    if (this.subscribers.has(socket.id)) {
       throw new BadRequestException(
         "Only one schedule subscription per connection allowed",
       )
     }
 
-    const routeStopPairs = subscription.routeStopPairs
-      .split(";")
-      .map((pair) => pair.split(",").map((part) => part.trim()))
-      .map(([routeId, stopId, offset]) => ({
-        routeId,
-        stopId,
-        offset: parseInt(offset ?? "0"),
-      }))
-
-    for (const pair of routeStopPairs) {
-      if (!pair.routeId || !pair.stopId) {
-        throw new BadRequestException(
-          "Invalid route-stop pair; must be in the format routeId,stopId[,offset]",
-        )
-      }
-    }
+    const routeStopPairs = this.scheduleService.parseRouteStopPairs(
+      subscriptionDto.routeStopPairs,
+    )
 
     if (routeStopPairs.length > 5) {
       throw new BadRequestException("Too many route-stop pairs; maximum 5")
     }
 
-    const scheduleProvider = this.feedService.getScheduleProvider(
-      subscription.feedCode,
-    )
-    if (!scheduleProvider) {
-      throw new BadRequestException("Invalid feed code")
+    this.subscribers.add(socket.id)
+
+    const subscription: ScheduleOptions = {
+      feedCode: subscriptionDto.feedCode,
+      routes: routeStopPairs,
+      limit: subscriptionDto.limit,
+      sortByDeparture: subscriptionDto.sortByDeparture,
+      listMode: subscriptionDto.listMode,
     }
 
-    this.subscribers.set(socket, subscription)
-    this.incrementMetrics(1, subscription.feedCode, routeStopPairs)
-
-    this.logger.debug(
-      `Subscribed to schedule updates for ${subscription.feedCode}, ${subscription.routeStopPairs}`,
-    )
-
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
-    const self = this
-    return new Observable((observer) => {
-      let currentSchedule: ScheduleUpdate | null = null
-      async function updateSchedule() {
-        let trips: ScheduleUpdate
-        try {
-          trips = await self.getUpcomingTrips(
-            scheduleProvider,
-            routeStopPairs,
-            subscription.limit,
-            subscription.sortByDeparture ?? false,
-          )
-        } catch (e: any) {
-          observer.error(e)
-        }
-
-        if (
-          currentSchedule === null ||
-          JSON.stringify(currentSchedule) !== JSON.stringify(trips)
-        ) {
-          currentSchedule = trips
-          observer.next({ event: "schedule", data: trips })
-        }
-
-        observer.next({ event: "heartbeat", data: null })
-      }
-
-      let interval: ReturnType<typeof setInterval>
-      setTimeout(
-        () => {
-          const jitter = Math.floor(Math.random() * 1000)
-          interval = setInterval(updateSchedule, 30_000 + jitter)
-        },
-        Math.floor(Math.random() * 10000),
+    const scheduleUpdates = this.scheduleService
+      .subscribeToSchedule(subscription)
+      .pipe(
+        map((update) => ({ event: "schedule", data: update })),
+        finalize(() => {
+          this.subscribers.delete(socket.id)
+        }),
       )
 
-      updateSchedule()
+    const heartbeat = interval(30000).pipe(
+      map(() => ({ event: "heartbeat", data: null })),
+    )
 
-      return () => {
-        this.logger.debug("Unsubscribed from schedule updates")
-
-        clearInterval(interval)
-        self.subscribers.delete(socket)
-        self.incrementMetrics(-1, subscription.feedCode, routeStopPairs)
-      }
-    })
+    return merge(scheduleUpdates, heartbeat)
   }
 }

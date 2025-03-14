@@ -6,7 +6,8 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "build": "nest build && pnpm sentry:sourcemaps",
+    "build:prod": "nest build && pnpm sentry:sourcemaps",
+    "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
