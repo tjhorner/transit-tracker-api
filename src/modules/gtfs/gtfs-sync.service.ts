@@ -5,7 +5,7 @@ import { DB } from "./db"
 import * as csv from "fast-csv"
 import * as fs from "fs"
 import * as path from "path"
-import axios from "axios"
+import axios, { AxiosResponse } from "axios"
 import * as unzipper from "unzipper"
 import { rimraf } from "rimraf"
 
@@ -14,6 +14,21 @@ export class GtfsSyncService {
   private readonly logger = new Logger(GtfsSyncService.name)
 
   constructor(@InjectKysely() private readonly db: Kysely<DB>) {}
+
+  async hasEverSynced(feedCode: string) {
+    return await this.db.transaction().execute(async (tx) => {
+      await sql`SET LOCAL app.current_feed = '${sql.raw(feedCode)}';`.execute(
+        tx,
+      )
+
+      const lastModified = await tx
+        .selectFrom("import_metadata")
+        .select("feed_code")
+        .executeTakeFirst()
+
+      return !!lastModified
+    })
+  }
 
   private async isUrlNewer(feedCode: string, url: string) {
     const currentImportMetadata = await this.db
@@ -33,7 +48,17 @@ export class GtfsSyncService {
       return true
     }
 
-    const response = await axios.head(url)
+    let response: AxiosResponse
+    try {
+      response = await axios.head(url)
+    } catch (e: any) {
+      if (e.status < 500) {
+        response = await axios.get(url)
+      } else {
+        throw e
+      }
+    }
+
     const lastModified = response.headers["last-modified"]
     const etag = response.headers["etag"]
 
@@ -59,9 +84,9 @@ export class GtfsSyncService {
 
     fs.mkdirSync(directory)
 
-    const outPath = path.join(directory, "gtfs.zip")
+    const zipDirectory = path.join(directory, "gtfs")
 
-    this.logger.log("Downloading GTFS feed")
+    this.logger.log(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
 
     let newLastModified: Date | null = null
     let newEtag: string | null = null
@@ -76,30 +101,25 @@ export class GtfsSyncService {
       )
       newEtag = response.headers["etag"]
 
-      const writer = fs.createWriteStream(outPath)
+      const extractor = unzipper.Extract({ path: zipDirectory })
 
       return new Promise<void>((resolve, reject) => {
-        response.data.pipe(writer)
+        response.data.pipe(extractor)
 
         let error: any = null
-        writer.on("error", (err) => {
+        extractor.on("error", (err) => {
           error = err
-          writer.close()
+          extractor.end()
           reject(err)
         })
 
-        writer.on("close", () => {
+        extractor.on("close", () => {
           if (!error) {
             resolve()
           }
         })
       })
     })
-
-    this.logger.log("Unzipping GTFS feed")
-    const zipFile = await unzipper.Open.file(outPath)
-    const zipDirectory = path.join(directory, "gtfs")
-    await zipFile.extract({ path: zipDirectory })
 
     this.logger.log("Importing GTFS feed")
     await this.importFromDirectory(feedCode, zipDirectory)
@@ -230,16 +250,21 @@ export class GtfsSyncService {
           allRows.push(this.flushEmptyStrings(mapRow(row)))
         })
         .on("end", async () => {
-          const batch = []
-          for (let i = 0; i < allRows.length; i += 1000) {
-            batch.push(allRows.slice(i, i + 1000))
-          }
+          let completedRows = 0
+          const batchSize = 5000
 
-          for (const rows of batch) {
+          for (let i = 0; i < allRows.length; i += batchSize) {
+            const batch = allRows.slice(i, i + batchSize)
+            this.logger.debug(
+              `Inserting ${tableName} rows ${i} - ${i + batch.length} / ${allRows.length} (${((completedRows / allRows.length) * 100).toFixed(2)}%)`,
+            )
+
             await tx
               .insertInto(tableName as any)
-              .values(rows)
+              .values(batch)
               .execute()
+
+            completedRows += batch.length
           }
 
           resolve()
