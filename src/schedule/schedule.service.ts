@@ -51,7 +51,7 @@ export class ScheduleService {
       await provider.getUpcomingTripsForRoutesAtStops(routes)
 
     const sortKey = sortByDeparture ? "departureTime" : "arrivalTime"
-    const trips: ScheduleTrip[] = upcomingTrips
+    let trips: ScheduleTrip[] = upcomingTrips
       .map((trip) => {
         const offset = routes.find(
           (r) => r.routeId === trip.routeId && r.stopId === trip.stopId,
@@ -67,24 +67,24 @@ export class ScheduleService {
       })
       .filter((trip) => trip[sortKey] > Date.now() / 1000)
       .sort((a, b) => a[sortKey] - b[sortKey])
-      .splice(0, limit)
 
     if (listMode === "nextPerRoute") {
-      const routeIds = new Set<string>()
-      trips.forEach((trip) => routeIds.add(trip.routeId))
+      const pairKey = (trip: ScheduleTrip) => `${trip.routeId}-${trip.stopId}`
 
-      const nextTrips = trips.filter((trip) => {
-        if (routeIds.has(trip.routeId)) {
-          routeIds.delete(trip.routeId)
+      const pairs = new Set<string>()
+      trips.forEach((trip) => pairs.add(pairKey(trip)))
+
+      trips = trips.filter((trip) => {
+        const key = pairKey(trip)
+        if (pairs.has(key)) {
+          pairs.delete(key)
           return true
         }
         return false
       })
-
-      return {
-        trips: nextTrips,
-      }
     }
+
+    trips = trips.slice(0, limit)
 
     return {
       trips,
