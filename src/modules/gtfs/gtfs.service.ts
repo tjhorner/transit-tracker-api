@@ -62,12 +62,16 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     this.feedCode = feedCode
     this.config = config
 
-    this.syncQueue.add(
+    this.syncQueue.upsertJobScheduler(
       `sync-${feedCode}`,
-      { feedCode, url: config.static.url },
       {
-        repeat: {
-          pattern: "0 0 * * *",
+        pattern: "0 0 * * *",
+      },
+      {
+        name: `sync-${feedCode}`,
+        data: {
+          feedCode,
+          url: config.static.url,
         },
       },
     )

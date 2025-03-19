@@ -4,7 +4,7 @@ import { CacheModule } from "@nestjs/cache-manager"
 import { StopsController } from "./stops/stops.controller"
 import { ScheduleGateway } from "./schedule/schedule.gateway"
 import { FeedModule } from "./modules/feed/feed.module"
-import { createKeyv } from "@keyv/redis"
+import { createKeyv as createKeyvRedis } from "@keyv/redis"
 import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { APP_FILTER, APP_GUARD } from "@nestjs/core"
 import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis"
@@ -13,6 +13,7 @@ import { OpenTelemetryModule } from "nestjs-otel"
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { ScheduleService } from "./schedule/schedule.service"
 import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
+import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
 
 @Module({
   imports: [
@@ -25,7 +26,17 @@ import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
     CacheModule.register({
       isGlobal: true,
       useFactory: () => ({
-        stores: [createKeyv(process.env.REDIS_URL, { namespace: "cache" })],
+        stores: [
+          new Cacheable({
+            primary: createKeyvMemory({
+              lruSize: 5000,
+              checkInterval: 3_600_000, // 1 hour
+            }),
+            secondary: createKeyvRedis(process.env.REDIS_URL, {
+              namespace: "cache",
+            }),
+          }),
+        ],
       }),
     }),
     ThrottlerModule.forRoot({
