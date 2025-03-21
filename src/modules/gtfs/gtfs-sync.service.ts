@@ -70,6 +70,8 @@ export class GtfsSyncService {
   }
 
   async importFromUrl(feedCode: string, url: string) {
+    this.logger.log(`Starting import of feed "${feedCode}" from URL ${url}`)
+
     if (!(await this.isUrlNewer(feedCode, url))) {
       this.logger.log("Feed is not newer; import not required")
       return

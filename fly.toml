@@ -11,6 +11,10 @@ primary_region = "sea"
   min_machines_running = 0
   processes = ["app"]
 
+  [http_service.concurrency]
+    type = "requests"
+    soft_limit = 50
+
 [metrics]
   port = 9090
   path = "/metrics"

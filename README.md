@@ -6,6 +6,8 @@ This is an API that is intended to be used to power a live arrivals or departure
 
 The service is distributed as a Docker image that runs on port 3000 by default. You can find an example `docker-compose.yml` in the root of this repo.
 
+To easily deploy an instance of the API, check out the [Fly.io deployment guide](./fly-deploy.md).
+
 ### Feed Configuration
 
 After installation, you will need to set up a feeds configuration. This will tell the API where to fetch the transit data from. These providers are currently supported:

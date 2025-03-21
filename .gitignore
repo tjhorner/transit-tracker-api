@@ -60,3 +60,5 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 feeds.yaml
 # Sentry Config File
 .sentryclirc
+
+fly.local.toml

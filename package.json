@@ -20,8 +20,9 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "kysely-codegen": "kysely-codegen --out-file src/modules/gtfs/db.d.ts",
-    "sync-gtfs": "node dist/scripts/sync-gtfs.js",
-    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist"
+    "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist",
+    "gtfs:sync": "nest start --entryFile scripts/sync-gtfs",
+    "gtfs:init-db": "src/scripts/init-db.sh"
   },
   "dependencies": {
     "@keyv/redis": "4.2.0",

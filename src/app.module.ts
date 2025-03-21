@@ -14,6 +14,7 @@ import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { ScheduleService } from "./schedule/schedule.service"
 import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
 import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
+import { HealthController } from "./health/health.controller"
 
 @Module({
   imports: [
@@ -32,9 +33,11 @@ import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
               lruSize: 5000,
               checkInterval: 3_600_000, // 1 hour
             }),
-            secondary: createKeyvRedis(process.env.REDIS_URL, {
-              namespace: "cache",
-            }),
+            secondary: process.env.REDIS_URL
+              ? createKeyvRedis(process.env.REDIS_URL, {
+                  namespace: "cache",
+                })
+              : undefined,
           }),
         ],
       }),
@@ -60,7 +63,7 @@ import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
     SentryModule.forRoot(),
     FeedModule,
   ],
-  controllers: [ScheduleController, StopsController],
+  controllers: [ScheduleController, StopsController, HealthController],
   providers: [
     ScheduleMetricsService,
     ScheduleService,

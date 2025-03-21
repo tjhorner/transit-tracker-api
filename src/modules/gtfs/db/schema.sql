@@ -17,6 +17,8 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+CREATE USER gtfs;
+
 --
 -- Name: default_agency_id(); Type: FUNCTION; Schema: public; Owner: postgres
 --
