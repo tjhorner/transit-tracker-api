@@ -268,7 +268,7 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
               END AS stop_headsign,
               TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time::interval) as arrival_time,
               TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time::interval) as departure_time,
-              to_char(current_day.today, 'YYYYMMDD') as start_date
+              to_char(current_day.today + st.arrival_time::interval, 'YYYYMMDD') as start_date
           FROM stop_times st
           JOIN route_trips rt ON st.trip_id = rt.trip_id
           JOIN routes r ON rt.route_id = r.route_id
@@ -422,6 +422,10 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     for (const entity of allTripUpdates.entity) {
       const tripId = entity.tripUpdate.trip.tripId
       if (tripIds.includes(tripId)) {
+        // const { DUPLICATED } =
+        //   GtfsRealtimeBindings.transit_realtime.TripDescriptor
+        //     .ScheduleRelationship
+
         const key = entity.tripUpdate.trip.startDate
           ? `${tripId}_${entity.tripUpdate.trip.startDate}`
           : tripId
@@ -431,6 +435,37 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
     }
 
     return filteredTripUpdates
+  }
+
+  private resolveTripTimes(trip: TripStopRaw, tripUpdate?: ITripUpdate) {
+    const stopTimeUpdate = tripUpdate?.stopTimeUpdate.find(
+      (update) => update.stopId === trip.stop_id,
+    )
+
+    let delay = 0
+    if (stopTimeUpdate) {
+      const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
+      const hasOnlyOneUpdate =
+        !stopTimeUpdate.arrival || !stopTimeUpdate.departure
+
+      if (hasAnyUpdate && hasOnlyOneUpdate) {
+        delay = stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
+      }
+    }
+
+    const departureTime = stopTimeUpdate?.departure?.time
+      ? new Date((stopTimeUpdate.departure?.time as number) * 1000)
+      : new Date(new Date(trip.departure_time).getTime() + delay * 1000)
+
+    const arrivalTime = stopTimeUpdate?.arrival?.time
+      ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
+      : new Date(new Date(trip.arrival_time).getTime() + delay * 1000)
+
+    if (arrivalTime > departureTime) {
+      arrivalTime.setTime(departureTime.getTime())
+    }
+
+    return { departureTime, arrivalTime }
   }
 
   async getUpcomingTripsForRoutesAtStops(
@@ -466,21 +501,10 @@ export class GtfsService implements ScheduleProvider<GtfsConfig> {
           tripUpdates[`${trip.trip_id}_${trip.start_date}`] ??
           tripUpdates[trip.trip_id]
 
-        const stopTimeUpdate = tripUpdate?.stopTimeUpdate.find(
-          (update) => update.stopId === trip.stop_id,
+        const { arrivalTime, departureTime } = this.resolveTripTimes(
+          trip,
+          tripUpdate,
         )
-
-        const departureTime = stopTimeUpdate?.departure?.time
-          ? new Date((stopTimeUpdate.departure?.time as number) * 1000)
-          : new Date(trip.departure_time)
-
-        if (departureTime < new Date()) {
-          return
-        }
-
-        const arrivalTime = stopTimeUpdate?.arrival?.time
-          ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
-          : new Date(trip.arrival_time)
 
         tripStops.push({
           tripId: trip.trip_id,

@@ -7,7 +7,7 @@ import {
   UseInterceptors,
 } from "@nestjs/common"
 import * as turf from "@turf/turf"
-import { ScheduleProviderParam } from "src/decorators/schedule-provider"
+import { ScheduleProviderParam as InjectScheduleProvider } from "src/decorators/schedule-provider"
 import { ScheduleProviderInterceptor } from "src/interceptors/schedule-provider"
 import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
 
@@ -18,7 +18,7 @@ export class StopsController {
 
   @Get("within/:lat1/:lon1/:lat2/:lon2")
   async getStopsInBounds(
-    @ScheduleProviderParam() provider: ScheduleProvider,
+    @InjectScheduleProvider() provider: ScheduleProvider,
     @Param("lat1", ParseFloatPipe) lat1: number,
     @Param("lon1", ParseFloatPipe) lon1: number,
     @Param("lat2", ParseFloatPipe) lat2: number,
@@ -37,7 +37,7 @@ export class StopsController {
 
   @Get(":stopId/routes")
   async getRoutesForStop(
-    @ScheduleProviderParam() provider: ScheduleProvider,
+    @InjectScheduleProvider() provider: ScheduleProvider,
     @Param("stopId") stopId: string,
   ) {
     return provider.getRoutesForStop(stopId)

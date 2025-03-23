@@ -8,6 +8,7 @@ import * as path from "path"
 import axios, { AxiosResponse } from "axios"
 import * as unzipper from "unzipper"
 import { rimraf } from "rimraf"
+import { pipeline } from "node:stream/promises"
 
 @Injectable()
 export class GtfsSyncService {
@@ -31,6 +32,7 @@ export class GtfsSyncService {
   }
 
   private async isUrlNewer(feedCode: string, url: string) {
+    return true
     const currentImportMetadata = await this.db
       .transaction()
       .execute(async (tx) => {
@@ -232,7 +234,7 @@ export class GtfsSyncService {
     return row
   }
 
-  private importGtfsFile(
+  private async importGtfsFile(
     tx: Transaction<DB>,
     tableName: string,
     filePath: string,
@@ -243,35 +245,37 @@ export class GtfsSyncService {
       return Promise.resolve()
     }
 
-    return new Promise((resolve, reject) => {
-      const allRows = []
-      fs.createReadStream(filePath)
-        .pipe(csv.parse({ headers: true }))
-        .on("error", reject)
-        .on("data", async (row) => {
-          allRows.push(this.flushEmptyStrings(mapRow(row)))
-        })
-        .on("end", async () => {
-          let completedRows = 0
-          const batchSize = 5000
+    let completedRows = 0
+    const insertRows = async (rows: any[]) => {
+      this.logger.debug(
+        `Inserting ${rows.length} ${tableName} rows ${completedRows} - ${completedRows + rows.length}`,
+      )
 
-          for (let i = 0; i < allRows.length; i += batchSize) {
-            const batch = allRows.slice(i, i + batchSize)
-            this.logger.debug(
-              `Inserting ${tableName} rows ${i} - ${i + batch.length} / ${allRows.length} (${((completedRows / allRows.length) * 100).toFixed(2)}%)`,
-            )
+      await tx
+        .insertInto(tableName as any)
+        .values(rows)
+        .execute()
 
-            await tx
-              .insertInto(tableName as any)
-              .values(batch)
-              .execute()
+      completedRows += rows.length
+    }
 
-            completedRows += batch.length
+    const batch = []
+    await pipeline(
+      fs.createReadStream(filePath).pipe(csv.parse({ headers: true })),
+      async (rows: AsyncIterable<any>) => {
+        for await (const item of rows) {
+          batch.push(this.flushEmptyStrings(mapRow(item)))
+          if (batch.length >= 5000) {
+            await insertRows(batch)
+            batch.length = 0
           }
+        }
+      },
+    )
 
-          resolve()
-        })
-    })
+    if (batch.length > 0) {
+      await insertRows(batch)
+    }
   }
 
   private importFeedInfo(
