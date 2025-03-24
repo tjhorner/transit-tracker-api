@@ -32,7 +32,6 @@ export class GtfsSyncService {
   }
 
   private async isUrlNewer(feedCode: string, url: string) {
-    return true
     const currentImportMetadata = await this.db
       .transaction()
       .execute(async (tx) => {
