@@ -3,6 +3,9 @@ primary_region = "sea"
 
 [build]
 
+[deploy]
+  strategy = "bluegreen"
+
 [http_service]
   internal_port = 3000
   force_https = true
