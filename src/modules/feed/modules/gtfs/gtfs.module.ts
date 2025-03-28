@@ -4,17 +4,9 @@ import { KyselyModule } from "nestjs-kysely"
 import { Pool } from "pg"
 import { GtfsService } from "./gtfs.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
-import { BullModule } from "@nestjs/bullmq"
-import { GtfsSyncConsumer } from "./gtfs-sync.consumer"
-import { GTFS_SYNC_QUEUE } from "./gtfs.const"
-
-const gtfsSyncQueue = BullModule.registerQueue({
-  name: GTFS_SYNC_QUEUE,
-})
 
 @Module({
   imports: [
-    gtfsSyncQueue,
     KyselyModule.forRoot({
       dialect: new PostgresDialect({
         pool: new Pool({
@@ -24,7 +16,7 @@ const gtfsSyncQueue = BullModule.registerQueue({
       }),
     }),
   ],
-  providers: [GtfsService, GtfsSyncService, GtfsSyncConsumer],
-  exports: [GtfsService, GtfsSyncService, gtfsSyncQueue],
+  providers: [GtfsService, GtfsSyncService],
+  exports: [GtfsService, GtfsSyncService],
 })
 export class GtfsModule {}

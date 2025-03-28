@@ -35,6 +35,7 @@ export type BBox = [number, number, number, number]
 
 export interface FeedProvider<TConfig = unknown> {
   init(feedCode: string, config: TConfig): void
+  sync?(): Promise<void>
 
   healthCheck(): Promise<void>
 

@@ -8,22 +8,17 @@ import { createKeyv as createKeyvRedis } from "@keyv/redis"
 import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { APP_FILTER, APP_GUARD } from "@nestjs/core"
 import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis"
-import { BullModule } from "@nestjs/bullmq"
 import { OpenTelemetryModule } from "nestjs-otel"
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { ScheduleService } from "./schedule/schedule.service"
 import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
 import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
 import { HealthController } from "./health/health.controller"
+import { ScheduleModule } from "@nestjs/schedule"
 
 @Module({
   imports: [
-    BullModule.forRoot({
-      prefix: "bullmq",
-      connection: {
-        url: process.env.REDIS_URL,
-      },
-    }),
+    ScheduleModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
       useFactory: () => ({

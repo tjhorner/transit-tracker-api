@@ -14,9 +14,6 @@ import {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import GtfsRealtimeBindings from "gtfs-realtime-bindings"
 import { GtfsSyncService } from "./gtfs-sync.service"
-import { InjectQueue } from "@nestjs/bullmq"
-import { Queue } from "bullmq"
-import { GTFS_SYNC_QUEUE } from "./gtfs.const"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 
 type ITripUpdate = GtfsRealtimeBindings.transit_realtime.ITripUpdate
@@ -53,7 +50,6 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
   constructor(
     @InjectKysely() private readonly db: Kysely<DB>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    @InjectQueue(GTFS_SYNC_QUEUE) private readonly syncQueue: Queue,
     private readonly syncService: GtfsSyncService,
   ) {}
 
@@ -62,20 +58,6 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
 
     this.feedCode = feedCode
     this.config = config
-
-    this.syncQueue.upsertJobScheduler(
-      `sync-${feedCode}`,
-      {
-        pattern: "0 0 * * *",
-      },
-      {
-        name: `sync-${feedCode}`,
-        data: {
-          feedCode,
-          url: config.static.url,
-        },
-      },
-    )
   }
 
   private async cached<T>(
