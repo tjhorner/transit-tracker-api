@@ -1,10 +1,9 @@
 import { Injectable, Logger, OnModuleInit, Type } from "@nestjs/common"
-import { ModuleRef } from "@nestjs/core"
-import { GtfsService } from "src/modules/feed/modules/gtfs/gtfs.service"
+import { DiscoveryService, ModuleRef } from "@nestjs/core"
 import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
-import { OneBusAwayService } from "src/modules/feed/modules/one-bus-away/one-bus-away.service"
 import * as yaml from "js-yaml"
 import fs from "fs/promises"
+import { RegisterFeedProvider } from "./decorators/feed-provider.decorator"
 
 export interface FeedConfig {
   name: string
@@ -19,7 +18,10 @@ export class FeedService implements OnModuleInit {
   private feeds: { [key: string]: FeedConfig } = {}
   private feedProviders: Map<string, FeedProvider> = new Map()
 
-  constructor(private readonly moduleRef: ModuleRef) {}
+  constructor(
+    private readonly moduleRef: ModuleRef,
+    private readonly discoveryService: DiscoveryService,
+  ) {}
 
   private async loadConfig(): Promise<{ [key: string]: FeedConfig }> {
     if (process.env.FEEDS_CONFIG) {
@@ -31,17 +33,40 @@ export class FeedService implements OnModuleInit {
     return config["feeds"]
   }
 
+  private getRegisteredProviders() {
+    const registeredProviders: { [key: string]: Type<FeedProvider> } =
+      Object.fromEntries(
+        this.discoveryService
+          .getProviders({
+            metadataKey: RegisterFeedProvider.KEY,
+          })
+          .map((item) => [
+            this.discoveryService.getMetadataByDecorator(
+              RegisterFeedProvider,
+              item,
+            ),
+            item.metatype as Type<FeedProvider>,
+          ]),
+      )
+
+    return registeredProviders
+  }
+
   async onModuleInit() {
     const feeds = await this.loadConfig()
     this.feeds = feeds
 
-    const providerTypeMap: { [key: string]: Type<FeedProvider> } = {
-      gtfs: GtfsService,
-      onebusaway: OneBusAwayService,
+    const registeredProviders = this.getRegisteredProviders()
+    for (const [providerType, provider] of Object.entries(
+      registeredProviders,
+    )) {
+      this.logger.log(
+        `Discovered feed provider "${providerType}" (${provider.name})`,
+      )
     }
 
     for (const [feedName, config] of Object.entries(feeds)) {
-      for (const [key, providerType] of Object.entries(providerTypeMap)) {
+      for (const [key, providerType] of Object.entries(registeredProviders)) {
         if (config[key]) {
           this.logger.log(
             `Initializing feed "${feedName}" with provider ${providerType.name}`,

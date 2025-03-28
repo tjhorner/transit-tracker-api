@@ -3,9 +3,10 @@ import { FeedService } from "./feed.service"
 import { GtfsModule } from "src/modules/feed/modules/gtfs/gtfs.module"
 import { OneBusAwayModule } from "src/modules/feed/modules/one-bus-away/one-bus-away.module"
 import { FeedsController } from "./feeds.controller"
+import { DiscoveryModule } from "@nestjs/core"
 
 @Module({
-  imports: [GtfsModule, OneBusAwayModule],
+  imports: [DiscoveryModule, GtfsModule, OneBusAwayModule],
   controllers: [FeedsController],
   providers: [FeedService],
   exports: [FeedService],

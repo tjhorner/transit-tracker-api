@@ -17,6 +17,7 @@ import { GtfsSyncService } from "./gtfs-sync.service"
 import { InjectQueue } from "@nestjs/bullmq"
 import { Queue } from "bullmq"
 import { GTFS_SYNC_QUEUE } from "./gtfs.const"
+import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 
 type ITripUpdate = GtfsRealtimeBindings.transit_realtime.ITripUpdate
 
@@ -44,6 +45,7 @@ export interface GtfsConfig {
 }
 
 @Injectable()
+@RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider<GtfsConfig> {
   private logger = new Logger(GtfsService.name)
   private feedCode: string

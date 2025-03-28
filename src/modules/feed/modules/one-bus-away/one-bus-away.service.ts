@@ -19,6 +19,7 @@ import {
 import { MetricService } from "nestjs-otel"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import { RateLimiter } from "limiter"
+import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 
 export interface OneBusAwayConfig {
   baseUrl: string
@@ -67,6 +68,7 @@ function sumOfAllBboxes(bboxes: BBox[]): BBox {
 }
 
 @Injectable()
+@RegisterFeedProvider("onebusaway")
 export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
   private logger = new Logger(OneBusAwayService.name)
   private feedCode: string
