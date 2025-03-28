@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common"
-import { Observable } from "rxjs"
+import { Observable, share } from "rxjs"
 import {
   RouteAtStop,
   ScheduleProvider,
@@ -116,6 +116,10 @@ export class ScheduleService {
           "Invalid route-stop pair; must be in the format routeId,stopId[,offset]",
         )
       }
+
+      if (isNaN(pair.offset)) {
+        throw new BadRequestException("Invalid offset; must be a number")
+      }
     }
 
     return routeStopPairs
@@ -135,11 +139,11 @@ export class ScheduleService {
       `Subscribed to schedule updates ${subscription.feedCode}, ${JSON.stringify(subscription)}`,
     )
 
-    this.metricsService.add(subscription)
-
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this
-    return new Observable((observer) => {
+    return new Observable<ScheduleUpdate>((observer) => {
+      self.metricsService.add(subscription)
+
       let currentSchedule: ScheduleUpdate | null = null
       async function updateSchedule() {
         let trips: ScheduleUpdate
@@ -159,7 +163,11 @@ export class ScheduleService {
       }
 
       let interval: ReturnType<typeof setInterval>
-      setTimeout(
+
+      // This is sort of a primitive load-balancing technique to avoid
+      // flooding schedule providers with requests if many clients are
+      // connecting at once (such as when an update is deployed)
+      const delayTimeout = setTimeout(
         () => {
           const jitter = Math.floor(Math.random() * 1000)
           interval = setInterval(updateSchedule, 30_000 + jitter)
@@ -171,10 +179,11 @@ export class ScheduleService {
 
       return () => {
         self.logger.debug("Unsubscribed from schedule updates")
+        clearTimeout(delayTimeout)
         clearInterval(interval)
 
         self.metricsService.remove(subscription)
       }
-    })
+    }).pipe(share())
   }
 }
