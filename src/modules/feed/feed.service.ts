@@ -1,9 +1,9 @@
 import { Injectable, Logger, OnModuleInit, Type } from "@nestjs/common"
 import { DiscoveryService, ModuleRef } from "@nestjs/core"
-import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
-import * as yaml from "js-yaml"
 import fs from "fs/promises"
-import { RegisterFeedProvider } from "./decorators/feed-provider.decorator"
+import * as yaml from "js-yaml"
+import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
+import { FeedCode } from "./decorators/feed-provider.decorator"
 
 export interface FeedConfig {
   name: string
@@ -13,7 +13,7 @@ export interface FeedConfig {
 
 @Injectable()
 export class FeedService implements OnModuleInit {
-  private readonly logger = new Logger(FeedService.name)
+  private readonly logger = new Logger(FeedService.name, { timestamp: true })
 
   private feeds: { [key: string]: FeedConfig } = {}
   private feedProviders: Map<string, FeedProvider> = new Map()
@@ -25,8 +25,13 @@ export class FeedService implements OnModuleInit {
 
   private async loadConfig(): Promise<{ [key: string]: FeedConfig }> {
     if (process.env.FEEDS_CONFIG) {
+      this.logger.verbose(
+        "Loading feeds from FEEDS_CONFIG environment variable",
+      )
       return yaml.load(process.env.FEEDS_CONFIG)["feeds"]
     }
+
+    this.logger.verbose("Loading feeds from feeds.yaml file")
 
     const configFile = await fs.readFile("feeds.yaml", "utf-8")
     const config = yaml.load(configFile)
@@ -38,13 +43,10 @@ export class FeedService implements OnModuleInit {
       Object.fromEntries(
         this.discoveryService
           .getProviders({
-            metadataKey: RegisterFeedProvider.KEY,
+            metadataKey: FeedCode.KEY,
           })
           .map((item) => [
-            this.discoveryService.getMetadataByDecorator(
-              RegisterFeedProvider,
-              item,
-            ),
+            this.discoveryService.getMetadataByDecorator(FeedCode, item),
             item.metatype as Type<FeedProvider>,
           ]),
       )
@@ -53,17 +55,19 @@ export class FeedService implements OnModuleInit {
   }
 
   async onModuleInit() {
-    const feeds = await this.loadConfig()
-    this.feeds = feeds
-
     const registeredProviders = this.getRegisteredProviders()
     for (const [providerType, provider] of Object.entries(
       registeredProviders,
     )) {
-      this.logger.log(
-        `Discovered feed provider "${providerType}" (${provider.name})`,
+      this.logger.verbose(
+        `Discovered feed provider type "${providerType}" (${provider.name})`,
       )
     }
+
+    const feeds = await this.loadConfig()
+    this.feeds = feeds
+
+    this.logger.log(`Loaded ${Object.keys(feeds).length} feeds`)
 
     for (const [feedName, config] of Object.entries(feeds)) {
       for (const [key, providerType] of Object.entries(registeredProviders)) {

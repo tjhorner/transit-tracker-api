@@ -1,5 +1,5 @@
 import { CACHE_MANAGER, Cache } from "@nestjs/cache-manager"
-import { Inject, Injectable, Logger } from "@nestjs/common"
+import { Inject, Logger } from "@nestjs/common"
 import axios from "axios"
 import { Kysely, sql, Transaction } from "kysely"
 import { InjectKysely } from "nestjs-kysely"
@@ -44,7 +44,6 @@ export interface GtfsConfig {
   rtTripUpdates?: FetchConfig
 }
 
-@Injectable()
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider<GtfsConfig> {
   private logger = new Logger(GtfsService.name)

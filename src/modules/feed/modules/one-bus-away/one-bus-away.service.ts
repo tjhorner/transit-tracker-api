@@ -1,6 +1,5 @@
 import {
   Inject,
-  Injectable,
   InternalServerErrorException,
   Logger,
   NotFoundException,
@@ -67,7 +66,6 @@ function sumOfAllBboxes(bboxes: BBox[]): BBox {
   return bboxes.reduce(sumOfBboxes)
 }
 
-@Injectable()
 @RegisterFeedProvider("onebusaway")
 export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
   private logger = new Logger(OneBusAwayService.name)
