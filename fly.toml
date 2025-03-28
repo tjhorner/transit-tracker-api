@@ -14,6 +14,13 @@ primary_region = "sea"
   [http_service.concurrency]
     type = "requests"
     soft_limit = 50
+  
+  [[http_service.checks]]
+    grace_period = "5s"
+    interval = "1m"
+    method = "GET"
+    timeout = "10s"
+    path = "/healthz"
 
 [metrics]
   port = 9090

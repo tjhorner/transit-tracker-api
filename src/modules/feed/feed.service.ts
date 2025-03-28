@@ -59,6 +59,10 @@ export class FeedService implements OnModuleInit {
     return this.feeds
   }
 
+  getAllFeedProviders(): { [key: string]: FeedProvider } {
+    return Object.fromEntries(this.feedProviders.entries())
+  }
+
   getFeedProvider(feedName: string): FeedProvider {
     return this.feedProviders.get(feedName)
   }

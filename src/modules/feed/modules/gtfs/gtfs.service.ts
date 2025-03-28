@@ -94,6 +94,13 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return data
   }
 
+  async healthCheck(): Promise<void> {
+    const result = await this.syncService.hasEverSynced(this.feedCode)
+    if (!result) {
+      throw new Error("GTFS feed has never been synced")
+    }
+  }
+
   async getAgencyBounds(): Promise<BBox> {
     return this.cached(
       "agencyBounds",

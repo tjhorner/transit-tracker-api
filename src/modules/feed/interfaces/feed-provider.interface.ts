@@ -36,6 +36,8 @@ export type BBox = [number, number, number, number]
 export interface FeedProvider<TConfig = unknown> {
   init(feedCode: string, config: TConfig): void
 
+  healthCheck(): Promise<void>
+
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>
 
   getStop(stopId: string): Promise<Stop>

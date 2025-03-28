@@ -134,6 +134,10 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
     })
   }
 
+  async healthCheck(): Promise<void> {
+    await this.obaSdk.currentTime.retrieve()
+  }
+
   private async instrumentedFetch(url: any, init?: any): Promise<any> {
     await this.obaRateLimiter.removeTokens(1)
 
