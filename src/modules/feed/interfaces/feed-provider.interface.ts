@@ -33,7 +33,7 @@ export interface StopRoute {
 
 export type BBox = [number, number, number, number]
 
-export interface ScheduleProvider<TConfig = unknown> {
+export interface FeedProvider<TConfig = unknown> {
   init(feedCode: string, config: TConfig): void
 
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>

@@ -11,11 +11,11 @@ import { CACHE_MANAGER } from "@nestjs/cache-manager"
 import {
   BBox,
   RouteAtStop,
-  ScheduleProvider,
+  FeedProvider,
   Stop,
   StopRoute,
   TripStop,
-} from "src/interfaces/schedule-provider.interface"
+} from "src/modules/feed/interfaces/feed-provider.interface"
 import { MetricService } from "nestjs-otel"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import { RateLimiter } from "limiter"
@@ -67,7 +67,7 @@ function sumOfAllBboxes(bboxes: BBox[]): BBox {
 }
 
 @Injectable()
-export class OneBusAwayService implements ScheduleProvider<OneBusAwayConfig> {
+export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
   private logger = new Logger(OneBusAwayService.name)
   private feedCode: string
   private obaSdk: OnebusawaySDK

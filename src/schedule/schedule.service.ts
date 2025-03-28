@@ -2,8 +2,8 @@ import { BadRequestException, Injectable, Logger } from "@nestjs/common"
 import { Observable, share } from "rxjs"
 import {
   RouteAtStop,
-  ScheduleProvider,
-} from "src/interfaces/schedule-provider.interface"
+  FeedProvider,
+} from "src/modules/feed/interfaces/feed-provider.interface"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
 
@@ -44,7 +44,7 @@ export class ScheduleService {
   ) {}
 
   private async getUpcomingTrips(
-    provider: ScheduleProvider,
+    provider: FeedProvider,
     { routes, limit, sortByDeparture, listMode }: ScheduleOptions,
   ): Promise<ScheduleUpdate> {
     const upcomingTrips =
@@ -92,7 +92,7 @@ export class ScheduleService {
   }
 
   getSchedule(options: ScheduleOptions): Promise<ScheduleUpdate> {
-    const provider = this.feedService.getScheduleProvider(options.feedCode)
+    const provider = this.feedService.getFeedProvider(options.feedCode)
     if (!provider) {
       throw new BadRequestException("Invalid feed code")
     }
@@ -128,10 +128,8 @@ export class ScheduleService {
   subscribeToSchedule(
     subscription: ScheduleOptions,
   ): Observable<ScheduleUpdate | null> {
-    const scheduleProvider = this.feedService.getScheduleProvider(
-      subscription.feedCode,
-    )
-    if (!scheduleProvider) {
+    const feedProvider = this.feedService.getFeedProvider(subscription.feedCode)
+    if (!feedProvider) {
       throw new BadRequestException("Invalid feed code")
     }
 
@@ -148,7 +146,7 @@ export class ScheduleService {
       async function updateSchedule() {
         let trips: ScheduleUpdate
         try {
-          trips = await self.getUpcomingTrips(scheduleProvider, subscription)
+          trips = await self.getUpcomingTrips(feedProvider, subscription)
         } catch (e: any) {
           observer.error(e)
         }

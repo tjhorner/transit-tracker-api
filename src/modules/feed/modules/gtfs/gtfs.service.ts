@@ -7,11 +7,11 @@ import { DB } from "./db"
 import {
   BBox,
   RouteAtStop,
-  ScheduleProvider,
+  FeedProvider,
   Stop,
   StopRoute,
   TripStop,
-} from "src/interfaces/schedule-provider.interface"
+} from "src/modules/feed/interfaces/feed-provider.interface"
 import GtfsRealtimeBindings from "gtfs-realtime-bindings"
 import { GtfsSyncService } from "./gtfs-sync.service"
 import { InjectQueue } from "@nestjs/bullmq"
@@ -44,7 +44,7 @@ export interface GtfsConfig {
 }
 
 @Injectable()
-export class GtfsService implements ScheduleProvider<GtfsConfig> {
+export class GtfsService implements FeedProvider<GtfsConfig> {
   private logger = new Logger(GtfsService.name)
   private feedCode: string
   private config: GtfsConfig

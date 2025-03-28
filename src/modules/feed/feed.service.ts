@@ -1,8 +1,8 @@
 import { Injectable, Logger, OnModuleInit, Type } from "@nestjs/common"
 import { ModuleRef } from "@nestjs/core"
-import { GtfsService } from "src/modules/gtfs/gtfs.service"
-import { ScheduleProvider } from "src/interfaces/schedule-provider.interface"
-import { OneBusAwayService } from "src/modules/one-bus-away/one-bus-away.service"
+import { GtfsService } from "src/modules/feed/modules/gtfs/gtfs.service"
+import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
+import { OneBusAwayService } from "src/modules/feed/modules/one-bus-away/one-bus-away.service"
 import * as yaml from "js-yaml"
 import fs from "fs/promises"
 
@@ -17,9 +17,9 @@ export class FeedService implements OnModuleInit {
   private readonly logger = new Logger(FeedService.name)
 
   private feeds: { [key: string]: FeedConfig } = {}
-  private scheduleProviders: Map<string, ScheduleProvider> = new Map()
+  private feedProviders: Map<string, FeedProvider> = new Map()
 
-  constructor(private moduleRef: ModuleRef) {}
+  constructor(private readonly moduleRef: ModuleRef) {}
 
   private async loadConfig(): Promise<{ [key: string]: FeedConfig }> {
     if (process.env.FEEDS_CONFIG) {
@@ -35,7 +35,7 @@ export class FeedService implements OnModuleInit {
     const feeds = await this.loadConfig()
     this.feeds = feeds
 
-    const providerTypeMap: { [key: string]: Type<ScheduleProvider> } = {
+    const providerTypeMap: { [key: string]: Type<FeedProvider> } = {
       gtfs: GtfsService,
       onebusaway: OneBusAwayService,
     }
@@ -48,7 +48,7 @@ export class FeedService implements OnModuleInit {
           )
           const provider = await this.moduleRef.create(providerType)
           provider.init(feedName, config[key])
-          this.scheduleProviders.set(feedName, provider)
+          this.feedProviders.set(feedName, provider)
           break
         }
       }
@@ -59,12 +59,12 @@ export class FeedService implements OnModuleInit {
     return this.feeds
   }
 
-  getScheduleProvider(feedName: string): ScheduleProvider {
-    return this.scheduleProviders.get(feedName)
+  getFeedProvider(feedName: string): FeedProvider {
+    return this.feedProviders.get(feedName)
   }
 
-  getScheduleProvidersOfType<T extends ScheduleProvider>(type: Type<T>): T[] {
-    return Array.from(this.scheduleProviders.values()).filter(
+  getFeedProvidersOfType<T extends FeedProvider>(type: Type<T>): T[] {
+    return Array.from(this.feedProviders.values()).filter(
       (provider) => provider instanceof type,
     ) as T[]
   }

@@ -1,8 +1,8 @@
 import { createParamDecorator, ExecutionContext } from "@nestjs/common"
 
-export const ScheduleProviderParam = createParamDecorator(
+export const InjectFeedProvider = createParamDecorator(
   (_: never, ctx: ExecutionContext) => {
     const request = ctx.switchToHttp().getRequest()
-    return request.scheduleProvider
+    return request.feedProvider
   },
 )

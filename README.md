@@ -50,7 +50,7 @@ feeds:
 
 To facilitate fast queries of the static GTFS data, the API uses a PostgreSQL database to store and index it.
 
-Since there is no auto-migration mechanism in place yet, you'll need to perform them yourself. Assuming you are running as a Postgres superuser in a database named `gtfs`, you can import the [database schema](./src/modules/gtfs/db/schema.sql) to create the necessary tables, indices, and `gtfs` role.
+Since there is no auto-migration mechanism in place yet, you'll need to perform them yourself. Assuming you are running as a Postgres superuser in a database named `gtfs`, you can import the [database schema](./src/modules/feed/modules/gtfs/db/schema.sql) to create the necessary tables, indices, and `gtfs` role.
 
 Once you've imported the schema, set the password for the new `gtfs` role:
 

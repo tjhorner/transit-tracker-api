@@ -50,7 +50,7 @@ export class FeedsController {
 
     const resp: Feed[] = []
     for (const [feedCode, feed] of Object.entries(feeds)) {
-      const provider = this.feedService.getScheduleProvider(feedCode)
+      const provider = this.feedService.getFeedProvider(feedCode)
       resp.push({
         code: feedCode,
         name: feed.name,

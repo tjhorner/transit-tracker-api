@@ -3,27 +3,27 @@ import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleOptions, ScheduleService } from "./schedule.service"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
 import {
-  ScheduleProvider,
+  FeedProvider,
   TripStop,
-} from "src/interfaces/schedule-provider.interface"
+} from "src/modules/feed/interfaces/feed-provider.interface"
 import { randomUUID } from "crypto"
 import { firstValueFrom, Observable } from "rxjs"
 
 describe("ScheduleService", () => {
   let scheduleService: ScheduleService
 
-  let mockScheduleProvider: MockProxy<ScheduleProvider>
+  let mockFeedProvider: MockProxy<FeedProvider>
   let mockFeedService: MockProxy<FeedService>
   let mockMetricsService: MockProxy<ScheduleMetricsService>
 
   beforeEach(() => {
-    mockScheduleProvider = mock<ScheduleProvider>()
-    mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue([])
+    mockFeedProvider = mock<FeedProvider>()
+    mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue([])
 
     mockMetricsService = mock<ScheduleMetricsService>()
 
     mockFeedService = mock<FeedService>()
-    mockFeedService.getScheduleProvider.mockReturnValue(mockScheduleProvider)
+    mockFeedService.getFeedProvider.mockReturnValue(mockFeedProvider)
 
     scheduleService = new ScheduleService(mockFeedService, mockMetricsService)
   })
@@ -37,7 +37,7 @@ describe("ScheduleService", () => {
         limit: 5,
       }
 
-      mockFeedService.getScheduleProvider.mockReturnValue(undefined)
+      mockFeedService.getFeedProvider.mockReturnValue(undefined)
 
       // Act
       const act = () => scheduleService.getSchedule(scheduleOptions)
@@ -64,9 +64,9 @@ describe("ScheduleService", () => {
       await scheduleService.getSchedule(scheduleOptions)
 
       // Assert
-      expect(mockFeedService.getScheduleProvider).toHaveBeenCalledWith(feedCode)
+      expect(mockFeedService.getFeedProvider).toHaveBeenCalledWith(feedCode)
       expect(
-        mockScheduleProvider.getUpcomingTripsForRoutesAtStops,
+        mockFeedProvider.getUpcomingTripsForRoutesAtStops,
       ).toHaveBeenCalledWith([
         expect.objectContaining({ routeId: "route1", stopId: "stop1" }),
         expect.objectContaining({ routeId: "route2", stopId: "stop2" }),
@@ -89,7 +89,7 @@ describe("ScheduleService", () => {
         ...makeMockTripStops("route2", "stop2", 1),
       ]
 
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
         mockTripStops,
       )
 
@@ -114,7 +114,7 @@ describe("ScheduleService", () => {
       }
 
       const mockTripStops = makeMockTripStops("route1", "stop1", 10)
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
         mockTripStops,
       )
 
@@ -142,7 +142,7 @@ describe("ScheduleService", () => {
         ...makeMockTripStops("route2", "stop2", 2),
       ]
 
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
         mockTripStops,
       )
 
@@ -178,7 +178,7 @@ describe("ScheduleService", () => {
         ...makeMockTripStops("route2", "stop3", 2),
       ]
 
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
         mockTripStops,
       )
 
@@ -216,7 +216,7 @@ describe("ScheduleService", () => {
         mockTripStops[1].arrivalTime = new Date(Date.now() + 60000)
         mockTripStops[1].departureTime = new Date(Date.now() + 120000)
 
-        mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+        mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
           mockTripStops,
         )
 
@@ -253,7 +253,7 @@ describe("ScheduleService", () => {
         limit: 5,
       }
 
-      mockFeedService.getScheduleProvider.mockReturnValue(undefined)
+      mockFeedService.getFeedProvider.mockReturnValue(undefined)
 
       // Act
       const act = () => scheduleService.subscribeToSchedule(scheduleOptions)
@@ -270,7 +270,7 @@ describe("ScheduleService", () => {
         limit: 5,
       }
 
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockRejectedValueOnce(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockRejectedValueOnce(
         new Error("whoops"),
       )
 
@@ -326,9 +326,7 @@ describe("ScheduleService", () => {
       const trips = makeMockTripStops("route1", "stop1", 3)
 
       // Act
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
-        trips,
-      )
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(trips)
 
       const observable = scheduleService.subscribeToSchedule(scheduleOptions)
 
@@ -340,7 +338,7 @@ describe("ScheduleService", () => {
 
       // Assert
       expect(
-        mockScheduleProvider.getUpcomingTripsForRoutesAtStops,
+        mockFeedProvider.getUpcomingTripsForRoutesAtStops,
       ).toHaveBeenCalledTimes(1)
     })
 
@@ -360,7 +358,7 @@ describe("ScheduleService", () => {
 
       // Assert
       expect(
-        mockScheduleProvider.getUpcomingTripsForRoutesAtStops,
+        mockFeedProvider.getUpcomingTripsForRoutesAtStops,
       ).toHaveBeenCalledTimes(1)
     })
 
@@ -376,7 +374,7 @@ describe("ScheduleService", () => {
       const secondTrips = makeMockTripStops("route1", "stop1", 2)
 
       // Act
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
         firstTrips,
       )
 
@@ -384,7 +382,7 @@ describe("ScheduleService", () => {
         scheduleService.subscribeToSchedule(scheduleOptions),
       )
 
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
         secondTrips,
       )
 
@@ -408,9 +406,7 @@ describe("ScheduleService", () => {
       const trips = makeMockTripStops("route1", "stop1", 3)
 
       // Act
-      mockScheduleProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
-        trips,
-      )
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(trips)
 
       const finish = collectValues(
         scheduleService.subscribeToSchedule(scheduleOptions),

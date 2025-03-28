@@ -2,7 +2,7 @@ import { Logger } from "@nestjs/common"
 import { NestFactory } from "@nestjs/core"
 import { AppModule } from "src/app.module"
 import { FeedService } from "src/modules/feed/feed.service"
-import { GtfsService } from "src/modules/gtfs/gtfs.service"
+import { GtfsService } from "src/modules/feed/modules/gtfs/gtfs.service"
 
 async function main() {
   const feedCode = process.argv[2]
@@ -14,7 +14,7 @@ async function main() {
   const providers: GtfsService[] = []
 
   if (feedCode) {
-    const provider = feedService.getScheduleProvider(feedCode)
+    const provider = feedService.getFeedProvider(feedCode)
     if (!provider) {
       logger.error("Invalid feed code")
       process.exit(1)
@@ -27,7 +27,7 @@ async function main() {
 
     providers.push(provider)
   } else {
-    providers.push(...feedService.getScheduleProvidersOfType(GtfsService))
+    providers.push(...feedService.getFeedProvidersOfType(GtfsService))
   }
 
   for (const provider of providers) {

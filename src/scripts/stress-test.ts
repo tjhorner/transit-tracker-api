@@ -1,4 +1,4 @@
-import { StopRoute } from "src/interfaces/schedule-provider.interface"
+import { StopRoute } from "src/modules/feed/interfaces/feed-provider.interface"
 import { allStops } from "./stops"
 import fs from "fs"
 import { WebSocket } from "ws"
@@ -18,21 +18,26 @@ function shuffleInPlace<T>(array: T[]) {
 async function subscribe(rsps: string) {
   const ws = new WebSocket("ws://localhost:3000")
   ws.on("open", () => {
-    ws.send(JSON.stringify({
-      event: "schedule:subscribe",
-      data: {
-        feedCode: "st",
-        routeStopPairs: rsps,
-        limit: 1,
-      },
-    }))
+    ws.send(
+      JSON.stringify({
+        event: "schedule:subscribe",
+        data: {
+          feedCode: "st",
+          routeStopPairs: rsps,
+          limit: 1,
+        },
+      }),
+    )
   })
 
   ws.on("close", () => {
-    setTimeout(() => {
-      console.log("reconnecting")
-      subscribe(rsps)
-    }, Math.floor(Math.random() * 30_000))
+    setTimeout(
+      () => {
+        console.log("reconnecting")
+        subscribe(rsps)
+      },
+      Math.floor(Math.random() * 30_000),
+    )
   })
 
   ws.on("message", (data) => {
@@ -48,7 +53,7 @@ async function main() {
   for (const stop of allStops) {
     const routes = stop.routes
     const randomRoute = routes[Math.floor(Math.random() * routes.length)]
-    
+
     const pushAmount = Math.floor(Math.random() * 3) + 1
     for (let i = 0; i < pushAmount; i++) {
       routeStopPairs.push(`${randomRoute.routeId},${stop.stopId}`)

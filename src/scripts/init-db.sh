@@ -18,7 +18,7 @@ echo "Creating 'gtfs' database..."
 psql "$DATABASE_URL" -c "CREATE DATABASE gtfs;"
 
 echo "Running schema migration..."
-psql "$DATABASE_URL/gtfs" -f src/modules/gtfs/db/schema.sql
+psql "$DATABASE_URL/gtfs" -f src/modules/feed/modules/gtfs/db/schema.sql
 
 echo "Generating password for gtfs user..."
 GTFS_USER_PASSWORD=$(openssl rand -hex 32)
