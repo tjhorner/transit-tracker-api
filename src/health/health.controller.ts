@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  InternalServerErrorException,
-  Logger,
-} from "@nestjs/common"
+import { Controller, Get, Logger } from "@nestjs/common"
 import { FeedService } from "src/modules/feed/feed.service"
 
 @Controller("healthz")
@@ -36,17 +31,10 @@ export class HealthController {
     )
 
     const results = await Promise.all(healthchecks)
-    const anyUnhealthy = results.some((result) => !result.healthy)
 
-    const resp = {
+    return {
       timestamp: new Date().toISOString(),
       feeds: results,
     }
-
-    if (anyUnhealthy) {
-      throw new InternalServerErrorException(resp)
-    }
-
-    return resp
   }
 }

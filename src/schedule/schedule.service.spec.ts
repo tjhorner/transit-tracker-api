@@ -270,7 +270,7 @@ describe("ScheduleService", () => {
         limit: 5,
       }
 
-      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockRejectedValueOnce(
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockRejectedValue(
         new Error("whoops"),
       )
 

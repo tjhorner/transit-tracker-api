@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  Logger,
   UseFilters,
   UsePipes,
   ValidationPipe,
@@ -22,7 +23,15 @@ import {
   Max,
   Min,
 } from "class-validator"
-import { finalize, interval, map, merge, Observable } from "rxjs"
+import {
+  catchError,
+  finalize,
+  interval,
+  map,
+  merge,
+  Observable,
+  retry,
+} from "rxjs"
 import {
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
@@ -62,6 +71,7 @@ type WebSocket = BaseWebSocket & { id: UUID }
 @WebSocketGateway()
 @UseFilters(WebSocketExceptionFilter, WebSocketHttpExceptionFilter)
 export class ScheduleGateway implements OnGatewayConnection {
+  private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Set<UUID> = new Set()
 
   constructor(private readonly scheduleService: ScheduleService) {}
@@ -104,6 +114,21 @@ export class ScheduleGateway implements OnGatewayConnection {
       .subscribeToSchedule(subscription)
       .pipe(
         map((update) => ({ event: "schedule", data: update })),
+        catchError((err) => {
+          this.logger.warn(
+            {
+              message: "Error in schedule subscription",
+              error: err.message,
+              subscription,
+            },
+            err.stack,
+          )
+
+          throw err
+        }),
+        retry({
+          delay: 10_000,
+        }),
         finalize(() => {
           this.subscribers.delete(socket.id)
         }),
