@@ -10,11 +10,11 @@ import {
   share,
   timer,
 } from "rxjs"
-import {
-  RouteAtStop,
-  FeedProvider,
-} from "src/modules/feed/interfaces/feed-provider.interface"
 import { FeedService } from "src/modules/feed/feed.service"
+import {
+  FeedProvider,
+  RouteAtStop,
+} from "src/modules/feed/interfaces/feed-provider.interface"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
 
 export interface ScheduleTrip {
@@ -37,7 +37,7 @@ export interface ScheduleUpdate {
 export type RouteAtStopWithOffset = RouteAtStop & { offset: number }
 
 export interface ScheduleOptions {
-  feedCode: string
+  feedCode?: string
   routes: RouteAtStopWithOffset[]
   limit: number
   sortByDeparture?: boolean
@@ -101,12 +101,21 @@ export class ScheduleService {
     }
   }
 
-  getSchedule(options: ScheduleOptions): Promise<ScheduleUpdate> {
-    const provider = this.feedService.getFeedProvider(options.feedCode)
-    if (!provider) {
-      throw new BadRequestException("Invalid feed code")
+  private getFeedProvider(options: ScheduleOptions): FeedProvider {
+    if (options.feedCode) {
+      const provider = this.feedService.getFeedProvider(options.feedCode)
+      if (!provider) {
+        throw new BadRequestException("Invalid feed code")
+      }
+
+      return provider
     }
 
+    return this.feedService.all
+  }
+
+  getSchedule(options: ScheduleOptions): Promise<ScheduleUpdate> {
+    const provider = this.getFeedProvider(options)
     return this.getUpcomingTrips(provider, options)
   }
 
@@ -138,14 +147,11 @@ export class ScheduleService {
   subscribeToSchedule(
     subscription: ScheduleOptions,
   ): Observable<ScheduleUpdate | null> {
-    const feedProvider = this.feedService.getFeedProvider(subscription.feedCode)
-    if (!feedProvider) {
-      throw new BadRequestException("Invalid feed code")
-    }
+    const feedProvider = this.getFeedProvider(subscription)
 
     return defer(() => {
       this.logger.debug(
-        `Subscribed to schedule updates ${subscription.feedCode}, ${JSON.stringify(subscription)}`,
+        `Subscribed to schedule updates: ${JSON.stringify(subscription)}`,
       )
 
       this.metricsService.add(subscription)
@@ -166,7 +172,10 @@ export class ScheduleService {
           (prev, curr) => JSON.stringify(prev) === JSON.stringify(curr),
         ),
         finalize(() => {
-          this.logger.debug("Unsubscribed from schedule updates")
+          this.logger.debug(
+            `Unsubscribed from schedule updates: ${JSON.stringify(subscription)}`,
+          )
+
           this.metricsService.remove(subscription)
         }),
       )

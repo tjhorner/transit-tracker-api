@@ -1,3 +1,5 @@
+import { BBox } from "geojson"
+
 export interface RouteAtStop {
   routeId: string
   stopId: string
@@ -30,8 +32,6 @@ export interface StopRoute {
   color: string | null
   headsigns: string[]
 }
-
-export type BBox = [number, number, number, number]
 
 export interface FeedProvider<TConfig = unknown> {
   init(feedCode: string, config: TConfig): void

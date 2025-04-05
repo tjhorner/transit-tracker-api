@@ -3,35 +3,33 @@ import {
   Controller,
   Get,
   Param,
-  ParseFloatPipe,
   UseInterceptors,
 } from "@nestjs/common"
-import * as turf from "@turf/turf"
 import { InjectFeedProvider } from "src/decorators/feed-provider.decorator"
-import { FeedProviderInterceptor } from "src/interceptors/feed-provider.interceptor"
 import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
+import * as turf from "@turf/turf"
+import { FeedProviderInterceptor } from "src/interceptors/feed-provider.interceptor"
+import { BBox } from "geojson"
+import { ParseBboxPipe } from "src/pipes/parse-bbox.pipe"
 
-@Controller("stops/:feedCode")
+@Controller("stops")
 @UseInterceptors(FeedProviderInterceptor)
 export class StopsController {
   constructor() {}
 
-  @Get("within/:lat1/:lon1/:lat2/:lon2")
+  @Get("within/:bbox")
   async getStopsInBounds(
     @InjectFeedProvider() provider: FeedProvider,
-    @Param("lat1", ParseFloatPipe) lat1: number,
-    @Param("lon1", ParseFloatPipe) lon1: number,
-    @Param("lat2", ParseFloatPipe) lat2: number,
-    @Param("lon2", ParseFloatPipe) lon2: number,
+    @Param("bbox", ParseBboxPipe) bbox: BBox,
   ) {
-    const bbox = turf.bboxPolygon([lat1, lon1, lat2, lon2])
-    const area = turf.area(bbox)
+    const polygon = turf.bboxPolygon(bbox)
+    const area = turf.area(polygon)
 
     if (area / 1000000 > 5) {
       throw new BadRequestException("Search area too large (max 5km^2)")
     }
 
-    const stops = await provider.getStopsInArea([lat1, lon1, lat2, lon2])
+    const stops = await provider.getStopsInArea(bbox)
     return stops
   }
 

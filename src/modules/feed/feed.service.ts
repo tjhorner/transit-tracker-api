@@ -4,6 +4,9 @@ import fs from "fs/promises"
 import * as yaml from "js-yaml"
 import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
 import { FeedCode } from "./decorators/feed-provider.decorator"
+import { BBox } from "geojson"
+import * as turf from "@turf/turf"
+import { AllFeedsService } from "./all-feeds.service"
 
 export interface FeedConfig {
   name: string
@@ -13,6 +16,13 @@ export interface FeedConfig {
 
 @Injectable()
 export class FeedService implements OnModuleInit {
+  /**
+   * A meta-FeedProvider that aggregates all other FeedProviders.
+   * IDs returned by this provider are prefixed with the feed code of the provider
+   * that provided the data.
+   */
+  readonly all: FeedProvider<never>
+
   private readonly logger = new Logger(FeedService.name, { timestamp: true })
 
   private feeds: { [key: string]: FeedConfig } = {}
@@ -21,7 +31,9 @@ export class FeedService implements OnModuleInit {
   constructor(
     private readonly moduleRef: ModuleRef,
     private readonly discoveryService: DiscoveryService,
-  ) {}
+  ) {
+    this.all = new AllFeedsService(this)
+  }
 
   private async loadConfig(): Promise<{ [key: string]: FeedConfig }> {
     if (process.env.FEEDS_CONFIG) {
@@ -100,5 +112,33 @@ export class FeedService implements OnModuleInit {
     return Array.from(this.feedProviders.values()).filter(
       (provider) => provider instanceof type,
     ) as T[]
+  }
+
+  async getFeedProvidersInBounds(targetBbox: BBox): Promise<
+    {
+      feedCode: string
+      provider: FeedProvider
+    }[]
+  > {
+    const providersInBounds = await Promise.all(
+      Array.from(this.feedProviders.entries()).map(
+        async ([feedCode, provider]) => {
+          const agencyBbox = await provider.getAgencyBounds()
+          if (
+            agencyBbox &&
+            turf.booleanIntersects(
+              turf.bboxPolygon(agencyBbox),
+              turf.bboxPolygon(targetBbox),
+            )
+          ) {
+            return { feedCode, provider }
+          }
+
+          return null
+        },
+      ),
+    )
+
+    return providersInBounds.filter((e) => e !== null)
   }
 }

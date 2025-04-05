@@ -18,7 +18,8 @@ export class FeedProviderInterceptor implements NestInterceptor {
   ): Observable<any> | Promise<Observable<any>> {
     const req = context.switchToHttp().getRequest()
     if (!req.params.feedCode) {
-      throw new BadRequestException("Missing feedCode parameter")
+      req.feedProvider = this.feedService.all
+      return next.handle()
     }
 
     const provider = this.feedService.getFeedProvider(req.params.feedCode)

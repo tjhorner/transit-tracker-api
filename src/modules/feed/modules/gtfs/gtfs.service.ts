@@ -5,7 +5,6 @@ import { Kysely, sql, Transaction } from "kysely"
 import { InjectKysely } from "nestjs-kysely"
 import { DB } from "./db"
 import {
-  BBox,
   RouteAtStop,
   FeedProvider,
   Stop,
@@ -15,6 +14,7 @@ import {
 import GtfsRealtimeBindings from "gtfs-realtime-bindings"
 import { GtfsSyncService } from "./gtfs-sync.service"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { BBox } from "geojson"
 
 type ITripUpdate = GtfsRealtimeBindings.transit_realtime.ITripUpdate
 
@@ -38,7 +38,7 @@ export interface FetchConfig {
 
 export interface GtfsConfig {
   static: FetchConfig
-  rtTripUpdates?: FetchConfig
+  rtTripUpdates?: FetchConfig | FetchConfig[]
 }
 
 @RegisterFeedProvider("gtfs")
@@ -105,10 +105,10 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         })
 
         return [
-          stopBounds.rows[0].min_lat,
           stopBounds.rows[0].min_lon,
-          stopBounds.rows[0].max_lat,
+          stopBounds.rows[0].min_lat,
           stopBounds.rows[0].max_lon,
+          stopBounds.rows[0].max_lat,
         ] as [number, number, number, number]
       },
       86_400_000,
@@ -284,8 +284,8 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
       return await tx
         .selectFrom("stops")
         .select(["stop_id", "stop_name", "stop_code", "stop_lat", "stop_lon"])
-        .where(sql<boolean>`stop_lat BETWEEN ${bbox[0]} AND ${bbox[2]}`)
-        .where(sql<boolean>`stop_lon BETWEEN ${bbox[1]} AND ${bbox[3]}`)
+        .where(sql<boolean>`stop_lat BETWEEN ${bbox[1]} AND ${bbox[3]}`)
+        .where(sql<boolean>`stop_lon BETWEEN ${bbox[0]} AND ${bbox[2]}`)
         .execute()
     })
 
@@ -344,7 +344,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
               "routes.route_color",
               sql<string[]>`
                 JSON_AGG(DISTINCT CASE 
-                    WHEN TRIM(stop_times.stop_headsign) = '' THEN trips.trip_headsign
+                    WHEN coalesce(TRIM(stop_times.stop_headsign), '') = '' THEN trips.trip_headsign
                     ELSE stop_times.stop_headsign
                 END)
               `.as("headsigns"),
@@ -391,31 +391,46 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     const allTripUpdates = await this.cached(
       "tripUpdates",
       async () => {
-        const response = await axios.get(this.config.rtTripUpdates.url, {
-          responseType: "arraybuffer",
-          responseEncoding: "binary",
-          headers: this.config.rtTripUpdates.headers,
-        })
+        let fetchConfigs: FetchConfig[] = []
+        if (Array.isArray(this.config.rtTripUpdates)) {
+          fetchConfigs = this.config.rtTripUpdates
+        } else {
+          fetchConfigs = [this.config.rtTripUpdates]
+        }
 
-        return GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
-          Uint8Array.from(response.data),
+        const responses = await Promise.all(
+          fetchConfigs.map(async (config) => {
+            const resp = await axios.get(config.url, {
+              responseType: "arraybuffer",
+              responseEncoding: "binary",
+              headers: config.headers,
+            })
+
+            return (
+              GtfsRealtimeBindings.transit_realtime.FeedMessage.decode(
+                Uint8Array.from(resp.data),
+              ).entity ?? []
+            )
+          }),
         )
+
+        return responses.flat()
       },
       15_000,
     )
 
-    if (typeof allTripUpdates?.entity?.[Symbol.iterator] !== "function") {
+    if (typeof allTripUpdates?.[Symbol.iterator] !== "function") {
       return {}
     }
 
     const filteredTripUpdates: { [tripId: string]: ITripUpdate } = {}
-    for (const entity of allTripUpdates.entity) {
+    for (const entity of allTripUpdates) {
+      if (!entity.tripUpdate) {
+        continue
+      }
+
       const tripId = entity.tripUpdate.trip.tripId
       if (tripIds.includes(tripId)) {
-        // const { DUPLICATED } =
-        //   GtfsRealtimeBindings.transit_realtime.TripDescriptor
-        //     .ScheduleRelationship
-
         const key = entity.tripUpdate.trip.startDate
           ? `${tripId}_${entity.tripUpdate.trip.startDate}`
           : tripId
@@ -440,6 +455,10 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
 
       if (hasAnyUpdate && hasOnlyOneUpdate) {
         delay = stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
+        if (delay === undefined) {
+          // HACK for now
+          delay = 0
+        }
       }
     }
 
@@ -465,6 +484,8 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
 
     const tripStops: TripStop[] = []
     for (const scheduleDate of scheduleDates) {
+      const todayTripStops: TripStop[] = []
+
       const trips = (
         await Promise.all(
           routes.map(({ routeId, stopId }) =>
@@ -479,11 +500,14 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
           trips.map((trip) => trip.trip_id),
         )
       } catch (e: any) {
-        this.logger.warn("Failed to fetch trip updates, using schedule", e)
+        this.logger.warn(
+          "Failed to fetch trip updates, using schedule",
+          e.stack,
+        )
       }
 
       trips.forEach((trip) => {
-        if (tripStops.some((ts) => ts.tripId === trip.trip_id)) {
+        if (todayTripStops.some((ts) => ts.tripId === trip.trip_id)) {
           return
         }
 
@@ -496,7 +520,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
           tripUpdate,
         )
 
-        tripStops.push({
+        todayTripStops.push({
           tripId: trip.trip_id,
           routeId: trip.route_id,
           stopId: trip.stop_id,
@@ -512,6 +536,8 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
           isRealtime: !!tripUpdate,
         })
       })
+
+      tripStops.push(...todayTripStops)
     }
 
     return tripStops

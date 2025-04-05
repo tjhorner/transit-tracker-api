@@ -260,7 +260,12 @@ export class GtfsSyncService {
 
     const batch = []
     await pipeline(
-      fs.createReadStream(filePath).pipe(csv.parse({ headers: true })),
+      fs.createReadStream(filePath).pipe(
+        csv.parse({
+          headers: true,
+          ignoreEmpty: true,
+        }),
+      ),
       async (rows: AsyncIterable<any>) => {
         for await (const item of rows) {
           batch.push(this.flushEmptyStrings(mapRow(item)))

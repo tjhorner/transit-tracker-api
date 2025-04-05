@@ -104,7 +104,7 @@ export class Trips {
   trips: Trip[]
 }
 
-@Controller("schedule/:feedCode")
+@Controller("schedule")
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
 
@@ -133,11 +133,6 @@ export class ScheduleController {
   })
   @ApiBadRequestResponse()
   @ApiParam({
-    name: "feedCode",
-    description: "The code of the feed to query",
-    example: "st",
-  })
-  @ApiParam({
     name: "routeStopPairs",
     description: "A semicolon-separated list of routeId,stopId pairs to query",
     example: "1_100113,1_71971;1_102704,1_71971",
@@ -149,7 +144,6 @@ export class ScheduleController {
     required: false,
   })
   async getArrivals(
-    @Param("feedCode") feedCode: string,
     @Param("routeStopPairs") routeStopPairsRaw: string,
     @Query("limit") limit: number = 10,
   ): Promise<Trips> {
@@ -163,7 +157,6 @@ export class ScheduleController {
     }
 
     const schedule = await this.scheduleService.getSchedule({
-      feedCode,
       routes: routeStopPairs,
       limit,
     })

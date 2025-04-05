@@ -43,10 +43,12 @@ import {
   ScheduleUpdate,
 } from "./schedule.service"
 import { randomUUID, UUID } from "crypto"
+import * as Sentry from "@sentry/nestjs"
 
 export class ScheduleSubscriptionDto {
-  @IsNotEmpty()
-  feedCode: string
+  @IsString()
+  @IsOptional()
+  feedCode?: string
 
   @IsNotEmpty()
   routeStopPairs: string
@@ -100,6 +102,10 @@ export class ScheduleGateway implements OnGatewayConnection {
       throw new BadRequestException("Too many route-stop pairs; maximum 5")
     }
 
+    if (subscriptionDto.feedCode === "") {
+      subscriptionDto.feedCode = undefined
+    }
+
     this.subscribers.add(socket.id)
 
     const subscription: ScheduleOptions = {
@@ -110,7 +116,7 @@ export class ScheduleGateway implements OnGatewayConnection {
       listMode: subscriptionDto.listMode,
     }
 
-    const scheduleUpdates = this.scheduleService
+    const scheduleUpdates$ = this.scheduleService
       .subscribeToSchedule(subscription)
       .pipe(
         map((update) => ({ event: "schedule", data: update })),
@@ -124,6 +130,12 @@ export class ScheduleGateway implements OnGatewayConnection {
             err.stack,
           )
 
+          Sentry.captureException(err, {
+            extra: {
+              subscription: JSON.stringify(subscription),
+            },
+          })
+
           throw err
         }),
         retry({
@@ -134,10 +146,10 @@ export class ScheduleGateway implements OnGatewayConnection {
         }),
       )
 
-    const heartbeat = interval(30000).pipe(
+    const heartbeat$ = interval(30000).pipe(
       map(() => ({ event: "heartbeat", data: null })),
     )
 
-    return merge(scheduleUpdates, heartbeat)
+    return merge(scheduleUpdates$, heartbeat$)
   }
 }

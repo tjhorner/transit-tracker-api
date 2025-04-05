@@ -8,7 +8,6 @@ import OnebusawaySDK from "onebusaway-sdk"
 import { Cache } from "@nestjs/cache-manager"
 import { CACHE_MANAGER } from "@nestjs/cache-manager"
 import {
-  BBox,
   RouteAtStop,
   FeedProvider,
   Stop,
@@ -19,6 +18,8 @@ import { MetricService } from "nestjs-otel"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import { RateLimiter } from "limiter"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { BBox } from "geojson"
+import * as turf from "@turf/turf"
 
 export interface OneBusAwayConfig {
   baseUrl: string
@@ -46,24 +47,11 @@ function latLonSpanToBounds(
   lonSpan: number,
 ): BBox {
   return [
-    latCenter - latSpan / 2,
     lonCenter - lonSpan / 2,
-    latCenter + latSpan / 2,
+    latCenter - latSpan / 2,
     lonCenter + lonSpan / 2,
+    latCenter + latSpan / 2,
   ]
-}
-
-function sumOfBboxes(bbox1: BBox, bbox2: BBox): BBox {
-  return [
-    Math.min(bbox1[0], bbox2[0]),
-    Math.min(bbox1[1], bbox2[1]),
-    Math.max(bbox1[2], bbox2[2]),
-    Math.max(bbox1[3], bbox2[3]),
-  ]
-}
-
-function sumOfAllBboxes(bboxes: BBox[]): BBox {
-  return bboxes.reduce(sumOfBboxes)
 }
 
 @RegisterFeedProvider("onebusaway")
@@ -201,16 +189,20 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
       async () => {
         const resp = await this.obaSdk.agenciesWithCoverage.list()
 
-        const bboxes = resp.data.list.map((agency) =>
-          latLonSpanToBounds(
-            agency.lat,
-            agency.lon,
-            agency.latSpan,
-            agency.lonSpan,
+        const bboxes = turf.featureCollection(
+          resp.data.list.map((agency) =>
+            turf.bboxPolygon(
+              latLonSpanToBounds(
+                agency.lat,
+                agency.lon,
+                agency.latSpan,
+                agency.lonSpan,
+              ),
+            ),
           ),
         )
 
-        return sumOfAllBboxes(bboxes)
+        return turf.bbox(bboxes)
       },
       86_400_000,
     )
@@ -282,10 +274,10 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
   }
 
   async getStopsInArea(bbox: BBox): Promise<Stop[]> {
-    const centerLat = (bbox[0] + bbox[2]) / 2
-    const centerLon = (bbox[1] + bbox[3]) / 2
-    const latSpan = bbox[2] - bbox[0]
-    const lonSpan = bbox[3] - bbox[1]
+    const centerLat = (bbox[1] + bbox[3]) / 2
+    const centerLon = (bbox[0] + bbox[2]) / 2
+    const latSpan = bbox[3] - bbox[1]
+    const lonSpan = bbox[2] - bbox[0]
 
     const stops = await this.obaSdk.stopsForLocation.list({
       lat: centerLat,
