@@ -108,6 +108,10 @@ export class AllFeedsService implements FeedProvider<never> {
     return trips.flat()
   }
 
+  listStops(): Promise<Stop[]> {
+    throw new Error("Method not implemented.")
+  }
+
   getStop(stopId: string): Promise<Stop> {
     const {
       feedCode,

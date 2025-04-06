@@ -1,6 +1,9 @@
-import { Controller, Get } from "@nestjs/common"
+import { Controller, Get, UseInterceptors } from "@nestjs/common"
 import { FeedService } from "./feed.service"
 import { ApiProperty, ApiResponse } from "@nestjs/swagger"
+import { FeatureCollection } from "geojson"
+import * as turf from "@turf/turf"
+import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager"
 
 class Feed {
   @ApiProperty({
@@ -60,5 +63,27 @@ export class FeedsController {
     }
 
     return resp
+  }
+
+  @Get("service-areas")
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(60 * 60 * 24) // 24 hours
+  async getServiceAreas(): Promise<FeatureCollection> {
+    const feeds = this.feedService.getAllFeedProviders()
+
+    const polygonFeatures = await Promise.all(
+      Object.entries(feeds).map(async ([, provider]) => {
+        const stops = await provider.listStops()
+        return turf.convex(
+          turf.featureCollection(
+            stops.map((stop) => turf.point([stop.lon, stop.lat])),
+          ),
+        )
+      }),
+    )
+
+    return turf.featureCollection([
+      turf.union(turf.featureCollection(polygonFeatures)),
+    ])
   }
 }

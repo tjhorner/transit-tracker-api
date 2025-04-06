@@ -67,7 +67,10 @@ export class GtfsSyncService {
       return currentImportMetadata.etag !== etag
     }
 
-    return new Date(lastModified) > currentImportMetadata.last_modified
+    return (
+      new Date(lastModified) >
+      (currentImportMetadata.last_modified ?? new Date(0))
+    )
   }
 
   async importFromUrl(feedCode: string, url: string) {
@@ -233,9 +236,9 @@ export class GtfsSyncService {
     return row
   }
 
-  private async importGtfsFile(
+  private async importGtfsFile<T extends keyof DB & string>(
     tx: Transaction<DB>,
-    tableName: string,
+    tableName: T,
     filePath: string,
     mapRow: (row: any) => any,
   ): Promise<void> {
@@ -250,15 +253,12 @@ export class GtfsSyncService {
         `Inserting ${rows.length} ${tableName} rows ${completedRows} - ${completedRows + rows.length}`,
       )
 
-      await tx
-        .insertInto(tableName as any)
-        .values(rows)
-        .execute()
+      await tx.insertInto(tableName).values(rows).execute()
 
       completedRows += rows.length
     }
 
-    const batch = []
+    const batch: any[] = []
     await pipeline(
       fs.createReadStream(filePath).pipe(
         csv.parse({

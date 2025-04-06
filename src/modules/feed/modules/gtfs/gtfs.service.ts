@@ -16,7 +16,16 @@ import { GtfsSyncService } from "./gtfs-sync.service"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { BBox } from "geojson"
 
+const TripScheduleRelationship =
+  GtfsRealtimeBindings.transit_realtime.TripDescriptor.ScheduleRelationship
+
+const StopTimeScheduleRelationship =
+  GtfsRealtimeBindings.transit_realtime.TripUpdate.StopTimeUpdate
+    .ScheduleRelationship
+
 type ITripUpdate = GtfsRealtimeBindings.transit_realtime.ITripUpdate
+type IStopTimeUpdate =
+  GtfsRealtimeBindings.transit_realtime.TripUpdate.IStopTimeUpdate
 
 export interface TripStopRaw {
   trip_id: string
@@ -277,6 +286,35 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     )
   }
 
+  async listStops(): Promise<Stop[]> {
+    return this.cached(
+      "stops",
+      async () => {
+        const stops = await this.tx(async (tx) => {
+          return await tx
+            .selectFrom("stops")
+            .select([
+              "stop_id",
+              "stop_name",
+              "stop_code",
+              "stop_lat",
+              "stop_lon",
+            ])
+            .execute()
+        })
+
+        return stops.map((stop) => ({
+          stopId: stop.stop_id,
+          stopCode: stop.stop_code,
+          name: stop.stop_name,
+          lat: stop.stop_lat,
+          lon: stop.stop_lon,
+        }))
+      },
+      86_400_000,
+    )
+  }
+
   async getStopsInArea(
     bbox: [number, number, number, number],
   ): Promise<Stop[]> {
@@ -442,11 +480,10 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return filteredTripUpdates
   }
 
-  private resolveTripTimes(trip: TripStopRaw, tripUpdate?: ITripUpdate) {
-    const stopTimeUpdate = tripUpdate?.stopTimeUpdate.find(
-      (update) => update.stopId === trip.stop_id,
-    )
-
+  private resolveTripTimes(
+    trip: TripStopRaw,
+    stopTimeUpdate?: IStopTimeUpdate,
+  ) {
     let delay = 0
     if (stopTimeUpdate) {
       const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
@@ -515,9 +552,27 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
           tripUpdates[`${trip.trip_id}_${trip.start_date}`] ??
           tripUpdates[trip.trip_id]
 
+        if (
+          tripUpdate?.trip?.scheduleRelationship ===
+          TripScheduleRelationship.CANCELED
+        ) {
+          return
+        }
+
+        const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
+          (update) => update.stopId === trip.stop_id,
+        )
+
+        if (
+          stopTimeUpdate?.scheduleRelationship ===
+          StopTimeScheduleRelationship.SKIPPED
+        ) {
+          return
+        }
+
         const { arrivalTime, departureTime } = this.resolveTripTimes(
           trip,
-          tripUpdate,
+          stopTimeUpdate,
         )
 
         todayTripStops.push({

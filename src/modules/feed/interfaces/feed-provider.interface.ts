@@ -10,7 +10,7 @@ export interface TripStop {
   stopId: string
   routeId: string
   routeName: string
-  routeColor: string
+  routeColor: string | null
   stopName: string
   headsign: string
   arrivalTime: Date
@@ -41,6 +41,7 @@ export interface FeedProvider<TConfig = unknown> {
 
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>
 
+  listStops(): Promise<Stop[]>
   getStop(stopId: string): Promise<Stop>
   getRoutesForStop(stopId: string): Promise<StopRoute[]>
   getStopsInArea(bbox: BBox): Promise<Stop[]>

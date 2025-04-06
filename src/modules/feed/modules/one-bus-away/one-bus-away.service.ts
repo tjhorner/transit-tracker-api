@@ -295,6 +295,37 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
     }))
   }
 
+  async listStops(): Promise<Stop[]> {
+    return this.cached(
+      "allStops",
+      async () => {
+        const boundingBox = await this.getAgencyBounds()
+
+        const latCenter = (boundingBox[1] + boundingBox[3]) / 2
+        const lonCenter = (boundingBox[0] + boundingBox[2]) / 2
+        const latSpan = boundingBox[3] - boundingBox[1]
+        const lonSpan = boundingBox[2] - boundingBox[0]
+        const stops = await this.obaSdk.stopsForLocation.list({
+          lat: latCenter,
+          lon: lonCenter,
+          latSpan,
+          lonSpan,
+        })
+
+        const allStops: Stop[] = stops.data.list.map((stop) => ({
+          stopId: stop.id,
+          stopCode: stop.code,
+          name: stop.name,
+          lat: stop.lat,
+          lon: stop.lon,
+        }))
+
+        return allStops
+      },
+      86_400_000,
+    )
+  }
+
   async getStop(stopId: string): Promise<Stop> {
     return this.cached(
       `stop-${stopId}`,
