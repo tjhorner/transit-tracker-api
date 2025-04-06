@@ -11,14 +11,14 @@ class Feed {
     description: "The code used to identify this feed",
     example: "st",
   })
-  code: string
+  code!: string
 
   @ApiProperty({
     required: true,
     description: "Human-readable name for this feed",
     example: "Puget Sound Region",
   })
-  name: string
+  name!: string
 
   @ApiProperty({
     required: false,
@@ -35,7 +35,7 @@ class Feed {
     type: Number,
     example: [46.93304, -123.01475, 48.59793, -121.601001],
   })
-  bounds: number[]
+  bounds!: number[]
 }
 
 @Controller("feeds")
@@ -53,7 +53,7 @@ export class FeedsController {
 
     const resp: Feed[] = []
     for (const [feedCode, feed] of Object.entries(feeds)) {
-      const provider = this.feedService.getFeedProvider(feedCode)
+      const provider = this.feedService.getFeedProvider(feedCode)!
       resp.push({
         code: feedCode,
         name: feed.name,
@@ -71,19 +71,21 @@ export class FeedsController {
   async getServiceAreas(): Promise<FeatureCollection> {
     const feeds = this.feedService.getAllFeedProviders()
 
-    const polygonFeatures = await Promise.all(
-      Object.entries(feeds).map(async ([, provider]) => {
-        const stops = await provider.listStops()
-        return turf.convex(
-          turf.featureCollection(
-            stops.map((stop) => turf.point([stop.lon, stop.lat])),
-          ),
-        )
-      }),
-    )
+    const polygonFeatures = (
+      await Promise.all(
+        Object.entries(feeds).map(async ([, provider]) => {
+          const stops = await provider.listStops()
+          return turf.convex(
+            turf.featureCollection(
+              stops.map((stop) => turf.point([stop.lon, stop.lat])),
+            ),
+          )
+        }),
+      )
+    ).filter((feature) => feature !== null)
 
     return turf.featureCollection([
-      turf.union(turf.featureCollection(polygonFeatures)),
+      turf.union(turf.featureCollection(polygonFeatures))!,
     ])
   }
 }

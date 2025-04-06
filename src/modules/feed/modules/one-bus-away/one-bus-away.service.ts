@@ -57,8 +57,8 @@ function latLonSpanToBounds(
 @RegisterFeedProvider("onebusaway")
 export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
   private logger = new Logger(OneBusAwayService.name)
-  private feedCode: string
-  private obaSdk: OnebusawaySDK
+  private feedCode!: string
+  private obaSdk!: OnebusawaySDK
   private obaRateLimiter = new RateLimiter({
     tokensPerInterval: 1,
     interval: 200,
@@ -219,7 +219,7 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
           includePolylines: false,
         })
 
-        const stopGrouping = stopsForRoute.data.entry.stopGroupings[0]
+        const stopGrouping = stopsForRoute.data.entry.stopGroupings?.[0]
         if (!stopGrouping) {
           return []
         }
@@ -257,11 +257,11 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
             stopId,
           )
 
-          const color = route.color?.replaceAll("#", "")
+          const color = route.color?.replaceAll("#", "").trim() ?? null
 
           stopRoutes.push({
             routeId: route.id,
-            name: route.shortName,
+            name: route.shortName ?? "Unnamed Route",
             color: color?.trim() !== "" ? color : null,
             headsigns,
           })
@@ -286,9 +286,9 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
       lonSpan,
     })
 
-    return stops.data.list.map((stop) => ({
+    return stops.data.list.map<Stop>((stop) => ({
       stopId: stop.id,
-      stopCode: stop.code,
+      stopCode: stop.code ?? null,
       name: stop.name,
       lat: stop.lat,
       lon: stop.lon,
@@ -312,9 +312,9 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
           lonSpan,
         })
 
-        const allStops: Stop[] = stops.data.list.map((stop) => ({
+        const allStops: Stop[] = stops.data.list.map<Stop>((stop) => ({
           stopId: stop.id,
-          stopCode: stop.code,
+          stopCode: stop.code ?? null,
           name: stop.name,
           lat: stop.lat,
           lon: stop.lon,
@@ -343,7 +343,7 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
 
         return {
           stopId: stop.data.entry.id,
-          stopCode: stop.data.entry.code,
+          stopCode: stop.data.entry.code ?? null,
           name: stop.data.entry.name,
           lat: stop.data.entry.lat,
           lon: stop.data.entry.lon,
@@ -355,7 +355,7 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
 
   async getArrivalsAndDeparturesForStop(
     stopId: string,
-  ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse> {
+  ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null> {
     return this.cached(`arrivalsAndDepartures-${stopId}`, async () => {
       let resp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse
       try {
@@ -452,19 +452,19 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
                 ? new Date(ad.predictedArrivalTime)
                 : new Date(ad.scheduledArrivalTime)
 
-            const color = staticRoute.color?.replaceAll("#", "")
+            const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
 
             tripStops.push({
               tripId: ad.tripId,
               stopId,
               routeId: ad.routeId,
-              routeName: ad.routeShortName,
+              routeName: ad.routeShortName ?? "Unnamed Route",
               routeColor: color?.trim() !== "" ? color : null,
-              stopName: staticStop.name,
+              stopName: staticStop?.name ?? "Unnamed Stop",
               headsign: ad.tripHeadsign,
               arrivalTime,
               departureTime,
-              isRealtime: ad.predicted,
+              isRealtime: ad.predicted ?? false,
             })
           }
         }

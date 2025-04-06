@@ -51,12 +51,12 @@ export class ScheduleSubscriptionDto {
   feedCode?: string
 
   @IsNotEmpty()
-  routeStopPairs: string
+  routeStopPairs!: string
 
   @IsInt()
   @Min(1)
   @Max(10)
-  limit: number
+  limit!: number
 
   @IsBoolean()
   @IsOptional()

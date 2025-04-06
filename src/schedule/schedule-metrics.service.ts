@@ -27,8 +27,9 @@ export class ScheduleMetricsService {
         )
 
         this.subscribers.forEach((subscription) => {
-          const count = subscribersByFeedCode.get(subscription.feedCode) ?? 0
-          subscribersByFeedCode.set(subscription.feedCode, count + 1)
+          const feedCode = subscription.feedCode ?? "all"
+          const count = subscribersByFeedCode.get(feedCode) ?? 0
+          subscribersByFeedCode.set(feedCode, count + 1)
         })
 
         for (const [feedCode, count] of subscribersByFeedCode) {
@@ -74,6 +75,7 @@ export class ScheduleMetricsService {
     value: number,
     { feedCode, routes }: ScheduleOptions,
   ) {
+    feedCode = feedCode ?? "all"
     for (const routeStopPair of routes) {
       const key = `${feedCode}:${routeStopPair.routeId}:${routeStopPair.stopId}`
       const metric = this.routeStopMetrics.get(key) ?? {

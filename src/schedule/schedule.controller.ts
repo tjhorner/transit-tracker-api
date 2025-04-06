@@ -20,21 +20,21 @@ export class Trip {
       "The ID of the trip (note this is not globally unique and can be repeated for multiple days)",
     example: "1_123456",
   })
-  tripId: string
+  tripId!: string
 
   @ApiProperty({
     required: true,
     description: "The ID of the route",
     example: "1_123456",
   })
-  routeId: string
+  routeId!: string
 
   @ApiProperty({
     required: true,
     description: "The name of the route",
     example: "221",
   })
-  routeName: string
+  routeName!: string
 
   @ApiProperty({
     required: true,
@@ -42,49 +42,49 @@ export class Trip {
     description: "The color of the route",
     example: "FF0000",
   })
-  routeColor: string
+  routeColor!: string | null
 
   @ApiProperty({
     required: true,
     description: "The ID of the stop",
     example: "1_123456",
   })
-  stopId: string
+  stopId!: string
 
   @ApiProperty({
     required: true,
     description: "The name of the stop",
     example: "Main St & 1st Ave",
   })
-  stopName: string
+  stopName!: string
 
   @ApiProperty({
     required: true,
     description: "The headsign for the trip",
     example: "Downtown",
   })
-  headsign: string
+  headsign!: string
 
   @ApiProperty({
     required: true,
     description: "The arrival time of the trip at the stop in Unix time",
     example: 1619029200,
   })
-  arrivalTime: number
+  arrivalTime!: number
 
   @ApiProperty({
     required: true,
     description: "The departure time of the trip at the stop in Unix time",
     example: 1619029200,
   })
-  departureTime: number
+  departureTime!: number
 
   @ApiProperty({
     required: true,
     description: "A human-readable countdown text for the arrival time",
     example: "5min",
   })
-  countdownText: string
+  countdownText!: string
 
   @ApiProperty({
     required: true,
@@ -92,7 +92,7 @@ export class Trip {
       "Whether the arrival and departure times are derived from real-time data or from the static schedule",
     example: true,
   })
-  isRealtime: boolean
+  isRealtime!: boolean
 }
 
 export class Trips {
@@ -101,7 +101,7 @@ export class Trips {
     type: Trip,
     required: true,
   })
-  trips: Trip[]
+  trips!: Trip[]
 }
 
 @Controller("schedule")
@@ -162,7 +162,7 @@ export class ScheduleController {
     })
 
     const tripDtos: Trip[] = schedule.trips
-      .map((trip) => ({
+      .map<Trip>((trip) => ({
         ...trip,
         countdownText: this.getCountdownText(new Date(trip.arrivalTime * 1000)),
       }))

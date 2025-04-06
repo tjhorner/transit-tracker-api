@@ -53,8 +53,8 @@ export interface GtfsConfig {
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider<GtfsConfig> {
   private logger = new Logger(GtfsService.name)
-  private feedCode: string
-  private config: GtfsConfig
+  private feedCode!: string
+  private config!: GtfsConfig
 
   constructor(
     @InjectKysely() private readonly db: Kysely<DB>,
@@ -148,9 +148,13 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
   }
 
   private removeRouteNameFromHeadsign(
-    routeShortName: string,
+    routeShortName: string | null,
     headsign: string,
   ): string {
+    if (!routeShortName) {
+      return headsign.trim()
+    }
+
     if (!headsign) {
       return ""
     }
@@ -300,15 +304,17 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
               "stop_lat",
               "stop_lon",
             ])
+            .where("stop_lat", "is not", null)
+            .where("stop_lon", "is not", null)
             .execute()
         })
 
         return stops.map((stop) => ({
           stopId: stop.stop_id,
           stopCode: stop.stop_code,
-          name: stop.stop_name,
-          lat: stop.stop_lat,
-          lon: stop.stop_lon,
+          name: stop.stop_name ?? "Unnamed Stop",
+          lat: stop.stop_lat!,
+          lon: stop.stop_lon!,
         }))
       },
       86_400_000,
@@ -322,6 +328,8 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
       return await tx
         .selectFrom("stops")
         .select(["stop_id", "stop_name", "stop_code", "stop_lat", "stop_lon"])
+        .where("stop_lat", "is not", null)
+        .where("stop_lon", "is not", null)
         .where(sql<boolean>`stop_lat BETWEEN ${bbox[1]} AND ${bbox[3]}`)
         .where(sql<boolean>`stop_lon BETWEEN ${bbox[0]} AND ${bbox[2]}`)
         .execute()
@@ -330,9 +338,9 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return stops.map((stop) => ({
       stopId: stop.stop_id,
       stopCode: stop.stop_code,
-      name: stop.stop_name,
-      lat: stop.stop_lat,
-      lon: stop.stop_lon,
+      name: stop.stop_name ?? "Unnamed Stop",
+      lat: stop.stop_lat!,
+      lon: stop.stop_lon!,
     }))
   }
 
@@ -357,9 +365,9 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         return {
           stopId: stop[0].stop_id,
           stopCode: stop[0].stop_code,
-          name: stop[0].stop_name,
-          lat: stop[0].stop_lat,
-          lon: stop[0].stop_lon,
+          name: stop[0].stop_name ?? "Unnamed Stop",
+          lat: stop[0].stop_lat ?? 0,
+          lon: stop[0].stop_lon ?? 0,
         }
       },
       86_400_000,
@@ -398,13 +406,13 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
             .execute()
         })
 
-        return routes.map((route) => ({
+        return routes.map<StopRoute>((route) => ({
           routeId: route.route_id,
           color: route.route_color?.replaceAll("#", "") ?? null,
           name:
-            !route.route_short_name || route.route_short_name.trim() === ""
+            (!route.route_short_name || route.route_short_name.trim() === ""
               ? route.route_long_name
-              : route.route_short_name,
+              : route.route_short_name) ?? "Unnamed Route",
           headsigns: route.headsigns
             .filter((headsign) => headsign && headsign.trim() !== "")
             .map((headsign) =>
@@ -432,7 +440,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         let fetchConfigs: FetchConfig[] = []
         if (Array.isArray(this.config.rtTripUpdates)) {
           fetchConfigs = this.config.rtTripUpdates
-        } else {
+        } else if (typeof this.config.rtTripUpdates === "object") {
           fetchConfigs = [this.config.rtTripUpdates]
         }
 
@@ -468,7 +476,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
       }
 
       const tripId = entity.tripUpdate.trip.tripId
-      if (tripIds.includes(tripId)) {
+      if (tripId && tripIds.includes(tripId)) {
         const key = entity.tripUpdate.trip.startDate
           ? `${tripId}_${entity.tripUpdate.trip.startDate}`
           : tripId
@@ -491,11 +499,8 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         !stopTimeUpdate.arrival || !stopTimeUpdate.departure
 
       if (hasAnyUpdate && hasOnlyOneUpdate) {
-        delay = stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
-        if (delay === undefined) {
-          // HACK for now
-          delay = 0
-        }
+        delay =
+          stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay ?? 0
       }
     }
 

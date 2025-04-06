@@ -20,7 +20,7 @@ export interface TripStop {
 
 export interface Stop {
   stopId: string
-  stopCode: string
+  stopCode: string | null
   name: string
   lat: number
   lon: number

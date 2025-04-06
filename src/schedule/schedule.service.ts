@@ -65,7 +65,7 @@ export class ScheduleService {
       .map((trip) => {
         const offset = routes.find(
           (r) => r.routeId === trip.routeId && r.stopId === trip.stopId,
-        ).offset
+        )?.offset
 
         return {
           ...trip,

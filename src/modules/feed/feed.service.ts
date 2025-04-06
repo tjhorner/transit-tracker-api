@@ -40,13 +40,15 @@ export class FeedService implements OnModuleInit {
       this.logger.verbose(
         "Loading feeds from FEEDS_CONFIG environment variable",
       )
-      return yaml.load(process.env.FEEDS_CONFIG)["feeds"]
+
+      const parsedYaml = yaml.load(process.env.FEEDS_CONFIG) as any
+      return parsedYaml["feeds"]
     }
 
     this.logger.verbose("Loading feeds from feeds.yaml file")
 
     const configFile = await fs.readFile("feeds.yaml", "utf-8")
-    const config = yaml.load(configFile)
+    const config = yaml.load(configFile) as any
     return config["feeds"]
   }
 
@@ -104,7 +106,7 @@ export class FeedService implements OnModuleInit {
     return Object.fromEntries(this.feedProviders.entries())
   }
 
-  getFeedProvider(feedName: string): FeedProvider {
+  getFeedProvider(feedName: string): FeedProvider | undefined {
     return this.feedProviders.get(feedName)
   }
 

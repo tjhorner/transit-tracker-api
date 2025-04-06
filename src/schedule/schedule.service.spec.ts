@@ -391,8 +391,8 @@ describe("ScheduleService", () => {
       const scheduleUpdates = finish()
 
       // Assert
-      expect(scheduleUpdates[0].trips.length).toBe(3)
-      expect(scheduleUpdates[1].trips.length).toBe(2)
+      expect(scheduleUpdates[0]!.trips.length).toBe(3)
+      expect(scheduleUpdates[1]!.trips.length).toBe(2)
     })
 
     it("does not publish an update if the schedule hasn't changed", async () => {

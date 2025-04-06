@@ -11,7 +11,7 @@ import Redis from "ioredis"
 @Module({
   imports: [
     RedlockModule.register({
-      clients: [new Redis(process.env.REDIS_URL, { keyPrefix: "redlock" })],
+      clients: [new Redis(process.env.REDIS_URL!, { keyPrefix: "redlock" })],
     }),
     DiscoveryModule,
     GtfsModule,
