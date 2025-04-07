@@ -112,32 +112,32 @@ export class AllFeedsService implements FeedProvider<never> {
     throw new Error("Method not implemented.")
   }
 
-  getStop(stopId: string): Promise<Stop> {
+  async getStop(stopId: string): Promise<Stop> {
     const {
       feedCode,
       feedProvider,
       id: stopIdWithoutFeed,
     } = this.fromGlobalId(stopId)
 
-    return feedProvider.getStop(stopIdWithoutFeed).then((stop) => ({
+    const stop = await feedProvider.getStop(stopIdWithoutFeed)
+    return {
       ...stop,
       stopId: this.toGlobalId(feedCode, stop.stopId),
-    }))
+    }
   }
 
-  getRoutesForStop(stopId: string): Promise<StopRoute[]> {
+  async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
     const {
       feedProvider,
       feedCode,
       id: stopIdWithoutFeed,
     } = this.fromGlobalId(stopId)
 
-    return feedProvider.getRoutesForStop(stopIdWithoutFeed).then((routes) =>
-      routes.map((route) => ({
-        ...route,
-        routeId: this.toGlobalId(feedCode, route.routeId),
-      })),
-    )
+    const routes = await feedProvider.getRoutesForStop(stopIdWithoutFeed)
+    return routes.map((route) => ({
+      ...route,
+      routeId: this.toGlobalId(feedCode, route.routeId),
+    }))
   }
 
   async getStopsInArea(bbox: BBox): Promise<Stop[]> {

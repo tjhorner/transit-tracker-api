@@ -81,13 +81,6 @@ export class Trip {
 
   @ApiProperty({
     required: true,
-    description: "A human-readable countdown text for the arrival time",
-    example: "5min",
-  })
-  countdownText!: string
-
-  @ApiProperty({
-    required: true,
     description:
       "Whether the arrival and departure times are derived from real-time data or from the static schedule",
     example: true,
@@ -107,24 +100,6 @@ export class Trips {
 @Controller("schedule")
 export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
-
-  private getCountdownText(arrivalTime: Date): string {
-    const now = new Date()
-    const diff = arrivalTime.getTime() - now.getTime()
-    const hours = Math.floor(diff / 3600000)
-    const minutes = Math.floor(diff / 60000)
-    const seconds = Math.floor(diff / 1000)
-
-    if (hours > 0) {
-      return `${hours}h${minutes % 60}m`
-    }
-
-    if (minutes === 0 && seconds <= 30) {
-      return "Now"
-    }
-
-    return `${minutes}min`
-  }
 
   @Get(":routeStopPairs")
   @ApiOkResponse({
@@ -162,10 +137,6 @@ export class ScheduleController {
     })
 
     const tripDtos: Trip[] = schedule.trips
-      .map<Trip>((trip) => ({
-        ...trip,
-        countdownText: this.getCountdownText(new Date(trip.arrivalTime * 1000)),
-      }))
       .sort((a, b) => a.arrivalTime - b.arrivalTime)
       .splice(0, limit)
 

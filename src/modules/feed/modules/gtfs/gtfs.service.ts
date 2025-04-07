@@ -35,8 +35,8 @@ export interface TripStopRaw {
   route_color: string | null
   stop_name: string
   stop_headsign: string
-  arrival_time: Date
-  departure_time: Date
+  arrival_time: number | Date
+  departure_time: number | Date
   start_date: string
 }
 
@@ -499,8 +499,22 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         !stopTimeUpdate.arrival || !stopTimeUpdate.departure
 
       if (hasAnyUpdate && hasOnlyOneUpdate) {
-        delay =
-          stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay ?? 0
+        const definedDelay =
+          stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
+
+        if (definedDelay) {
+          delay = definedDelay
+        } else {
+          // Infer delay from difference between schedule and update
+          for (const key of ["arrival", "departure"] as const) {
+            const time = stopTimeUpdate[key]?.time
+            if (typeof time !== "number") {
+              continue
+            }
+
+            delay = new Date(trip[`${key}_time`]).getTime() / 1000 - time
+          }
+        }
       }
     }
 
@@ -603,5 +617,3 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return tripStops
   }
 }
-
-export { TripStop, RouteAtStop }
