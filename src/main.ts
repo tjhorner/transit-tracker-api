@@ -15,7 +15,7 @@ function configureForFly(app: NestExpressApplication) {
   app.set("trust proxy", 2)
 }
 
-async function bootstrap() {
+export async function bootstrap() {
   otelSDK.start()
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
@@ -34,7 +34,7 @@ async function bootstrap() {
     jsonDocumentUrl: "openapi/json",
   })
 
-  await app.listen(3000)
+  return await app.listen(3000)
 }
 
 bootstrap()

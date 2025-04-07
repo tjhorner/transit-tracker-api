@@ -22,7 +22,7 @@
     "kysely-codegen": "kysely-codegen --out-file src/modules/feed/modules/gtfs/db.d.ts",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist",
     "gtfs:sync": "nest start --entryFile scripts/sync-gtfs",
-    "gtfs:init-db": "src/scripts/init-db.sh"
+    "gtfs:db:migrate": "dbmate -e SUPERUSER_DATABASE_URL up"
   },
   "dependencies": {
     "@anchan828/nest-redlock": "^0.3.10",
@@ -49,6 +49,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
     "cron": "4.1.4",
+    "dbmate": "^2.26.0",
     "fast-csv": "^5.0.2",
     "geojson": "^0.5.0",
     "gtfs-realtime-bindings": "^1.1.1",
@@ -76,6 +77,8 @@
     "@nestjs/testing": "^11.0.13",
     "@types/express": "^5.0.1",
     "@types/geojson": "^7946.0.16",
+    "@testcontainers/postgresql": "^10.23.0",
+    "@testcontainers/redis": "^10.23.0",
     "@types/jest": "^29.5.14",
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^22.14.0",

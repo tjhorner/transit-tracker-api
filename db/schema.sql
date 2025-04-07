@@ -1,10 +1,3 @@
---
--- PostgreSQL database dump
---
-
--- Dumped from database version 16.4 (Ubuntu 16.4-1.pgdg24.04+1)
--- Dumped by pg_dump version 17.0
-
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -17,10 +10,15 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
-CREATE USER gtfs;
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+-- *not* creating schema, since initdb creates it
+
 
 --
--- Name: default_agency_id(); Type: FUNCTION; Schema: public; Owner: postgres
+-- Name: default_agency_id(); Type: FUNCTION; Schema: public; Owner: -
 --
 
 CREATE FUNCTION public.default_agency_id() RETURNS text
@@ -30,14 +28,12 @@ CREATE FUNCTION public.default_agency_id() RETURNS text
 $$;
 
 
-ALTER FUNCTION public.default_agency_id() OWNER TO postgres;
-
 SET default_tablespace = '';
 
 SET default_table_access_method = heap;
 
 --
--- Name: agency; Type: TABLE; Schema: public; Owner: postgres
+-- Name: agency; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.agency (
@@ -53,10 +49,8 @@ CREATE TABLE public.agency (
 );
 
 
-ALTER TABLE public.agency OWNER TO postgres;
-
 --
--- Name: calendar; Type: TABLE; Schema: public; Owner: postgres
+-- Name: calendar; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.calendar (
@@ -74,10 +68,8 @@ CREATE TABLE public.calendar (
 );
 
 
-ALTER TABLE public.calendar OWNER TO postgres;
-
 --
--- Name: calendar_dates; Type: TABLE; Schema: public; Owner: postgres
+-- Name: calendar_dates; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.calendar_dates (
@@ -88,10 +80,8 @@ CREATE TABLE public.calendar_dates (
 );
 
 
-ALTER TABLE public.calendar_dates OWNER TO postgres;
-
 --
--- Name: feed_info; Type: TABLE; Schema: public; Owner: postgres
+-- Name: feed_info; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.feed_info (
@@ -105,10 +95,8 @@ CREATE TABLE public.feed_info (
 );
 
 
-ALTER TABLE public.feed_info OWNER TO postgres;
-
 --
--- Name: import_metadata; Type: TABLE; Schema: public; Owner: postgres
+-- Name: import_metadata; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.import_metadata (
@@ -118,10 +106,8 @@ CREATE TABLE public.import_metadata (
 );
 
 
-ALTER TABLE public.import_metadata OWNER TO postgres;
-
 --
--- Name: routes; Type: TABLE; Schema: public; Owner: postgres
+-- Name: routes; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.routes (
@@ -142,10 +128,17 @@ CREATE TABLE public.routes (
 );
 
 
-ALTER TABLE public.routes OWNER TO postgres;
+--
+-- Name: schema_migrations; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.schema_migrations (
+    version character varying(128) NOT NULL
+);
+
 
 --
--- Name: stop_times; Type: TABLE; Schema: public; Owner: postgres
+-- Name: stop_times; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.stop_times (
@@ -163,10 +156,8 @@ CREATE TABLE public.stop_times (
 );
 
 
-ALTER TABLE public.stop_times OWNER TO postgres;
-
 --
--- Name: stops; Type: TABLE; Schema: public; Owner: postgres
+-- Name: stops; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.stops (
@@ -186,10 +177,8 @@ CREATE TABLE public.stops (
 );
 
 
-ALTER TABLE public.stops OWNER TO postgres;
-
 --
--- Name: trips; Type: TABLE; Schema: public; Owner: postgres
+-- Name: trips; Type: TABLE; Schema: public; Owner: -
 --
 
 CREATE TABLE public.trips (
@@ -209,10 +198,8 @@ CREATE TABLE public.trips (
 );
 
 
-ALTER TABLE public.trips OWNER TO postgres;
-
 --
--- Name: agency agency_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: agency agency_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.agency
@@ -220,7 +207,7 @@ ALTER TABLE ONLY public.agency
 
 
 --
--- Name: calendar_dates calendar_dates_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: calendar_dates calendar_dates_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.calendar_dates
@@ -228,7 +215,7 @@ ALTER TABLE ONLY public.calendar_dates
 
 
 --
--- Name: calendar calendar_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: calendar calendar_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.calendar
@@ -236,7 +223,7 @@ ALTER TABLE ONLY public.calendar
 
 
 --
--- Name: import_metadata import_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: import_metadata import_metadata_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.import_metadata
@@ -244,7 +231,7 @@ ALTER TABLE ONLY public.import_metadata
 
 
 --
--- Name: routes routes_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: routes routes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.routes
@@ -252,7 +239,15 @@ ALTER TABLE ONLY public.routes
 
 
 --
--- Name: stop_times stop_times_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: schema_migrations schema_migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.schema_migrations
+    ADD CONSTRAINT schema_migrations_pkey PRIMARY KEY (version);
+
+
+--
+-- Name: stop_times stop_times_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stop_times
@@ -260,7 +255,7 @@ ALTER TABLE ONLY public.stop_times
 
 
 --
--- Name: stops stops_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stops stops_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stops
@@ -268,7 +263,7 @@ ALTER TABLE ONLY public.stops
 
 
 --
--- Name: trips trips_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+-- Name: trips trips_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.trips
@@ -276,49 +271,49 @@ ALTER TABLE ONLY public.trips
 
 
 --
--- Name: idx_calendar_dates_date_exception; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_calendar_dates_date_exception; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_calendar_dates_date_exception ON public.calendar_dates USING btree (feed_code, date, exception_type);
 
 
 --
--- Name: idx_calendar_service_date_range; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_calendar_service_date_range; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_calendar_service_date_range ON public.calendar USING btree (feed_code, start_date, end_date, service_id);
 
 
 --
--- Name: idx_stop_times_stop_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_stop_times_stop_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_stop_times_stop_id ON public.stop_times USING btree (feed_code, stop_id);
 
 
 --
--- Name: idx_stop_times_trip_id; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_stop_times_trip_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_stop_times_trip_id ON public.stop_times USING btree (feed_code, trip_id);
 
 
 --
--- Name: idx_stop_times_trip_stop; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_stop_times_trip_stop; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_stop_times_trip_stop ON public.stop_times USING btree (feed_code, trip_id, stop_id);
 
 
 --
--- Name: idx_trips_route_service; Type: INDEX; Schema: public; Owner: postgres
+-- Name: idx_trips_route_service; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_trips_route_service ON public.trips USING btree (feed_code, route_id, service_id);
 
 
 --
--- Name: routes routes_feed_code_agency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: routes routes_feed_code_agency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.routes
@@ -326,7 +321,7 @@ ALTER TABLE ONLY public.routes
 
 
 --
--- Name: stop_times stop_times_feed_code_stop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stop_times stop_times_feed_code_stop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stop_times
@@ -334,7 +329,7 @@ ALTER TABLE ONLY public.stop_times
 
 
 --
--- Name: stop_times stop_times_feed_code_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: stop_times stop_times_feed_code_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.stop_times
@@ -342,7 +337,7 @@ ALTER TABLE ONLY public.stop_times
 
 
 --
--- Name: trips trips_feed_code_route_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+-- Name: trips trips_feed_code_route_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY public.trips
@@ -350,199 +345,132 @@ ALTER TABLE ONLY public.trips
 
 
 --
--- Name: agency; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: agency; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.agency ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: calendar; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: calendar; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.calendar ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: calendar_dates; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: calendar_dates; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.calendar_dates ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: feed_info; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: feed_info; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.feed_info ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: import_metadata; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: import_metadata; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.import_metadata ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: agency rls_agency; Type: POLICY; Schema: public; Owner: postgres
+-- Name: agency rls_agency; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_agency ON public.agency USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: calendar rls_calendar; Type: POLICY; Schema: public; Owner: postgres
+-- Name: calendar rls_calendar; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_calendar ON public.calendar USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: calendar_dates rls_calendar_dates; Type: POLICY; Schema: public; Owner: postgres
+-- Name: calendar_dates rls_calendar_dates; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_calendar_dates ON public.calendar_dates USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: feed_info rls_feed_info; Type: POLICY; Schema: public; Owner: postgres
+-- Name: feed_info rls_feed_info; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_feed_info ON public.feed_info USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: import_metadata rls_import_metadata; Type: POLICY; Schema: public; Owner: postgres
+-- Name: import_metadata rls_import_metadata; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_import_metadata ON public.import_metadata USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: routes rls_routes; Type: POLICY; Schema: public; Owner: postgres
+-- Name: routes rls_routes; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_routes ON public.routes USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: stop_times rls_stop_times; Type: POLICY; Schema: public; Owner: postgres
+-- Name: stop_times rls_stop_times; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_stop_times ON public.stop_times USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: stops rls_stops; Type: POLICY; Schema: public; Owner: postgres
+-- Name: stops rls_stops; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_stops ON public.stops USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: trips rls_trips; Type: POLICY; Schema: public; Owner: postgres
+-- Name: trips rls_trips; Type: POLICY; Schema: public; Owner: -
 --
 
 CREATE POLICY rls_trips ON public.trips USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
--- Name: routes; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: routes; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.routes ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: stop_times; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: stop_times; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.stop_times ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: stops; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: stops; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.stops ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: trips; Type: ROW SECURITY; Schema: public; Owner: postgres
+-- Name: trips; Type: ROW SECURITY; Schema: public; Owner: -
 --
 
 ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
 
 --
--- Name: SCHEMA public; Type: ACL; Schema: -; Owner: pg_database_owner
---
-
-GRANT ALL ON SCHEMA public TO gtfs;
-
-
---
--- Name: TABLE agency; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.agency TO gtfs;
-
-
---
--- Name: TABLE calendar; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.calendar TO gtfs;
-
-
---
--- Name: TABLE calendar_dates; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.calendar_dates TO gtfs;
-
-
---
--- Name: TABLE feed_info; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.feed_info TO gtfs;
-
-
---
--- Name: TABLE import_metadata; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.import_metadata TO gtfs;
-
-
---
--- Name: TABLE routes; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.routes TO gtfs;
-
-
---
--- Name: TABLE stop_times; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.stop_times TO gtfs;
-
-
---
--- Name: TABLE stops; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.stops TO gtfs;
-
-
---
--- Name: TABLE trips; Type: ACL; Schema: public; Owner: postgres
---
-
-GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLE public.trips TO gtfs;
-
-
---
--- Name: DEFAULT PRIVILEGES FOR TABLES; Type: DEFAULT ACL; Schema: public; Owner: postgres
---
-
-ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public GRANT SELECT,INSERT,REFERENCES,DELETE,TRIGGER,TRUNCATE,UPDATE ON TABLES TO gtfs;
-
-
---
 -- PostgreSQL database dump complete
 --
+
+
+--
+-- Dbmate schema migrations
+--
+
+INSERT INTO public.schema_migrations (version) VALUES
+    ('20250328231057'),
+    ('20250328231235'),
+    ('20250328231306');

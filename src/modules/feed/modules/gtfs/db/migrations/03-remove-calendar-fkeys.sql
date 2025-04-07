@@ -1,2 +1,0 @@
-ALTER TABLE calendar_dates DROP CONSTRAINT calendar_dates_feed_code_service_id_fkey;
-ALTER TABLE trips DROP CONSTRAINT trips_feed_code_service_id_fkey;
