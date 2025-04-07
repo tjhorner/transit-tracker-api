@@ -1,12 +1,12 @@
 import { Injectable, Logger, OnModuleInit, Type } from "@nestjs/common"
 import { DiscoveryService, ModuleRef } from "@nestjs/core"
+import * as turf from "@turf/turf"
 import fs from "fs/promises"
+import { BBox } from "geojson"
 import * as yaml from "js-yaml"
 import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
-import { FeedCode } from "./decorators/feed-provider.decorator"
-import { BBox } from "geojson"
-import * as turf from "@turf/turf"
 import { AllFeedsService } from "./all-feeds.service"
+import { FeedCode } from "./decorators/feed-provider.decorator"
 
 export interface FeedConfig {
   name: string

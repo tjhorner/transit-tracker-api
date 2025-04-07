@@ -1,6 +1,7 @@
+import { BBox } from "geojson"
 import { mock, MockProxy } from "jest-mock-extended"
-import { FeedService } from "./feed.service"
 import { AllFeedsService } from "./all-feeds.service"
+import { FeedService } from "./feed.service"
 import {
   FeedProvider,
   RouteAtStop,
@@ -8,7 +9,6 @@ import {
   StopRoute,
   TripStop,
 } from "./interfaces/feed-provider.interface"
-import { BBox } from "geojson"
 
 describe("AllFeedsService", () => {
   let allFeedsService: AllFeedsService

@@ -1,25 +1,24 @@
+import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager"
 import {
   Inject,
   InternalServerErrorException,
   Logger,
   NotFoundException,
 } from "@nestjs/common"
+import { Counter, Histogram, ValueType } from "@opentelemetry/api"
+import * as turf from "@turf/turf"
+import { BBox } from "geojson"
+import { RateLimiter } from "limiter"
+import { MetricService } from "nestjs-otel"
 import OnebusawaySDK from "onebusaway-sdk"
-import { Cache } from "@nestjs/cache-manager"
-import { CACHE_MANAGER } from "@nestjs/cache-manager"
 import {
-  RouteAtStop,
   FeedProvider,
+  RouteAtStop,
   Stop,
   StopRoute,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
-import { MetricService } from "nestjs-otel"
-import { Counter, Histogram, ValueType } from "@opentelemetry/api"
-import { RateLimiter } from "limiter"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
-import { BBox } from "geojson"
-import * as turf from "@turf/turf"
 
 export interface OneBusAwayConfig {
   baseUrl: string

@@ -2,8 +2,8 @@ import { Module } from "@nestjs/common"
 import { PostgresDialect } from "kysely"
 import { KyselyModule } from "nestjs-kysely"
 import { Pool } from "pg"
-import { GtfsService } from "./gtfs.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
+import { GtfsService } from "./gtfs.service"
 
 @Module({
   imports: [

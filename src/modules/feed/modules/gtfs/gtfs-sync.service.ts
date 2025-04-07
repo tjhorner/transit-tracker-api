@@ -1,14 +1,14 @@
 import { Injectable, Logger } from "@nestjs/common"
-import { Kysely, sql, Transaction } from "kysely"
-import { InjectKysely } from "nestjs-kysely"
-import { DB } from "./db"
+import axios, { AxiosResponse } from "axios"
 import * as csv from "fast-csv"
 import * as fs from "fs"
-import * as path from "path"
-import axios, { AxiosResponse } from "axios"
-import * as unzipper from "unzipper"
-import { rimraf } from "rimraf"
+import { Kysely, sql, Transaction } from "kysely"
+import { InjectKysely } from "nestjs-kysely"
 import { pipeline } from "node:stream/promises"
+import * as path from "path"
+import { rimraf } from "rimraf"
+import * as unzipper from "unzipper"
+import { DB } from "./db"
 
 @Injectable()
 export class GtfsSyncService {

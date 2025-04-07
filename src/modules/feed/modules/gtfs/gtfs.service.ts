@@ -1,20 +1,20 @@
-import { CACHE_MANAGER, Cache } from "@nestjs/cache-manager"
+import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager"
 import { Inject, Logger } from "@nestjs/common"
 import axios from "axios"
+import { BBox } from "geojson"
+import GtfsRealtimeBindings from "gtfs-realtime-bindings"
 import { Kysely, sql, Transaction } from "kysely"
 import { InjectKysely } from "nestjs-kysely"
-import { DB } from "./db"
 import {
-  RouteAtStop,
   FeedProvider,
+  RouteAtStop,
   Stop,
   StopRoute,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
-import GtfsRealtimeBindings from "gtfs-realtime-bindings"
-import { GtfsSyncService } from "./gtfs-sync.service"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
-import { BBox } from "geojson"
+import { DB } from "./db"
+import { GtfsSyncService } from "./gtfs-sync.service"
 
 const TripScheduleRelationship =
   GtfsRealtimeBindings.transit_realtime.TripDescriptor.ScheduleRelationship

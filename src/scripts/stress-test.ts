@@ -1,7 +1,5 @@
-import { StopRoute } from "src/modules/feed/interfaces/feed-provider.interface"
-import { allStops } from "./stops"
-import fs from "fs"
 import { WebSocket } from "ws"
+import { allStops } from "./stops"
 
 const routeStopPairs: string[] = []
 const rspChunks: string[][] = []

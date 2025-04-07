@@ -1,3 +1,4 @@
+import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { FeedService } from "./feed.service"
 import {
@@ -7,7 +8,6 @@ import {
   StopRoute,
   TripStop,
 } from "./interfaces/feed-provider.interface"
-import * as turf from "@turf/turf"
 
 type GlobalId = `${string}:${string}`
 

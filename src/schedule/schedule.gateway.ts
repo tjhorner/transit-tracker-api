@@ -13,6 +13,7 @@ import {
   WebSocketGateway,
   WsResponse,
 } from "@nestjs/websockets"
+import * as Sentry from "@sentry/nestjs"
 import {
   IsBoolean,
   IsIn,
@@ -23,6 +24,7 @@ import {
   Max,
   Min,
 } from "class-validator"
+import { randomUUID, UUID } from "crypto"
 import {
   catchError,
   finalize,
@@ -42,8 +44,6 @@ import {
   ScheduleService,
   ScheduleUpdate,
 } from "./schedule.service"
-import { randomUUID, UUID } from "crypto"
-import * as Sentry from "@sentry/nestjs"
 
 export class ScheduleSubscriptionDto {
   @IsString()

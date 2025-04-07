@@ -1,9 +1,9 @@
-import { Controller, Get, UseInterceptors } from "@nestjs/common"
-import { FeedService } from "./feed.service"
-import { ApiProperty, ApiResponse } from "@nestjs/swagger"
-import { FeatureCollection } from "geojson"
-import * as turf from "@turf/turf"
 import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager"
+import { Controller, Get, UseInterceptors } from "@nestjs/common"
+import { ApiProperty, ApiResponse } from "@nestjs/swagger"
+import * as turf from "@turf/turf"
+import { FeatureCollection } from "geojson"
+import { FeedService } from "./feed.service"
 
 class Feed {
   @ApiProperty({

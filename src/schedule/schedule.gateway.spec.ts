@@ -1,10 +1,10 @@
+import { BadRequestException } from "@nestjs/common"
 import { Test, TestingModule } from "@nestjs/testing"
+import { randomUUID } from "crypto"
+import { mock, MockProxy } from "jest-mock-extended"
+import { firstValueFrom, Observable, of } from "rxjs"
 import { ScheduleGateway, ScheduleSubscriptionDto } from "./schedule.gateway"
 import { ScheduleService, ScheduleUpdate } from "./schedule.service"
-import { mock, MockProxy } from "jest-mock-extended"
-import { BadRequestException } from "@nestjs/common"
-import { randomUUID } from "crypto"
-import { Observable, firstValueFrom, of } from "rxjs"
 
 // Mock the WebSocket exception filters
 jest.mock("src/filters/ws-exception.filter", () => ({

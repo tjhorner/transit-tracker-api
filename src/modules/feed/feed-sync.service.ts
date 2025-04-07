@@ -1,7 +1,7 @@
-import { Injectable, Logger } from "@nestjs/common"
-import { FeedService } from "./feed.service"
-import { Cron } from "@nestjs/schedule"
 import { Redlock } from "@anchan828/nest-redlock"
+import { Injectable, Logger } from "@nestjs/common"
+import { Cron } from "@nestjs/schedule"
+import { FeedService } from "./feed.service"
 
 @Injectable()
 export class FeedSyncService {

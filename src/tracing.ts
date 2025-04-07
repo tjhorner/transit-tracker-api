@@ -1,5 +1,5 @@
-import { NodeSDK } from "@opentelemetry/sdk-node"
 import { PrometheusExporter } from "@opentelemetry/exporter-prometheus"
+import { NodeSDK } from "@opentelemetry/sdk-node"
 
 const otelSDK = new NodeSDK({
   metricReader: new PrometheusExporter({

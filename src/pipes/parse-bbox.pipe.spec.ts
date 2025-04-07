@@ -1,6 +1,6 @@
 import { ArgumentMetadata, BadRequestException } from "@nestjs/common"
-import { ParseBboxPipe } from "./parse-bbox.pipe"
 import { BBox } from "geojson"
+import { ParseBboxPipe } from "./parse-bbox.pipe"
 
 describe("ParseBboxPipe", () => {
   let pipe: ParseBboxPipe

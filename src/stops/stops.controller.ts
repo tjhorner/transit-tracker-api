@@ -5,11 +5,11 @@ import {
   Param,
   UseInterceptors,
 } from "@nestjs/common"
-import { InjectFeedProvider } from "src/decorators/feed-provider.decorator"
-import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
 import * as turf from "@turf/turf"
+import type { BBox } from "geojson"
+import { InjectFeedProvider } from "src/decorators/feed-provider.decorator"
 import { FeedProviderInterceptor } from "src/interceptors/feed-provider.interceptor"
-import { BBox } from "geojson"
+import type { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
 import { ParseBboxPipe } from "src/pipes/parse-bbox.pipe"
 
 @Controller("stops")

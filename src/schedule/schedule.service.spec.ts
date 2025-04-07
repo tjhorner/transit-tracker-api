@@ -1,13 +1,13 @@
+import { randomUUID } from "crypto"
 import { mock, MockProxy } from "jest-mock-extended"
+import { firstValueFrom, Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
-import { ScheduleOptions, ScheduleService } from "./schedule.service"
-import { ScheduleMetricsService } from "./schedule-metrics.service"
 import {
   FeedProvider,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
-import { randomUUID } from "crypto"
-import { firstValueFrom, Observable } from "rxjs"
+import { ScheduleMetricsService } from "./schedule-metrics.service"
+import { ScheduleOptions, ScheduleService } from "./schedule.service"
 
 describe("ScheduleService", () => {
   let scheduleService: ScheduleService

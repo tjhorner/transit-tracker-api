@@ -17,6 +17,7 @@
     "noFallthroughCasesInSwitch": false,
     "strict": true,
     "inlineSources": true,
+    "isolatedModules": true,
 
     // Set `sourceRoot` to  "/" to strip the build path prefix
     // from generated source code references.

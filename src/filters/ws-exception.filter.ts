@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, HttpException } from "@nestjs/common"
+import { type ArgumentsHost, Catch, HttpException } from "@nestjs/common"
 import { BaseWsExceptionFilter } from "@nestjs/websockets"
 import { SentryExceptionCaptured } from "@sentry/nestjs"
 import { WebSocket } from "ws"
