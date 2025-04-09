@@ -83,6 +83,14 @@ export class FeedsController {
         }),
       )
     ).filter((feature) => feature !== null)
+    
+    if (polygonFeatures.length === 0) {
+      return turf.featureCollection([])
+    }
+
+    if (polygonFeatures.length === 1) {
+      return turf.featureCollection(polygonFeatures)
+    }
 
     return turf.featureCollection([
       turf.union(turf.featureCollection(polygonFeatures))!,

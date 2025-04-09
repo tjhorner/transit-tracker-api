@@ -10,8 +10,10 @@ import { FeedsController } from "./feeds.controller"
 
 @Module({
   imports: [
-    RedlockModule.register({
-      clients: [new Redis(process.env.REDIS_URL!, { keyPrefix: "redlock" })],
+    RedlockModule.registerAsync({
+      useFactory: () => ({
+        clients: [new Redis(process.env.REDIS_URL!, { keyPrefix: "redlock" })]
+      }),
     }),
     DiscoveryModule,
     GtfsModule,

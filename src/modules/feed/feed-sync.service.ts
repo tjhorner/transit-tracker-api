@@ -25,6 +25,7 @@ export class FeedSyncService {
       try {
         await provider.sync()
       } catch (e: any) {
+        throw e
         this.logger.warn(
           `Scheduled sync of feed "${feedCode}" failed: ${e.message}`,
           e.stack,

@@ -175,6 +175,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return this.cached(
       cacheKey,
       async () => {
+        const now = Date.now() / 1000
         const interval = `${dayOffset} days`
         const result = await this.tx(async (tx) => {
           return await sql<TripStopRaw>`
@@ -186,7 +187,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
               LIMIT 1
           ),
           current_day AS (
-              SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), now() + ${interval}::interval)) AS today
+              SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(${now}) + ${interval}::interval)) AS today
           ),
           active_services AS (
               -- Services active according to the calendar table

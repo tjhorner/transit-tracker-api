@@ -9,6 +9,7 @@ import * as path from "path"
 import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
 import { DB } from "./db"
+import { tmpdir } from "node:os"
 
 @Injectable()
 export class GtfsSyncService {
@@ -81,8 +82,7 @@ export class GtfsSyncService {
       return
     }
 
-    const tmpDir = (await import("temp-dir")).default
-    const directory = path.join(tmpDir, "gtfs-import")
+    const directory = path.join(tmpdir(), "gtfs-import")
 
     if (fs.existsSync(directory)) {
       await rimraf(directory)

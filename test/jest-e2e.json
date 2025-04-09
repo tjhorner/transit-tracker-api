@@ -8,5 +8,6 @@
   },
   "moduleNameMapper": {
     "^src/(.*)$": "<rootDir>/../src/$1"
-  }
+  },
+  "openHandlesTimeout": 30000
 }

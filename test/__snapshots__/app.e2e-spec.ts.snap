@@ -1,0 +1,144 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`E2E test GET /feeds/service-areas 1`] = `
+{
+  "features": [
+    {
+      "geometry": {
+        "coordinates": [
+          [
+            [
+              -116.40094,
+              36.641495,
+            ],
+            [
+              -117.13316,
+              36.42529,
+            ],
+            [
+              -116.81797,
+              36.88108,
+            ],
+            [
+              -116.76821,
+              36.914894,
+            ],
+            [
+              -116.75168,
+              36.915684,
+            ],
+            [
+              -116.40094,
+              36.641495,
+            ],
+          ],
+        ],
+        "type": "Polygon",
+      },
+      "properties": {},
+      "type": "Feature",
+    },
+  ],
+  "type": "FeatureCollection",
+}
+`;
+
+exports[`E2E test GET /schedule/:routeStopPairs 1`] = `
+{
+  "trips": [
+    {
+      "arrivalTime": 1199541600,
+      "departureTime": 1199541600,
+      "headsign": "Shuttle",
+      "isRealtime": false,
+      "routeColor": null,
+      "routeId": "testfeed:STBA",
+      "routeName": "30",
+      "stopId": "testfeed:STAGECOACH",
+      "stopName": "Stagecoach Hotel & Casino (Demo)",
+      "tripId": "testfeed:STBA",
+    },
+    {
+      "arrivalTime": 1199548800,
+      "departureTime": 1199548800,
+      "headsign": "to Amargosa Valley",
+      "isRealtime": false,
+      "routeColor": null,
+      "routeId": "testfeed:AAMV",
+      "routeName": "50",
+      "stopId": "testfeed:BEATTY_AIRPORT",
+      "stopName": "Nye County Airport (Demo)",
+      "tripId": "testfeed:AAMV1",
+    },
+    {
+      "arrivalTime": 1199559600,
+      "departureTime": 1199559600,
+      "headsign": "to Airport",
+      "isRealtime": false,
+      "routeColor": null,
+      "routeId": "testfeed:AAMV",
+      "routeName": "50",
+      "stopId": "testfeed:BEATTY_AIRPORT",
+      "stopName": "Nye County Airport (Demo)",
+      "tripId": "testfeed:AAMV2",
+    },
+    {
+      "arrivalTime": 1199566800,
+      "departureTime": 1199566800,
+      "headsign": "to Amargosa Valley",
+      "isRealtime": false,
+      "routeColor": null,
+      "routeId": "testfeed:AAMV",
+      "routeName": "50",
+      "stopId": "testfeed:BEATTY_AIRPORT",
+      "stopName": "Nye County Airport (Demo)",
+      "tripId": "testfeed:AAMV3",
+    },
+    {
+      "arrivalTime": 1199577600,
+      "departureTime": 1199577600,
+      "headsign": "to Airport",
+      "isRealtime": false,
+      "routeColor": null,
+      "routeId": "testfeed:AAMV",
+      "routeName": "50",
+      "stopId": "testfeed:BEATTY_AIRPORT",
+      "stopName": "Nye County Airport (Demo)",
+      "tripId": "testfeed:AAMV4",
+    },
+  ],
+}
+`;
+
+exports[`E2E test GET /stops/:id/routes 1`] = `
+[
+  {
+    "color": null,
+    "headsigns": [
+      "to Airport",
+      "to Amargosa Valley",
+    ],
+    "name": "50",
+    "routeId": "testfeed:AAMV",
+  },
+]
+`;
+
+exports[`E2E test GET /stops/within/:bbox 1`] = `
+[
+  {
+    "lat": 36.914894,
+    "lon": -116.76821,
+    "name": "North Ave / D Ave N (Demo)",
+    "stopCode": null,
+    "stopId": "testfeed:NADAV",
+  },
+  {
+    "lat": 36.914944,
+    "lon": -116.761475,
+    "name": "North Ave / N A Ave (Demo)",
+    "stopCode": null,
+    "stopId": "testfeed:NANAA",
+  },
+]
+`;

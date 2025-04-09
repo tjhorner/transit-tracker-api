@@ -1,0 +1,7 @@
+feeds:
+  testfeed:
+    name: Test Feed
+    description: Test Feed Description
+    gtfs:
+      static:
+        url: https://github.com/interline-io/transitland-lib/raw/896bd4d7bf6cb1d55feb5d0072195c3903006cf9/testdata/example.zip
