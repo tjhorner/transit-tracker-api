@@ -1,3 +1,4 @@
+import archiver from "archiver"
 import express from "express"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import { Server } from "http"
@@ -12,7 +13,16 @@ export async function setupFakeGtfsServer() {
   let currentTripUpdates: GtfsRt.ITripUpdate[] = []
   let simulateTripUpdatesFailure = false
 
-  gtfsServerApp.get("/gtfs-rt/trip-updates", (req, res) => {
+  gtfsServerApp.get("/feed.zip", (_, res) => {
+    res.setHeader("Content-Type", "application/zip")
+
+    const archive = archiver("zip")
+    archive.pipe(res)
+    archive.directory(path.join(__dirname, "..", "fixtures", "gtfs-feed"), "/")
+    archive.finalize()
+  })
+
+  gtfsServerApp.get("/gtfs-rt/trip-updates", (_, res) => {
     if (simulateTripUpdatesFailure) {
       res.status(500).send("Simulated failure")
       return

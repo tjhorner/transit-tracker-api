@@ -440,11 +440,9 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     )
   }
 
-  async getTripUpdates(
-    tripIds: string[],
-  ): Promise<{ [tripId: string]: ITripUpdate }> {
+  async getTripUpdates(): Promise<ITripUpdate[]> {
     if (!this.config.rtTripUpdates) {
-      return {}
+      return []
     }
 
     const allFeedEntities: GtfsRt.IFeedEntity[] = await this.cached(
@@ -493,27 +491,9 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
       },
     )
 
-    if (typeof allFeedEntities?.[Symbol.iterator] !== "function") {
-      return {}
-    }
-
-    const filteredTripUpdates: { [tripId: string]: ITripUpdate } = {}
-    for (const entity of allFeedEntities) {
-      if (!entity.tripUpdate) {
-        continue
-      }
-
-      const tripId = entity.tripUpdate.trip.tripId
-      if (tripId && tripIds.includes(tripId)) {
-        const key = entity.tripUpdate.trip.startDate
-          ? `${tripId}_${entity.tripUpdate.trip.startDate}`
-          : tripId
-
-        filteredTripUpdates[key] = entity.tripUpdate
-      }
-    }
-
-    return filteredTripUpdates
+    return allFeedEntities
+      .map((entity) => entity.tripUpdate)
+      .filter((tripUpdate) => !!tripUpdate)
   }
 
   private resolveTripTimes(
@@ -584,11 +564,44 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     }
   }
 
+  private matchTripToTripUpdate(
+    trip: TripStopRaw,
+    tripUpdates: ITripUpdate[],
+  ): {
+    tripUpdate: ITripUpdate | undefined
+    stopTimeUpdate: IStopTimeUpdate | undefined
+  } {
+    // Filter by trip updates with:
+    //   - the same trip_id and start_date *or*
+    //   - the same trip_id and no start_date
+    const tripUpdate = tripUpdates.find(
+      (update) =>
+        (update.trip.tripId === trip.trip_id &&
+          update.trip.startDate === trip.start_date) ||
+        (!update.trip.startDate && update.trip.tripId === trip.trip_id),
+    )
+
+    const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
+      (update) =>
+        update.stopSequence === trip.stop_sequence ||
+        update.stopId === trip.stop_id,
+    )
+
+    return { tripUpdate, stopTimeUpdate }
+  }
+
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
     const scheduleDates = [-1, 0, 1]
     const now = Date.now()
+
+    let tripUpdates: ITripUpdate[] = []
+    try {
+      tripUpdates = await this.getTripUpdates()
+    } catch (e: any) {
+      this.logger.warn("Failed to fetch trip updates, using schedule", e.stack)
+    }
 
     const tripStops: TripStop[] = []
     for (const scheduleDate of scheduleDates) {
@@ -600,27 +613,10 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         )
       ).flat()
 
-      let tripUpdates: { [tripId: string]: ITripUpdate | undefined } = {}
-      try {
-        tripUpdates = await this.getTripUpdates(
-          trips.map((trip) => trip.trip_id),
-        )
-      } catch (e: any) {
-        this.logger.warn(
-          "Failed to fetch trip updates, using schedule",
-          e.stack,
-        )
-      }
-
       trips.forEach((trip) => {
-        const tripUpdate =
-          tripUpdates[`${trip.trip_id}_${trip.start_date}`] ??
-          tripUpdates[trip.trip_id]
-
-        const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
-          (update) =>
-            update.stopSequence === trip.stop_sequence ||
-            update.stopId === trip.stop_id,
+        let { tripUpdate, stopTimeUpdate } = this.matchTripToTripUpdate(
+          trip,
+          tripUpdates,
         )
 
         const { arrivalTime, departureTime, isRealtime } =
