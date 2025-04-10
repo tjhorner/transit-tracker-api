@@ -243,6 +243,55 @@ describe("E2E test", () => {
         expect(updatedTrips[1].isRealtime).toBe(false)
       })
 
+      test("with cancelled trip on multiple days using ambiguous start_date", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "STBA",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.CANCELED,
+            },
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        const remainingUncancelledTrips = trips.filter(
+          (trip) => trip.tripId === "testfeed:STBA",
+        )
+
+        // Expect that we have only cancelled one of the two STBA trips
+        expect(remainingUncancelledTrips).toHaveLength(1)
+        expect(remainingUncancelledTrips[0].arrivalTime).toBe(1199541600)
+      })
+
+      test("with skipped stop on multiple days using ambiguous start_date", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "STBA",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopId: "STAGECOACH",
+                scheduleRelationship:
+                  GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED,
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        const remainingUncancelledTrips = trips.filter(
+          (trip) => trip.tripId === "testfeed:STBA",
+        )
+
+        // Expect that we have only cancelled one of the two STBA trips
+        expect(remainingUncancelledTrips).toHaveLength(1)
+        expect(remainingUncancelledTrips[0].arrivalTime).toBe(1199541600)
+      })
+
       test.each(["arrival", "departure"])(
         "with %s time update",
         async (arrivalOrDeparture: string) => {

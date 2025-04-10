@@ -617,31 +617,48 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
           tripUpdates[`${trip.trip_id}_${trip.start_date}`] ??
           tripUpdates[trip.trip_id]
 
-        if (
-          tripUpdate?.trip?.scheduleRelationship ===
-          TripScheduleRelationship.CANCELED
-        ) {
-          return
-        }
-
         const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
           (update) =>
             update.stopSequence === trip.stop_sequence ||
             update.stopId === trip.stop_id,
         )
 
-        if (
-          stopTimeUpdate?.scheduleRelationship ===
-          StopTimeScheduleRelationship.SKIPPED
-        ) {
-          return
-        }
-
         const { arrivalTime, departureTime, isRealtime } =
           this.resolveTripTimes(trip, stopTimeUpdate)
 
         if (departureTime.getTime() < now) {
           return
+        }
+
+        // A trip is "feasibly active" if it arrives or departs within 4 hours
+        // and is used to determine if we should apply cancellations or skips
+        // to the trip
+        const tripIsFeasiblyActive =
+          Math.min(
+            Math.abs(arrivalTime.getTime() - now),
+            Math.abs(departureTime.getTime() - now),
+          ) < 14400000
+
+        // Apply cancelled or skipped updates to trips that:
+        //   - we infer are active *or*
+        //   - explicitly have the same start date as the trip
+        if (
+          tripIsFeasiblyActive ||
+          tripUpdate?.trip?.startDate === trip.start_date
+        ) {
+          if (
+            tripUpdate?.trip?.scheduleRelationship ===
+            TripScheduleRelationship.CANCELED
+          ) {
+            return
+          }
+
+          if (
+            stopTimeUpdate?.scheduleRelationship ===
+            StopTimeScheduleRelationship.SKIPPED
+          ) {
+            return
+          }
         }
 
         if (
