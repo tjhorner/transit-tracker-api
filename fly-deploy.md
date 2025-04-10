@@ -61,16 +61,14 @@ Then run the following command in a new shell session to initialize the database
 
 ```bash
 # Using the modified connection string
-DATABASE_URL="postgres://username:password@localhost:5432" ./src/scripts/init-db.sh
+SUPERUSER_DATABASE_URL="postgres://username:password@localhost:5432/gtfs" pnpm gtfs:db:migrate
 ```
 
-This will initialize the database and create the `gtfs` user, whose password is provided at the end of the command. Using this password, modify the original connection string (the one from the `fly postgres create` command) to use the `gtfs` user with the generated password and the `gtfs` database and run this command:
+This command will create the database and run the migrations to set up the GTFS schema. It will also create the `gtfs` user used to run the GTFS queries. The default password is `gtfs`, so it's recommended to change it to something more secure. We'll create a new `DATABASE_URL` environment variable for the GTFS database with the new password.
 
 ```bash
-export DATABASE_URL="postgres://gtfs:GeneratedPasswordGoesHere@postgres-app-name.flycast:5432/gtfs"
+export DATABASE_URL="postgres://gtfs:gtfs@postgres-app-name.flycast:5432/gtfs"
 ```
-
-This will be our `DATABASE_URL` environment variable for the GTFS database when we deploy the API later.
 
 ## Deploy Redis
 

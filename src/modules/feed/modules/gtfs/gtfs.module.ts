@@ -1,4 +1,4 @@
-import { DynamicModule, Module } from "@nestjs/common"
+import { Module } from "@nestjs/common"
 import { PostgresDialect } from "kysely"
 import { KyselyModule } from "nestjs-kysely"
 import { Pool } from "pg"
@@ -15,7 +15,7 @@ import { GtfsService } from "./gtfs.service"
             idleTimeoutMillis: 60000,
           }),
         }),
-      })
+      }),
     }),
   ],
   providers: [GtfsService, GtfsSyncService],

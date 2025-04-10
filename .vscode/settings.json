@@ -1,3 +1,15 @@
 {
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "typescript.tsdk": "node_modules/typescript/lib",
+  "jest.virtualFolders": [
+    {
+      "name": "unit-tests",
+      "jestCommandLine": "npm test --",
+      "runMode": "watch",
+    },
+    {
+      "name": "e2e-tests",
+      "jestCommandLine": "npm run test:e2e --",
+      "runMode": "on-demand",
+    }
+  ]
 }

@@ -12,7 +12,7 @@ import { FeedsController } from "./feeds.controller"
   imports: [
     RedlockModule.registerAsync({
       useFactory: () => ({
-        clients: [new Redis(process.env.REDIS_URL!, { keyPrefix: "redlock" })]
+        clients: [new Redis(process.env.REDIS_URL!, { keyPrefix: "redlock" })],
       }),
     }),
     DiscoveryModule,

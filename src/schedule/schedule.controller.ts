@@ -13,7 +13,7 @@ import {
 } from "@nestjs/swagger"
 import { ScheduleService } from "./schedule.service"
 
-export class Trip {
+export class TripDto {
   @ApiProperty({
     required: true,
     description:
@@ -91,10 +91,10 @@ export class Trip {
 export class Trips {
   @ApiProperty({
     isArray: true,
-    type: Trip,
+    type: TripDto,
     required: true,
   })
-  trips!: Trip[]
+  trips!: TripDto[]
 }
 
 @Controller("schedule")
@@ -136,7 +136,7 @@ export class ScheduleController {
       limit,
     })
 
-    const tripDtos: Trip[] = schedule.trips
+    const tripDtos: TripDto[] = schedule.trips
       .sort((a, b) => a.arrivalTime - b.arrivalTime)
       .splice(0, limit)
 

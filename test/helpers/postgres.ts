@@ -1,7 +1,10 @@
 import { PostgreSqlContainer } from "@testcontainers/postgresql"
 import { exec } from "child_process"
 
-async function runCmd(command: string, env: Record<string, string>): Promise<{
+async function runCmd(
+  command: string,
+  env: Record<string, string>,
+): Promise<{
   stdout: string
   stderr: string
 }> {

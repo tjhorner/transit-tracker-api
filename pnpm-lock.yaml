@@ -65,6 +65,9 @@ importers:
       axios:
         specifier: ^1.8.4
         version: 1.8.4
+      cache-control-parser:
+        specifier: ^2.0.6
+        version: 2.0.6
       cache-manager:
         specifier: ^6.4.2
         version: 6.4.2
@@ -2540,6 +2543,9 @@ packages:
   bytes@3.1.2:
     resolution: {integrity: sha512-/Nf7TyzTx6S3yRJObOAV7956r8cr2+Oj8AC5dt8wSP3BQAoeX58NoHyCU8P8zGkNXStjTSi6fzO6F0pBdcYbEg==}
     engines: {node: '>= 0.8'}
+
+  cache-control-parser@2.0.6:
+    resolution: {integrity: sha512-N4rxCk7V8NLfUVONXG0d7S4IyTQh3KEDW5k2I4CAcEUcMQCmVkfAMn37JSWfUQudiR883vDBy5XM5+TS2Xo7uQ==}
 
   cache-manager@6.4.2:
     resolution: {integrity: sha512-oT0d1cGWZAlqEGDPjOfhmldTS767jT6kBT3KIdn7MX5OevlRVYqJT+LxRv5WY4xW9heJtYxeRRXaoKlEW+Biew==}
@@ -8718,6 +8724,8 @@ snapshots:
   byline@5.0.0: {}
 
   bytes@3.1.2: {}
+
+  cache-control-parser@2.0.6: {}
 
   cache-manager@6.4.2:
     dependencies:

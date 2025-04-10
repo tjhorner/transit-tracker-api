@@ -4,12 +4,12 @@ import * as csv from "fast-csv"
 import * as fs from "fs"
 import { Kysely, sql, Transaction } from "kysely"
 import { InjectKysely } from "nestjs-kysely"
+import { tmpdir } from "node:os"
 import { pipeline } from "node:stream/promises"
 import * as path from "path"
 import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
 import { DB } from "./db"
-import { tmpdir } from "node:os"
 
 @Injectable()
 export class GtfsSyncService {

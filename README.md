@@ -50,18 +50,22 @@ feeds:
 
 To facilitate fast queries of the static GTFS data, the API uses a PostgreSQL database to store and index it.
 
-Since there is no auto-migration mechanism in place yet, you'll need to perform them yourself. Assuming you are running as a Postgres superuser in a database named `gtfs`, you can import the [database schema](./src/modules/feed/modules/gtfs/db/schema.sql) to create the necessary tables, indices, and `gtfs` role.
+Run the following command to perform the migrations on your PostgreSQL database:
 
-Once you've imported the schema, set the password for the new `gtfs` role:
+```bash
+SUPERUSER_DATABASE_URL="postgres://postgres:your_password@localhost:5432/gtfs" pnpm gtfs:db:migrate
+```
+
+Once the migrations are complete, it's recommended to change the password of the `gtfs` user (it's `gtfs` by default):
 
 ```sql
 ALTER ROLE gtfs WITH PASSWORD 'your_password';
 ```
 
-Then set the `DATABASE_URL` environment variable to use the new user and password. For example:
+Then set the `DATABASE_URL` environment variable to use the `gtfs` user. For example:
 
 ```bash
-DATABASE_URL=postgres://gtfs:your_password@localhost:5432/gtfs
+DATABASE_URL=postgres://gtfs:gtfs@localhost:5432/gtfs
 ```
 
 > [!IMPORTANT]  
