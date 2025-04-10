@@ -292,6 +292,31 @@ describe("E2E test", () => {
         expect(remainingUncancelledTrips[0].arrivalTime).toBe(1199541600)
       })
 
+      test("with time update more than 90 minutes deviated from schedule", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "STBA",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopId: "STAGECOACH",
+                arrival: {
+                  time: 1199460700,
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        expect(trips.some((trip) => trip.tripId === "testfeed:STBA" && trip.arrivalTime === 1199460700)).toBe(false)
+        expect(trips.some((trip) => trip.tripId === "testfeed:STBA" && trip.isRealtime)).toBe(false)
+      })
+
       test.each(["arrival", "departure"])(
         "with %s time update",
         async (arrivalOrDeparture: string) => {
