@@ -1,3 +1,4 @@
+import { BadRequestException, NotFoundException } from "@nestjs/common"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { FeedService } from "./feed.service"
@@ -8,11 +9,10 @@ import {
   StopRoute,
   TripStop,
 } from "./interfaces/feed-provider.interface"
-import { BadRequestException, NotFoundException } from "@nestjs/common"
 
 type GlobalId = `${string}:${string}`
 
-export class AllFeedsService implements FeedProvider<never> {
+export class AllFeedsService implements FeedProvider {
   constructor(private readonly feedService: FeedService) {}
 
   private onAllProviders<T>(
@@ -46,8 +46,6 @@ export class AllFeedsService implements FeedProvider<never> {
   private toGlobalId(feedCode: string, id: string): GlobalId {
     return `${feedCode}:${id}`
   }
-
-  init(): void {}
 
   healthCheck(): Promise<void> {
     return Promise.resolve()
@@ -91,7 +89,9 @@ export class AllFeedsService implements FeedProvider<never> {
       Object.entries(routeStopsByFeed).map(async ([feedCode, routeStops]) => {
         const provider = this.feedService.getFeedProvider(feedCode)
         if (!provider) {
-          throw new NotFoundException(`No provider found for feed code ${feedCode}`)
+          throw new NotFoundException(
+            `No provider found for feed code ${feedCode}`,
+          )
         }
 
         const result =

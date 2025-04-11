@@ -2,6 +2,8 @@ import { Module } from "@nestjs/common"
 import { PostgresDialect } from "kysely"
 import { KyselyModule } from "nestjs-kysely"
 import { Pool } from "pg"
+import { GtfsDbService } from "./gtfs-db.service"
+import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
 import { GtfsService } from "./gtfs.service"
 
@@ -18,7 +20,7 @@ import { GtfsService } from "./gtfs.service"
       }),
     }),
   ],
-  providers: [GtfsService, GtfsSyncService],
-  exports: [GtfsService, GtfsSyncService],
+  providers: [GtfsService, GtfsDbService, GtfsRealtimeService, GtfsSyncService],
+  exports: [GtfsService],
 })
 export class GtfsModule {}

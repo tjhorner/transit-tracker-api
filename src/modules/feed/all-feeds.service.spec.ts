@@ -37,12 +37,6 @@ describe("AllFeedsService", () => {
     allFeedsService = new AllFeedsService(mockFeedService)
   })
 
-  describe("init", () => {
-    it("should not throw an error", () => {
-      expect(() => allFeedsService.init()).not.toThrow()
-    })
-  })
-
   describe("healthCheck", () => {
     it("should resolve without error", async () => {
       await expect(allFeedsService.healthCheck()).resolves.toBeUndefined()

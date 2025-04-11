@@ -1,12 +1,11 @@
 import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager"
 import { Inject, Logger } from "@nestjs/common"
-import axios from "axios"
-import { parse as parseCacheControl } from "cache-control-parser"
+import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
-import { Kysely, sql, Transaction } from "kysely"
-import { InjectKysely } from "nestjs-kysely"
-import {
+import { sql } from "kysely"
+import type {
+  FeedContext,
   FeedProvider,
   RouteAtStop,
   Stop,
@@ -14,7 +13,8 @@ import {
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
-import { DB } from "./db"
+import { GtfsDbService } from "./gtfs-db.service"
+import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
 
 const TripScheduleRelationship = GtfsRt.TripDescriptor.ScheduleRelationship
@@ -23,7 +23,6 @@ const StopTimeScheduleRelationship =
   GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship
 
 type ITripUpdate = GtfsRt.ITripUpdate
-type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate
 
 export interface TripStopRaw {
   trip_id: string
@@ -50,20 +49,19 @@ export interface GtfsConfig {
 }
 
 @RegisterFeedProvider("gtfs")
-export class GtfsService implements FeedProvider<GtfsConfig> {
+export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
-  private feedCode!: string
-  private config!: GtfsConfig
+  private feedCode: string
+  private config: GtfsConfig
 
   constructor(
-    @InjectKysely() private readonly db: Kysely<DB>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    private readonly db: GtfsDbService,
     private readonly syncService: GtfsSyncService,
-  ) {}
-
-  init(feedCode: string, config: GtfsConfig): void {
+    private readonly realtimeService: GtfsRealtimeService,
+  ) {
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
-
     this.feedCode = feedCode
     this.config = config
   }
@@ -93,7 +91,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
   }
 
   async healthCheck(): Promise<void> {
-    const result = await this.syncService.hasEverSynced(this.feedCode)
+    const result = await this.syncService.hasEverSynced()
     if (!result) {
       throw new Error("GTFS feed has never been synced")
     }
@@ -103,7 +101,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return this.cached(
       "agencyBounds",
       async () => {
-        const stopBounds = await this.tx(async (tx) => {
+        const stopBounds = await this.db.tx(async (tx) => {
           return await sql<{
             min_lat: number
             min_lon: number
@@ -131,16 +129,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
   }
 
   async sync(): Promise<void> {
-    await this.syncService.importFromUrl(this.feedCode, this.config.static.url)
-  }
-
-  async tx<T>(fn: (tx: Transaction<DB>) => Promise<T>): Promise<T> {
-    return await this.db.transaction().execute(async (tx) => {
-      await sql`SET LOCAL app.current_feed = '${sql.raw(
-        this.feedCode,
-      )}';`.execute(tx)
-      return await fn(tx)
-    })
+    await this.syncService.import()
   }
 
   private removeFromStart(str: string, substrs: string[]): string {
@@ -188,7 +177,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
       cacheKey,
       async () => {
         const interval = `${dayOffset} days`
-        const result = await this.tx(async (tx) => {
+        const result = await this.db.tx(async (tx) => {
           return await sql<TripStopRaw>`
           WITH agency_timezone AS (
               SELECT agency_timezone AS tz
@@ -307,7 +296,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return this.cached(
       "stops",
       async () => {
-        const stops = await this.tx(async (tx) => {
+        const stops = await this.db.tx(async (tx) => {
           return await tx
             .selectFrom("stops")
             .select([
@@ -337,7 +326,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
   async getStopsInArea(
     bbox: [number, number, number, number],
   ): Promise<Stop[]> {
-    const stops = await this.tx(async (tx) => {
+    const stops = await this.db.tx(async (tx) => {
       return await tx
         .selectFrom("stops")
         .select(["stop_id", "stop_name", "stop_code", "stop_lat", "stop_lon"])
@@ -361,7 +350,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return this.cached(
       `stop-${stopId}`,
       async () => {
-        const stop = await this.tx(async (tx) => {
+        const stop = await this.db.tx(async (tx) => {
           return await tx
             .selectFrom("stops")
             .select([
@@ -391,7 +380,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
     return this.cached(
       `routesForStop-${stopId}`,
       async () => {
-        const routes = await this.tx(async (tx) => {
+        const routes = await this.db.tx(async (tx) => {
           return await tx
             .selectFrom("stop_times")
             .innerJoin("trips", "stop_times.trip_id", "trips.trip_id")
@@ -447,147 +436,12 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
 
     const allFeedEntities: GtfsRt.IFeedEntity[] = await this.cached(
       "tripUpdates",
-      async () => {
-        let fetchConfigs: FetchConfig[] = []
-        if (Array.isArray(this.config.rtTripUpdates)) {
-          fetchConfigs = this.config.rtTripUpdates
-        } else if (typeof this.config.rtTripUpdates === "object") {
-          fetchConfigs = [this.config.rtTripUpdates]
-        }
-
-        let maxAge = -1
-        const responses = await Promise.all(
-          fetchConfigs.map(async (config) => {
-            const resp = await axios.get(config.url, {
-              responseType: "arraybuffer",
-              responseEncoding: "binary",
-              headers: config.headers,
-            })
-
-            if (resp.headers["cache-control"]) {
-              const directives = parseCacheControl(
-                resp.headers["cache-control"],
-              )
-              if (typeof directives["max-age"] === "number") {
-                maxAge = Math.max(maxAge, directives["max-age"])
-              } else if (directives["no-cache"]) {
-                maxAge = Math.max(maxAge, 0)
-              }
-            }
-
-            const feedMessage = GtfsRt.FeedMessage.toObject(
-              GtfsRt.FeedMessage.decode(Uint8Array.from(resp.data)),
-              { longs: Number },
-            )
-
-            return feedMessage.entity ?? []
-          }),
-        )
-
-        return {
-          value: responses.flat(),
-          ttl: maxAge >= 0 ? maxAge * 1000 : 15_000,
-        }
-      },
+      this.realtimeService.getTripUpdates.bind(this.realtimeService),
     )
 
     return allFeedEntities
       .map((entity) => entity.tripUpdate)
       .filter((tripUpdate) => !!tripUpdate)
-  }
-
-  private resolveTripTimes(
-    trip: TripStopRaw,
-    stopTimeUpdate?: IStopTimeUpdate,
-  ) {
-    const scheduledArrivalTime = new Date(trip.arrival_time)
-    const scheduledDepartureTime = new Date(trip.departure_time)
-
-    let delay = 0
-    if (stopTimeUpdate) {
-      const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
-      const hasOnlyOneUpdate =
-        !stopTimeUpdate.arrival || !stopTimeUpdate.departure
-
-      if (hasAnyUpdate && hasOnlyOneUpdate) {
-        const definedDelay =
-          stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
-
-        if (definedDelay) {
-          delay = definedDelay
-        } else {
-          // Infer delay from difference between schedule and update
-          for (const key of ["arrival", "departure"] as const) {
-            const time = stopTimeUpdate[key]?.time
-            if (typeof time !== "number") {
-              continue
-            }
-
-            delay = time - new Date(trip[`${key}_time`]).getTime() / 1000
-          }
-        }
-      }
-    }
-
-    const departureTime = stopTimeUpdate?.departure?.time
-      ? new Date((stopTimeUpdate.departure?.time as number) * 1000)
-      : new Date(scheduledDepartureTime.getTime() + delay * 1000)
-
-    const arrivalTime = stopTimeUpdate?.arrival?.time
-      ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
-      : new Date(scheduledArrivalTime.getTime() + delay * 1000)
-
-    if (arrivalTime > departureTime) {
-      departureTime.setTime(arrivalTime.getTime())
-    }
-
-    const maximumDeviationFromSchedule = Math.max(
-      Math.abs(departureTime.getTime() - scheduledDepartureTime.getTime()),
-      Math.abs(arrivalTime.getTime() - scheduledArrivalTime.getTime()),
-    )
-
-    const ninetyMinutes = 5400000
-    if (maximumDeviationFromSchedule > ninetyMinutes) {
-      // Low confidence prediction, following Transit's guidelines:
-      // https://resources.transitapp.com/article/462-trip-updates#rbest
-      return {
-        departureTime: scheduledDepartureTime,
-        arrivalTime: scheduledArrivalTime,
-        isRealtime: false,
-      }
-    }
-
-    return {
-      departureTime,
-      arrivalTime,
-      isRealtime: !!stopTimeUpdate,
-    }
-  }
-
-  private matchTripToTripUpdate(
-    trip: TripStopRaw,
-    tripUpdates: ITripUpdate[],
-  ): {
-    tripUpdate: ITripUpdate | undefined
-    stopTimeUpdate: IStopTimeUpdate | undefined
-  } {
-    // Filter by trip updates with:
-    //   - the same trip_id and start_date *or*
-    //   - the same trip_id and no start_date
-    const tripUpdate = tripUpdates.find(
-      (update) =>
-        (update.trip.tripId === trip.trip_id &&
-          update.trip.startDate === trip.start_date) ||
-        (!update.trip.startDate && update.trip.tripId === trip.trip_id),
-    )
-
-    const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
-      (update) =>
-        update.stopSequence === trip.stop_sequence ||
-        update.stopId === trip.stop_id,
-    )
-
-    return { tripUpdate, stopTimeUpdate }
   }
 
   async getUpcomingTripsForRoutesAtStops(
@@ -605,7 +459,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
 
     const tripStops: TripStop[] = []
     for (const scheduleDate of scheduleDates) {
-      const trips = (
+      const staticTrips = (
         await Promise.all(
           routes.map(({ routeId, stopId }) =>
             this.getScheduleForRouteAtStop(routeId, stopId, scheduleDate),
@@ -613,14 +467,12 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         )
       ).flat()
 
-      trips.forEach((trip) => {
-        let { tripUpdate, stopTimeUpdate } = this.matchTripToTripUpdate(
-          trip,
-          tripUpdates,
-        )
+      staticTrips.forEach((staticTrip) => {
+        const { tripUpdate, stopTimeUpdate } =
+          this.realtimeService.matchTripToTripUpdate(staticTrip, tripUpdates)
 
         const { arrivalTime, departureTime, isRealtime } =
-          this.resolveTripTimes(trip, stopTimeUpdate)
+          this.realtimeService.resolveTripTimes(staticTrip, stopTimeUpdate)
 
         if (departureTime.getTime() < now) {
           return
@@ -640,7 +492,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         //   - explicitly have the same start date as the trip
         if (
           tripIsFeasiblyActive ||
-          tripUpdate?.trip?.startDate === trip.start_date
+          tripUpdate?.trip?.startDate === staticTrip.start_date
         ) {
           if (
             tripUpdate?.trip?.scheduleRelationship ===
@@ -660,7 +512,7 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         if (
           tripStops.some(
             (ts) =>
-              ts.tripId === trip.trip_id &&
+              ts.tripId === staticTrip.trip_id &&
               ts.arrivalTime === arrivalTime &&
               ts.departureTime === departureTime,
           )
@@ -670,16 +522,16 @@ export class GtfsService implements FeedProvider<GtfsConfig> {
         }
 
         tripStops.push({
-          tripId: trip.trip_id,
-          routeId: trip.route_id,
-          stopId: trip.stop_id,
-          routeName: trip.route_name,
-          routeColor: trip.route_color?.replaceAll("#", "") ?? null,
+          tripId: staticTrip.trip_id,
+          routeId: staticTrip.route_id,
+          stopId: staticTrip.stop_id,
+          routeName: staticTrip.route_name,
+          routeColor: staticTrip.route_color?.replaceAll("#", "") ?? null,
           headsign: this.removeRouteNameFromHeadsign(
-            trip.route_name,
-            trip.stop_headsign,
+            staticTrip.route_name,
+            staticTrip.stop_headsign,
           ),
-          stopName: trip.stop_name,
+          stopName: staticTrip.stop_name,
           arrivalTime,
           departureTime,
           isRealtime,

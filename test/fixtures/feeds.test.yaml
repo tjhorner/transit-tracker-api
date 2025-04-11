@@ -5,5 +5,9 @@ feeds:
     gtfs:
       static:
         url: http://127.0.0.1:3123/feed.zip
+        headers:
+          Authorization: fake-auth
       rtTripUpdates:
         url: http://127.0.0.1:3123/gtfs-rt/trip-updates
+        headers:
+          Authorization: fake-auth

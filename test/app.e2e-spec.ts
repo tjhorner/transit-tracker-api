@@ -313,8 +313,18 @@ describe("E2E test", () => {
         ])
 
         const trips = await getTripSchedule()
-        expect(trips.some((trip) => trip.tripId === "testfeed:STBA" && trip.arrivalTime === 1199460700)).toBe(false)
-        expect(trips.some((trip) => trip.tripId === "testfeed:STBA" && trip.isRealtime)).toBe(false)
+        expect(
+          trips.some(
+            (trip) =>
+              trip.tripId === "testfeed:STBA" &&
+              trip.arrivalTime === 1199460700,
+          ),
+        ).toBe(false)
+        expect(
+          trips.some(
+            (trip) => trip.tripId === "testfeed:STBA" && trip.isRealtime,
+          ),
+        ).toBe(false)
       })
 
       test.each(["arrival", "departure"])(

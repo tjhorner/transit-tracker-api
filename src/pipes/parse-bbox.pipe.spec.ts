@@ -80,19 +80,68 @@ describe("ParseBboxPipe", () => {
 
   it("should reject empty string input", async () => {
     const value = ""
-
     await expect(pipe.transform(value, metadata)).rejects.toThrow()
+  })
+
+  it("should throw BadRequestException when longitude is out of range", async () => {
+    // Test minLon out of range (below -180)
+    let value = "-190,37,-121,38"
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      BadRequestException,
+    )
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      "minLon ([0]) must be between -180 and 180",
+    )
+
+    // Test maxLon out of range (above 180)
+    value = "-122,37,190,38"
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      BadRequestException,
+    )
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      "maxLon ([2]) must be between -180 and 180",
+    )
+  })
+
+  it("should throw BadRequestException when latitude is out of range", async () => {
+    // Test minLat out of range (below -90)
+    let value = "-122,-95,-121,38"
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      BadRequestException,
+    )
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      "minLat ([1]) must be between -90 and 90",
+    )
+
+    // Test maxLat out of range (above 90)
+    value = "-122,37,-121,95"
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      BadRequestException,
+    )
+    await expect(pipe.transform(value, metadata)).rejects.toThrow(
+      "maxLat ([3]) must be between -90 and 90",
+    )
+  })
+
+  it("should accept boundary values for lat/lon ranges", async () => {
+    // Test minimum boundary values
+    let value = "-180,-90,-170,-80"
+    expect(await pipe.transform(value, metadata)).toEqual([
+      -180, -90, -170, -80,
+    ])
+
+    // Test maximum boundary values
+    value = "170,80,180,90"
+    expect(await pipe.transform(value, metadata)).toEqual([170, 80, 180, 90])
   })
 
   it("should reject null input", async () => {
     const value = null
-
     await expect(pipe.transform(value, metadata)).rejects.toThrow()
   })
 
   it("should reject undefined input", async () => {
     const value = undefined
-
     await expect(pipe.transform(value, metadata)).rejects.toThrow()
   })
 })

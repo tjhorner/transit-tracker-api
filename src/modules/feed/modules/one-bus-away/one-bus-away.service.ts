@@ -5,13 +5,15 @@ import {
   Logger,
   NotFoundException,
 } from "@nestjs/common"
+import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { RateLimiter } from "limiter"
 import { MetricService } from "nestjs-otel"
 import OnebusawaySDK from "onebusaway-sdk"
-import {
+import type {
+  FeedContext,
   FeedProvider,
   RouteAtStop,
   Stop,
@@ -54,10 +56,10 @@ function latLonSpanToBounds(
 }
 
 @RegisterFeedProvider("onebusaway")
-export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
-  private logger = new Logger(OneBusAwayService.name)
-  private feedCode!: string
-  private obaSdk!: OnebusawaySDK
+export class OneBusAwayService implements FeedProvider {
+  private logger: Logger
+  private feedCode: string
+  private obaSdk: OnebusawaySDK
   private obaRateLimiter = new RateLimiter({
     tokensPerInterval: 1,
     interval: 200,
@@ -71,8 +73,19 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
 
   constructor(
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
     metricService: MetricService,
   ) {
+    this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
+    this.feedCode = feedCode
+
+    this.obaSdk = new OnebusawaySDK({
+      apiKey: config.apiKey,
+      baseURL: config.baseUrl,
+      maxRetries: 5,
+      fetch: this.instrumentedFetch.bind(this),
+    })
+
     this.obaRequestCounter = metricService.getCounter(
       "onebusaway_request_count",
       {
@@ -106,18 +119,6 @@ export class OneBusAwayService implements FeedProvider<OneBusAwayConfig> {
     this.obaCacheMisses = metricService.getCounter("onebusaway_cache_misses", {
       description: "Number of cache misses for OneBusAway requests",
       unit: "misses",
-    })
-  }
-
-  init(feedCode: string, config: OneBusAwayConfig) {
-    this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
-    this.feedCode = feedCode
-
-    this.obaSdk = new OnebusawaySDK({
-      apiKey: config.apiKey,
-      baseURL: config.baseUrl,
-      maxRetries: 5,
-      fetch: this.instrumentedFetch.bind(this),
     })
   }
 

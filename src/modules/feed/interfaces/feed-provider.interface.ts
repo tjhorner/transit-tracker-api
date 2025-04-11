@@ -33,8 +33,12 @@ export interface StopRoute {
   headsigns: string[]
 }
 
-export interface FeedProvider<TConfig = unknown> {
-  init(feedCode: string, config: TConfig): void
+export interface FeedContext<TConfig = unknown> {
+  feedCode: string
+  config: TConfig
+}
+
+export interface FeedProvider {
   sync?(): Promise<void>
 
   healthCheck(): Promise<void>

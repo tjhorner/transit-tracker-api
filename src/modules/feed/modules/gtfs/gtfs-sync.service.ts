@@ -1,28 +1,38 @@
-import { Injectable, Logger } from "@nestjs/common"
+import { Inject, Injectable, Logger } from "@nestjs/common"
+import { REQUEST } from "@nestjs/core"
 import axios, { AxiosResponse } from "axios"
 import * as csv from "fast-csv"
 import * as fs from "fs"
-import { Kysely, sql, Transaction } from "kysely"
-import { InjectKysely } from "nestjs-kysely"
+import { Transaction } from "kysely"
 import { tmpdir } from "node:os"
 import { pipeline } from "node:stream/promises"
 import * as path from "path"
 import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
+import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { DB } from "./db"
+import { GtfsDbService } from "./gtfs-db.service"
+import { GtfsConfig } from "./gtfs.service"
 
 @Injectable()
 export class GtfsSyncService {
-  private readonly logger = new Logger(GtfsSyncService.name)
+  private readonly logger: Logger
+  private readonly feedCode: string
+  private readonly config: GtfsConfig
 
-  constructor(@InjectKysely() private readonly db: Kysely<DB>) {}
+  constructor(
+    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    private readonly db: GtfsDbService,
+  ) {
+    this.logger = new Logger(`${GtfsSyncService.name}[${feedCode}]`, {
+      timestamp: true,
+    })
+    this.feedCode = feedCode
+    this.config = config
+  }
 
-  async hasEverSynced(feedCode: string) {
-    return await this.db.transaction().execute(async (tx) => {
-      await sql`SET LOCAL app.current_feed = '${sql.raw(feedCode)}';`.execute(
-        tx,
-      )
-
+  async hasEverSynced() {
+    return await this.db.tx(async (tx) => {
       const lastModified = await tx
         .selectFrom("import_metadata")
         .select("feed_code")
@@ -32,19 +42,13 @@ export class GtfsSyncService {
     })
   }
 
-  private async isUrlNewer(feedCode: string, url: string) {
-    const currentImportMetadata = await this.db
-      .transaction()
-      .execute(async (tx) => {
-        await sql`SET LOCAL app.current_feed = '${sql.raw(feedCode)}';`.execute(
-          tx,
-        )
-
-        return await tx
-          .selectFrom("import_metadata")
-          .select(["last_modified", "etag"])
-          .executeTakeFirst()
-      })
+  private async isUrlNewer(url: string) {
+    const currentImportMetadata = await this.db.tx(async (tx) => {
+      return await tx
+        .selectFrom("import_metadata")
+        .select(["last_modified", "etag"])
+        .executeTakeFirst()
+    })
 
     if (!currentImportMetadata) {
       return true
@@ -74,10 +78,13 @@ export class GtfsSyncService {
     )
   }
 
-  async importFromUrl(feedCode: string, url: string) {
-    this.logger.log(`Starting import of feed "${feedCode}" from URL ${url}`)
+  async import() {
+    const url = this.config.static.url
+    this.logger.log(
+      `Starting import of feed "${this.feedCode}" from URL ${url}`,
+    )
 
-    if (!(await this.isUrlNewer(feedCode, url))) {
+    if (!(await this.isUrlNewer(url))) {
       this.logger.log("Feed is not newer; import not required")
       return
     }
@@ -101,6 +108,7 @@ export class GtfsSyncService {
       method: "get",
       responseType: "stream",
       responseEncoding: "binary",
+      headers: this.config.static.headers,
     }).then((response) => {
       newLastModified = new Date(
         response.headers["last-modified"] ?? Date.now(),
@@ -128,20 +136,16 @@ export class GtfsSyncService {
     })
 
     this.logger.log("Importing GTFS feed")
-    await this.importFromDirectory(feedCode, zipDirectory)
+    await this.importFromDirectory(zipDirectory)
 
     this.logger.log("Updating import metadata")
-    await this.db.transaction().execute(async (tx) => {
-      await sql`SET LOCAL app.current_feed = '${sql.raw(feedCode)}';`.execute(
-        tx,
-      )
-
+    await this.db.tx(async (tx) => {
       await tx
         .insertInto("import_metadata")
         .values({
           etag: newEtag,
           last_modified: newLastModified,
-          feed_code: feedCode,
+          feed_code: this.feedCode,
         })
         .onConflict((oc) =>
           oc.column("feed_code").doUpdateSet({
@@ -156,72 +160,44 @@ export class GtfsSyncService {
     await rimraf(directory)
   }
 
-  async importFromDirectory(feedCode: string, directory: string) {
-    await this.db
-      .transaction()
-      .setIsolationLevel("read committed")
-      .execute(async (tx) => {
-        await sql`SET LOCAL app.current_feed = '${sql.raw(feedCode)}';`.execute(
-          tx,
-        )
+  async importFromDirectory(directory: string) {
+    await this.db.tx(async (tx) => {
+      await tx.deleteFrom("stop_times").execute()
+      await tx.deleteFrom("trips").execute()
+      await tx.deleteFrom("stops").execute()
+      await tx.deleteFrom("routes").execute()
+      await tx.deleteFrom("calendar_dates").execute()
+      await tx.deleteFrom("calendar").execute()
+      await tx.deleteFrom("agency").execute()
+      await tx.deleteFrom("feed_info").execute()
 
-        await tx.deleteFrom("stop_times").execute()
-        await tx.deleteFrom("trips").execute()
-        await tx.deleteFrom("stops").execute()
-        await tx.deleteFrom("routes").execute()
-        await tx.deleteFrom("calendar_dates").execute()
-        await tx.deleteFrom("calendar").execute()
-        await tx.deleteFrom("agency").execute()
-        await tx.deleteFrom("feed_info").execute()
+      this.logger.log("Importing feed_info")
+      await this.importFeedInfo(tx, path.join(directory, "feed_info.txt"))
 
-        this.logger.log("Importing feed_info")
-        await this.importFeedInfo(
-          feedCode,
-          tx,
-          path.join(directory, "feed_info.txt"),
-        )
+      this.logger.log("Importing agency")
+      await this.importAgency(tx, path.join(directory, "agency.txt"))
 
-        this.logger.log("Importing agency")
-        await this.importAgency(
-          feedCode,
-          tx,
-          path.join(directory, "agency.txt"),
-        )
+      this.logger.log("Importing calendar")
+      await this.importCalendar(tx, path.join(directory, "calendar.txt"))
 
-        this.logger.log("Importing calendar")
-        await this.importCalendar(
-          feedCode,
-          tx,
-          path.join(directory, "calendar.txt"),
-        )
+      this.logger.log("Importing calendar_dates")
+      await this.importCalendarDates(
+        tx,
+        path.join(directory, "calendar_dates.txt"),
+      )
 
-        this.logger.log("Importing calendar_dates")
-        await this.importCalendarDates(
-          feedCode,
-          tx,
-          path.join(directory, "calendar_dates.txt"),
-        )
+      this.logger.log("Importing routes")
+      await this.importRoutes(tx, path.join(directory, "routes.txt"))
 
-        this.logger.log("Importing routes")
-        await this.importRoutes(
-          feedCode,
-          tx,
-          path.join(directory, "routes.txt"),
-        )
+      this.logger.log("Importing stops")
+      await this.importStops(tx, path.join(directory, "stops.txt"))
 
-        this.logger.log("Importing stops")
-        await this.importStops(feedCode, tx, path.join(directory, "stops.txt"))
+      this.logger.log("Importing trips")
+      await this.importTrips(tx, path.join(directory, "trips.txt"))
 
-        this.logger.log("Importing trips")
-        await this.importTrips(feedCode, tx, path.join(directory, "trips.txt"))
-
-        this.logger.log("Importing stop_times")
-        await this.importStopTimes(
-          feedCode,
-          tx,
-          path.join(directory, "stop_times.txt"),
-        )
-      })
+      this.logger.log("Importing stop_times")
+      await this.importStopTimes(tx, path.join(directory, "stop_times.txt"))
+    })
 
     this.logger.log("Import done")
   }
@@ -283,7 +259,6 @@ export class GtfsSyncService {
   }
 
   private importFeedInfo(
-    feedCode: string,
     tx: Transaction<DB>,
     feedInfoPath: string,
   ): Promise<void> {
@@ -294,15 +269,11 @@ export class GtfsSyncService {
       feed_start_date: row.feed_start_date,
       feed_end_date: row.feed_end_date,
       feed_version: row.feed_version,
-      feed_code: feedCode,
+      feed_code: this.feedCode,
     }))
   }
 
-  private importAgency(
-    feedCode: string,
-    tx: Transaction<DB>,
-    agencyPath: string,
-  ): Promise<void> {
+  private importAgency(tx: Transaction<DB>, agencyPath: string): Promise<void> {
     return this.importGtfsFile(tx, "agency", agencyPath, (row) => ({
       agency_id: row.agency_id,
       agency_name: row.agency_name,
@@ -312,12 +283,11 @@ export class GtfsSyncService {
       agency_phone: row.agency_phone,
       agency_fare_url: row.agency_fare_url,
       agency_email: row.agency_email,
-      feed_code: feedCode,
+      feed_code: this.feedCode,
     }))
   }
 
   private importCalendar(
-    feedCode: string,
     tx: Transaction<DB>,
     calendarPath: string,
   ): Promise<void> {
@@ -332,12 +302,11 @@ export class GtfsSyncService {
       sunday: row.sunday,
       start_date: row.start_date,
       end_date: row.end_date,
-      feed_code: feedCode,
+      feed_code: this.feedCode,
     }))
   }
 
   private importCalendarDates(
-    feedCode: string,
     tx: Transaction<DB>,
     calendarDatesPath: string,
   ): Promise<void> {
@@ -349,16 +318,12 @@ export class GtfsSyncService {
         service_id: row.service_id,
         date: row.date,
         exception_type: row.exception_type,
-        feed_code: feedCode,
+        feed_code: this.feedCode,
       }),
     )
   }
 
-  private importRoutes(
-    feedCode: string,
-    tx: Transaction<DB>,
-    routesPath: string,
-  ): Promise<void> {
+  private importRoutes(tx: Transaction<DB>, routesPath: string): Promise<void> {
     return this.importGtfsFile(tx, "routes", routesPath, (row) => ({
       route_id: row.route_id,
       agency_id: row.agency_id,
@@ -369,15 +334,11 @@ export class GtfsSyncService {
       route_url: row.route_url,
       route_color: row.route_color,
       route_text_color: row.route_text_color,
-      feed_code: feedCode,
+      feed_code: this.feedCode,
     }))
   }
 
-  private importStops(
-    feedCode: string,
-    tx: Transaction<DB>,
-    stopsPath: string,
-  ): Promise<void> {
+  private importStops(tx: Transaction<DB>, stopsPath: string): Promise<void> {
     return this.importGtfsFile(tx, "stops", stopsPath, (row) => ({
       stop_id: row.stop_id,
       stop_code: row.stop_code,
@@ -391,12 +352,11 @@ export class GtfsSyncService {
       parent_station: row.parent_station,
       stop_timezone: row.stop_timezone,
       wheelchair_boarding: row.wheelchair_boarding,
-      feed_code: feedCode,
+      feed_code: this.feedCode,
     }))
   }
 
   private importStopTimes(
-    feedCode: string,
     tx: Transaction<DB>,
     stopTimesPath: string,
   ): Promise<void> {
@@ -410,15 +370,11 @@ export class GtfsSyncService {
       pickup_type: row.pickup_type,
       drop_off_type: row.drop_off_type,
       shape_dist_traveled: row.shape_dist_traveled,
-      feed_code: feedCode,
+      feed_code: this.feedCode,
     }))
   }
 
-  private importTrips(
-    feedCode: string,
-    tx: Transaction<DB>,
-    tripsPath: string,
-  ): Promise<void> {
+  private importTrips(tx: Transaction<DB>, tripsPath: string): Promise<void> {
     return this.importGtfsFile(tx, "trips", tripsPath, (row) => ({
       route_id: row.route_id,
       service_id: row.service_id,
@@ -430,7 +386,7 @@ export class GtfsSyncService {
       shape_id: row.shape_id,
       wheelchair_accessible: row.wheelchair_accessible,
       bikes_allowed: row.bikes_allowed,
-      feed_code: feedCode,
+      feed_code: this.feedCode,
     }))
   }
 }

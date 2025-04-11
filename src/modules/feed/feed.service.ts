@@ -1,10 +1,13 @@
 import { Injectable, Logger, OnModuleInit, Type } from "@nestjs/common"
-import { DiscoveryService, ModuleRef } from "@nestjs/core"
+import { ContextIdFactory, DiscoveryService, ModuleRef } from "@nestjs/core"
 import * as turf from "@turf/turf"
 import fs from "fs/promises"
 import { BBox } from "geojson"
 import * as yaml from "js-yaml"
-import { FeedProvider } from "src/modules/feed/interfaces/feed-provider.interface"
+import {
+  FeedContext,
+  FeedProvider,
+} from "src/modules/feed/interfaces/feed-provider.interface"
 import { AllFeedsService } from "./all-feeds.service"
 import { FeedCode } from "./decorators/feed-provider.decorator"
 
@@ -21,7 +24,7 @@ export class FeedService implements OnModuleInit {
    * IDs returned by this provider are prefixed with the feed code of the provider
    * that provided the data.
    */
-  readonly all: FeedProvider<never>
+  readonly all: FeedProvider
 
   private readonly logger = new Logger(FeedService.name, { timestamp: true })
 
@@ -89,8 +92,24 @@ export class FeedService implements OnModuleInit {
           this.logger.log(
             `Initializing feed "${feedName}" with provider ${providerType.name}`,
           )
-          const provider = await this.moduleRef.create(providerType)
-          provider.init(feedName, config[key])
+
+          const contextId = ContextIdFactory.create()
+          this.moduleRef.registerRequestByContextId<FeedContext>(
+            {
+              feedCode: feedName,
+              config: config[key],
+            },
+            contextId,
+          )
+
+          const provider = await this.moduleRef.resolve(
+            providerType,
+            contextId,
+            {
+              strict: false,
+            },
+          )
+
           this.feedProviders.set(feedName, provider)
           break
         }

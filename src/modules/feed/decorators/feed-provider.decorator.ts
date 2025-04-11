@@ -5,7 +5,7 @@ export const FeedCode = DiscoveryService.createDecorator<string>()
 
 export function RegisterFeedProvider(feedCode: string) {
   return applyDecorators(
-    Injectable({ scope: Scope.TRANSIENT }),
+    Injectable({ scope: Scope.REQUEST, durable: true }),
     FeedCode(feedCode),
   )
 }

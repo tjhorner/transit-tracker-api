@@ -10,6 +10,15 @@ export async function setupFakeGtfsServer() {
     express.static(path.join(__dirname, "..", "fixtures", "gtfs-static")),
   )
 
+  gtfsServerApp.use((req, res, next) => {
+    if (req.headers["authorization"] !== "fake-auth") {
+      res.status(401).send("Unauthorized")
+      return
+    }
+
+    next()
+  })
+
   let currentTripUpdates: GtfsRt.ITripUpdate[] = []
   let simulateTripUpdatesFailure = false
 
@@ -43,7 +52,7 @@ export async function setupFakeGtfsServer() {
     res.setHeader("Content-Type", "application/x-protobuf")
     res.setHeader("Cache-Control", "no-cache")
 
-    res.send(GtfsRt.FeedMessage.encode(message).finish())
+    res.status(200).send(GtfsRt.FeedMessage.encode(message).finish())
   })
 
   const server = await new Promise<Server>((resolve, reject) => {
