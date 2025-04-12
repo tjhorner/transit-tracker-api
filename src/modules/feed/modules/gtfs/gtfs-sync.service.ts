@@ -10,9 +10,9 @@ import * as path from "path"
 import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
+import { GtfsConfig } from "./config"
 import { DB } from "./db"
 import { GtfsDbService } from "./gtfs-db.service"
-import { GtfsConfig } from "./gtfs.service"
 
 @Injectable()
 export class GtfsSyncService {

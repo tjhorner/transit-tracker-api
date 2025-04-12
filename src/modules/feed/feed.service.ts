@@ -9,7 +9,7 @@ import {
   FeedProvider,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { AllFeedsService } from "./all-feeds.service"
-import { FeedCode } from "./decorators/feed-provider.decorator"
+import { ProviderKey } from "./decorators/feed-provider.decorator"
 
 export interface FeedConfig {
   name: string
@@ -60,10 +60,10 @@ export class FeedService implements OnModuleInit {
       Object.fromEntries(
         this.discoveryService
           .getProviders({
-            metadataKey: FeedCode.KEY,
+            metadataKey: ProviderKey.KEY,
           })
           .map((item) => [
-            this.discoveryService.getMetadataByDecorator(FeedCode, item),
+            this.discoveryService.getMetadataByDecorator(ProviderKey, item),
             item.metatype as Type<FeedProvider>,
           ]),
       )
@@ -102,13 +102,22 @@ export class FeedService implements OnModuleInit {
             contextId,
           )
 
-          const provider = await this.moduleRef.resolve(
-            providerType,
-            contextId,
-            {
-              strict: false,
-            },
-          )
+          let provider: FeedProvider
+          try {
+            provider = await this.moduleRef.resolve(
+              providerType,
+              contextId,
+              {
+                strict: false,
+              },
+            )
+          } catch (e: any) {
+            this.logger.error(
+              `Error initializing feed "${feedName}" with provider ${providerType.name}: ${e.message}`,
+              e.stack,
+            )
+            break
+          }
 
           this.feedProviders.set(feedName, provider)
           break

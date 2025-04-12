@@ -143,6 +143,9 @@ importers:
       ws:
         specifier: ^8.18.1
         version: 8.18.1
+      zod:
+        specifier: ^3.24.2
+        version: 3.24.2
     devDependencies:
       '@flydotio/dockerfile':
         specifier: ^0.7.10

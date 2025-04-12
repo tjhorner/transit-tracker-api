@@ -21,11 +21,7 @@ import type {
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
-
-export interface OneBusAwayConfig {
-  baseUrl: string
-  apiKey: string
-}
+import { OneBusAwayConfig, OneBusAwayConfigSchema } from "./config"
 
 export interface StopGroup {
   id: string
@@ -78,6 +74,8 @@ export class OneBusAwayService implements FeedProvider {
   ) {
     this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
     this.feedCode = feedCode
+
+    config = OneBusAwayConfigSchema.parse(config)
 
     this.obaSdk = new OnebusawaySDK({
       apiKey: config.apiKey,

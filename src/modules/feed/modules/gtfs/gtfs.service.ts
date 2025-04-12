@@ -13,6 +13,7 @@ import type {
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { GtfsConfig, GtfsConfigSchema } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
@@ -38,16 +39,6 @@ export interface TripStopRaw {
   start_date: string
 }
 
-export interface FetchConfig {
-  url: string
-  headers?: Record<string, string>
-}
-
-export interface GtfsConfig {
-  static: FetchConfig
-  rtTripUpdates?: FetchConfig | FetchConfig[]
-}
-
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
@@ -63,7 +54,7 @@ export class GtfsService implements FeedProvider {
   ) {
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
     this.feedCode = feedCode
-    this.config = config
+    this.config = GtfsConfigSchema.parse(config)
   }
 
   private async cached<T>(

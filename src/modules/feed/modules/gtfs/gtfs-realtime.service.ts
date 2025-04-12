@@ -4,7 +4,8 @@ import axios from "axios"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
-import { FetchConfig, GtfsConfig, TripStopRaw } from "./gtfs.service"
+import { FetchConfig, GtfsConfig } from "./config"
+import { TripStopRaw } from "./gtfs.service"
 
 type ITripUpdate = GtfsRt.ITripUpdate
 type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate

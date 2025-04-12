@@ -6,6 +6,7 @@ import * as yaml from "js-yaml"
 import { RegisterFeedProvider } from "./decorators/feed-provider.decorator"
 import { FeedService } from "./feed.service"
 import type { FeedContext } from "./interfaces/feed-provider.interface"
+import z from "zod"
 
 describe("FeedService", () => {
   let feedService: FeedService
@@ -167,6 +168,10 @@ describe("FeedService", () => {
       expect(providersWithinNoBounds).toHaveLength(0)
     })
   })
+})
+
+const FakeProviderConfigSchema = z.strictObject({
+  configOption: z.string(),
 })
 
 @RegisterFeedProvider("fake")
