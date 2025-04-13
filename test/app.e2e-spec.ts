@@ -51,10 +51,10 @@ describe("E2E test", () => {
   }, 120_000)
 
   afterAll(async () => {
+    await app.close()
     await Promise.all([
       postgresContainer.stop(),
       redisContainer.stop(),
-      app.close(),
       promisify(fakeGtfs.server.close).bind(fakeGtfs.server)(),
     ])
   })
