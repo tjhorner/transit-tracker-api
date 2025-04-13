@@ -17,7 +17,7 @@ class Feed {
     required: true,
     nullable: true,
     description:
-      "The last time this feed was synced (this can be null for feed providers that do not support or require syncing)",
+      "The last time this feed was synced (this can be null for feed providers that do not support or require syncing, e.g. OneBusAway since it's always up to date)",
     example: "2023-05-01T12:00:00Z",
     type: Date,
   })
