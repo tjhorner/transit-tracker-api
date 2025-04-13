@@ -102,4 +102,6 @@ JOIN current_day ON true
 JOIN agency_timezone ON true
 LEFT JOIN last_stops ls ON st.trip_id = ls.trip_id
 WHERE st.stop_id = :stopId!
+AND st.arrival_time IS NOT NULL
+AND st.departure_time IS NOT NULL
 ORDER BY st.arrival_time;

@@ -102,14 +102,30 @@ export class GtfsSyncService {
       responseType: "stream",
       responseEncoding: "binary",
       headers: this.config.static.headers,
+    }).then((response) => {
+      const extractor = unzipper.Extract({ path: zipDirectory })
+      return new Promise<typeof response>((resolve, reject) => {
+        response.data.pipe(extractor)
+
+        let error: any = null
+        extractor.on("error", (err) => {
+          error = err
+          extractor.end()
+          reject(err)
+        })
+
+        extractor.on("close", () => {
+          if (!error) {
+            resolve(response)
+          }
+        })
+      })
     })
 
     const newEtag = response.headers["etag"]
     const newLastModified = new Date(
       response.headers["last-modified"] ?? Date.now(),
     )
-
-    await pipeline(response.data, unzipper.Extract({ path: zipDirectory }))
 
     this.logger.log("Importing GTFS feed")
     await this.importFromDirectory(zipDirectory)
@@ -151,22 +167,15 @@ export class GtfsSyncService {
       }
 
       await this.importFeedInfo(client, path.join(directory, "feed_info.txt"))
-
       await this.importAgency(client, path.join(directory, "agency.txt"))
-
       await this.importCalendar(client, path.join(directory, "calendar.txt"))
-
       await this.importCalendarDates(
         client,
         path.join(directory, "calendar_dates.txt"),
       )
-
       await this.importRoutes(client, path.join(directory, "routes.txt"))
-
       await this.importStops(client, path.join(directory, "stops.txt"))
-
       await this.importTrips(client, path.join(directory, "trips.txt"))
-
       await this.importStopTimes(client, path.join(directory, "stop_times.txt"))
 
       this.logger.log("Committing changes to database")
@@ -374,6 +383,7 @@ export class GtfsSyncService {
       pickup_type: row.pickup_type,
       drop_off_type: row.drop_off_type,
       shape_dist_traveled: row.shape_dist_traveled,
+      timepoint: row.timepoint,
     }))
   }
 
