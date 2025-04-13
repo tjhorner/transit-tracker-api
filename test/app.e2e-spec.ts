@@ -173,6 +173,13 @@ describe("E2E test", () => {
       )
     })
 
+    test("with frequency-based trip", async () => {
+      const trips = await getTripSchedule("testfeed:AB,testfeed:BEATTY_AIRPORT")
+
+      // We want to skip frequency-based trips for now since they are unsupported
+      expect(trips.some((trip) => trip.tripId === "testfeed:AB1")).toBe(false)
+    })
+
     describe("with GTFS-RT updates", () => {
       afterEach(() => {
         fakeGtfs.setTripUpdates([])

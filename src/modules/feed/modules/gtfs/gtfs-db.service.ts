@@ -1,4 +1,11 @@
-import { forwardRef, Inject, Injectable, Logger, OnApplicationShutdown, Scope } from "@nestjs/common"
+import {
+  forwardRef,
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationShutdown,
+  Scope,
+} from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { IDatabaseConnection } from "@pgtyped/runtime"
 import { Pool, PoolClient } from "pg"
@@ -6,7 +13,9 @@ import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { PG_POOL } from "./gtfs.module"
 
 @Injectable({ scope: Scope.REQUEST })
-export class GtfsDbService implements IDatabaseConnection, OnApplicationShutdown {
+export class GtfsDbService
+  implements IDatabaseConnection, OnApplicationShutdown
+{
   private readonly logger = new Logger(GtfsDbService.name)
   private readonly feedCode: string
 

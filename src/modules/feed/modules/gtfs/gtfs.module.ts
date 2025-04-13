@@ -2,8 +2,8 @@ import { Module } from "@nestjs/common"
 import { Pool } from "pg"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
-import { GtfsSyncService } from "./gtfs-sync.service"
 import { GtfsService } from "./gtfs.service"
+import { GtfsSyncService } from "./sync/gtfs-sync.service"
 
 export const PG_POOL = Symbol.for("PG_POOL")
 

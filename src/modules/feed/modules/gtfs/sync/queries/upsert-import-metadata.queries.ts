@@ -1,4 +1,4 @@
-/** Types generated for queries found in "src/modules/feed/modules/gtfs/import-queries/upsert-import-metadata.sql" */
+/** Types generated for queries found in "src/modules/feed/modules/gtfs/sync/queries/upsert-import-metadata.sql" */
 import { PreparedQuery } from "@pgtyped/runtime"
 
 export type DateOrString = Date | string

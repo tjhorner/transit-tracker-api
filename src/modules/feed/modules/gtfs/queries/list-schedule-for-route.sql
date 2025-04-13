@@ -54,8 +54,10 @@ route_trips AS (
     SELECT t.trip_id, t.trip_headsign, r.route_short_name, r.route_long_name, r.route_id
     FROM trips t
     JOIN routes r ON t.route_id = r.route_id
+    LEFT JOIN frequencies f ON t.trip_id = f.trip_id
     WHERE t.route_id = :routeId!
       AND t.service_id IN (SELECT service_id FROM final_active_services)
+      AND f.trip_id IS NULL -- TODO: support frequencies.txt
 ),
 last_stops AS (
     SELECT 

@@ -1,4 +1,4 @@
-/** Types generated for queries found in "src/modules/feed/modules/gtfs/import-queries/interpolate-empty-stop-times.sql" */
+/** Types generated for queries found in "src/modules/feed/modules/gtfs/sync/queries/interpolate-empty-stop-times.sql" */
 import { PreparedQuery } from "@pgtyped/runtime"
 
 /** 'InterpolateEmptyArrivalTimes' parameters type */

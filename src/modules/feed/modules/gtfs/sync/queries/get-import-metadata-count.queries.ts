@@ -1,4 +1,4 @@
-/** Types generated for queries found in "src/modules/feed/modules/gtfs/import-queries/get-import-metadata-count.sql" */
+/** Types generated for queries found in "src/modules/feed/modules/gtfs/sync/queries/get-import-metadata-count.sql" */
 import { PreparedQuery } from "@pgtyped/runtime"
 
 /** 'GetImportMetadataCount' parameters type */

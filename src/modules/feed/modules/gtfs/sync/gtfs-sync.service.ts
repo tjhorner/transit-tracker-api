@@ -13,16 +13,13 @@ import * as unzipper from "unzipper"
 import type {
   FeedContext,
   SyncOptions,
-} from "../../interfaces/feed-provider.interface"
-import { GtfsConfig } from "./config"
-import { GtfsDbService } from "./gtfs-db.service"
-import { getImportMetadataCount } from "./import-queries/get-import-metadata-count.queries"
-import { getImportMetadata } from "./import-queries/get-import-metadata.queries"
-import {
-  interpolateEmptyArrivalTimes,
-  updateEmptyDepartureTimes,
-} from "./import-queries/interpolate-empty-stop-times.queries"
-import { upsertImportMetadata } from "./import-queries/upsert-import-metadata.queries"
+} from "../../../interfaces/feed-provider.interface"
+import { GtfsConfig } from "../config"
+import { GtfsDbService } from "../gtfs-db.service"
+import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
+import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
+import { getImportMetadata } from "./queries/get-import-metadata.queries"
+import { upsertImportMetadata } from "./queries/upsert-import-metadata.queries"
 
 @Injectable()
 export class GtfsSyncService {
@@ -153,6 +150,7 @@ export class GtfsSyncService {
       await client.query("SET LOCAL ROLE gtfs_import")
 
       const tables = [
+        "frequencies",
         "stop_times",
         "trips",
         "stops",
@@ -181,38 +179,31 @@ export class GtfsSyncService {
       await this.importStops(client, path.join(directory, "stops.txt"))
       await this.importTrips(client, path.join(directory, "trips.txt"))
       await this.importStopTimes(client, path.join(directory, "stop_times.txt"))
-
-      this.logger.log("Interpolating empty arrival times")
-
-      const interpolatedArrivals =
-        await interpolateEmptyArrivalTimes.runWithCounts(
-          {
-            feedCode: this.feedCode,
-          },
-          client,
-        )
-
-      this.logger.log(
-        `Interpolated ${interpolatedArrivals.rowCount.toLocaleString()} empty arrival times`,
-      )
-
-      this.logger.log("Filling in empty departure times")
-
-      const filledDepartures = await updateEmptyDepartureTimes.runWithCounts(
-        {
-          feedCode: this.feedCode,
-        },
+      await this.importFrequencies(
         client,
+        path.join(directory, "frequencies.txt"),
       )
 
-      this.logger.log(
-        `Filled in ${filledDepartures.rowCount.toLocaleString()} empty departure times`,
-      )
+      await this.runPostProcessors(client)
 
       this.logger.log("Committing changes to database")
     })
 
     this.logger.log("Import done")
+  }
+
+  private async runPostProcessors(client: PoolClient) {
+    this.logger.log("Running post-processing tasks")
+
+    const postProcessors = [new InterpolateEmptyStopTimesPostProcessor()]
+
+    for (const processor of postProcessors) {
+      this.logger.log(`Running ${processor.constructor.name}`)
+      await processor.process(client, {
+        feedCode: this.feedCode,
+        config: this.config,
+      })
+    }
   }
 
   private flushEmptyStrings(row: any) {
@@ -441,5 +432,23 @@ export class GtfsSyncService {
       wheelchair_accessible: row.wheelchair_accessible,
       bikes_allowed: row.bikes_allowed,
     }))
+  }
+
+  private importFrequencies(
+    client: PoolClient,
+    frequenciesPath: string,
+  ): Promise<void> {
+    return this.importGtfsFile(
+      client,
+      "frequencies",
+      frequenciesPath,
+      (row) => ({
+        trip_id: row.trip_id,
+        start_time: row.start_time,
+        end_time: row.end_time,
+        headway_secs: row.headway_secs,
+        exact_times: row.exact_times,
+      }),
+    )
   }
 }

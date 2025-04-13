@@ -16,8 +16,6 @@ import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { GtfsConfig, GtfsConfigSchema } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
-import { GtfsSyncService } from "./gtfs-sync.service"
-import { getImportMetadata } from "./import-queries/get-import-metadata.queries"
 import { getStopBounds } from "./queries/get-stop-bounds.queries"
 import { getStop } from "./queries/get-stop.queries"
 import { listRoutesForStop } from "./queries/list-routes-for-stop.queries"
@@ -27,6 +25,8 @@ import {
 } from "./queries/list-schedule-for-route.queries"
 import { listStopsInArea } from "./queries/list-stops-in-area.queries"
 import { listStops } from "./queries/list-stops.queries"
+import { GtfsSyncService } from "./sync/gtfs-sync.service"
+import { getImportMetadata } from "./sync/queries/get-import-metadata.queries"
 
 const TripScheduleRelationship = GtfsRt.TripDescriptor.ScheduleRelationship
 
