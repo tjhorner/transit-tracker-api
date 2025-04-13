@@ -38,8 +38,12 @@ export interface FeedContext<TConfig = unknown> {
   config: TConfig
 }
 
+export interface SyncOptions {
+  force?: boolean
+}
+
 export interface FeedProvider {
-  sync?(): Promise<void>
+  sync?(opts?: SyncOptions): Promise<void>
 
   healthCheck(): Promise<void>
 

@@ -124,14 +124,6 @@ And deploy the app:
 fly deploy
 ```
 
-Once the app is deployed, run the initial sync of GTFS feeds (if you have any configured):
-
-```bash
-fly ssh console -C "node dist/scripts/sync-gtfs"
-```
-
-They will automatically sync every 24 hours from now on.
-
 Now visit `/feeds` at your app URL, e.g. `https://your-app-name.fly.dev/feeds`, to see the available feeds. If you see a list of feeds, congratulations! You're done.
 
 ## Updates

@@ -20,10 +20,10 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist",
-    "gtfs:sync": "nest start --entryFile scripts/sync-gtfs",
     "gtfs:db:migrate": "dbmate up",
     "gtfs:db:rollback": "dbmate rollback",
-    "gtfs:db:pgtyped": "pgtyped -w -c pgtyped.json"
+    "gtfs:db:pgtyped": "pgtyped -w -c pgtyped.json",
+    "cli": "nest start --entryFile cli --"
   },
   "dependencies": {
     "@anchan828/nest-redlock": "^0.3.10",
@@ -60,6 +60,7 @@
     "js-yaml": "^4.1.0",
     "keyv": "5.3.2",
     "limiter": "^3.0.0",
+    "nest-commander": "^3.17.0",
     "nestjs-otel": "^6.2.0",
     "node-fetch": "3.3.2",
     "onebusaway-sdk": "^1.8.4",

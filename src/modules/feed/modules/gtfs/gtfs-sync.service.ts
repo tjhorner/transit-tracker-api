@@ -10,7 +10,10 @@ import { PoolClient } from "pg"
 import { from as copyFrom } from "pg-copy-streams"
 import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
-import type { FeedContext } from "../../interfaces/feed-provider.interface"
+import type {
+  FeedContext,
+  SyncOptions,
+} from "../../interfaces/feed-provider.interface"
 import { GtfsConfig } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { getImportMetadataCount } from "./import-queries/get-import-metadata-count.queries"
@@ -70,13 +73,13 @@ export class GtfsSyncService {
     )
   }
 
-  async import() {
+  async import(opts?: SyncOptions) {
     const url = this.config.static.url
     this.logger.log(
       `Starting import of feed "${this.feedCode}" from URL ${url}`,
     )
 
-    if (!(await this.isUrlNewer(url))) {
+    if (!opts?.force && !(await this.isUrlNewer(url))) {
       this.logger.log("Feed is not newer; import not required")
       return
     }

@@ -8,6 +8,7 @@ import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
 import { OpenTelemetryModule } from "nestjs-otel"
+import { SyncCommand } from "./commands/sync.command"
 import { HealthController } from "./health/health.controller"
 import { FeedModule } from "./modules/feed/feed.module"
 import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
@@ -62,6 +63,7 @@ import { StopsController } from "./stops/stops.controller"
   ],
   controllers: [ScheduleController, StopsController, HealthController],
   providers: [
+    SyncCommand,
     ScheduleMetricsService,
     ScheduleService,
     ScheduleGateway,

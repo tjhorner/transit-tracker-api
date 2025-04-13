@@ -9,6 +9,7 @@ import type {
   RouteAtStop,
   Stop,
   StopRoute,
+  SyncOptions,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
@@ -99,8 +100,8 @@ export class GtfsService implements FeedProvider {
     ) // 24 hours
   }
 
-  async sync(): Promise<void> {
-    await this.syncService.import()
+  async sync(opts?: SyncOptions): Promise<void> {
+    await this.syncService.import(opts)
   }
 
   private removeFromStart(str: string, substrs: string[]): string {
