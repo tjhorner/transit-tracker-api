@@ -21,15 +21,11 @@ describe("E2E test", () => {
   let app: INestApplication
 
   beforeAll(async () => {
-    const {
-      postgresContainer: pgContainer,
-      gtfsUserUrl,
-      superuserUrl,
-    } = await setupTestDatabase()
+    const { postgresContainer: pgContainer, connectionUrl } =
+      await setupTestDatabase()
 
     postgresContainer = pgContainer
-    process.env.DATABASE_URL = gtfsUserUrl.toString()
-    process.env.SUPERUSER_DATABASE_URL = superuserUrl.toString()
+    process.env.DATABASE_URL = connectionUrl.toString()
 
     redisContainer = await new RedisContainer().start()
     process.env.REDIS_URL = redisContainer.getConnectionUrl()

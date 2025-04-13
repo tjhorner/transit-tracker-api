@@ -3,7 +3,7 @@ services:
     build: .
     environment:
       REDIS_URL: redis://redis:6379
-      DATABASE_URL: postgres://gtfs:gtfs@postgres:5432/gtfs
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/gtfs
     ports:
       - "3000:3000"
 

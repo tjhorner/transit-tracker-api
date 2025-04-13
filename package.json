@@ -21,7 +21,8 @@
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist",
     "gtfs:sync": "nest start --entryFile scripts/sync-gtfs",
-    "gtfs:db:migrate": "dbmate -e SUPERUSER_DATABASE_URL up",
+    "gtfs:db:migrate": "dbmate up",
+    "gtfs:db:rollback": "dbmate rollback",
     "gtfs:db:pgtyped": "pgtyped -w -c pgtyped.json"
   },
   "dependencies": {

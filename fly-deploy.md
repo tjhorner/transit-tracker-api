@@ -34,10 +34,10 @@ fly postgres create
 
 It will ask a few questions like name, region, and database size. You can change these, but the defaults are sufficient for this guide.
 
-Once the database is created, take note of the connection string it gives you. It will look something like this:
+Once the database is created, take note of the connection string it gives you and export it to your environment, for example:
 
-```
-postgres://username:password@postgres-app-name.flycast:5432
+```shell
+export DATABASE_URL="postgres://username:password@postgres-app-name.flycast:5432/gtfs?sslmode=disable"
 ```
 
 ### Initialize Database
@@ -61,14 +61,10 @@ Then run the following command in a new shell session to initialize the database
 
 ```bash
 # Using the modified connection string
-SUPERUSER_DATABASE_URL="postgres://username:password@localhost:5432/gtfs" pnpm gtfs:db:migrate
+DATABASE_URL="postgres://username:password@localhost:5432/gtfs?sslmode=disable" pnpm gtfs:db:migrate
 ```
 
-This command will create the database and run the migrations to set up the GTFS schema. It will also create the `gtfs` user used to run the GTFS queries. The default password is `gtfs`, so it's recommended to change it to something more secure. We'll create a new `DATABASE_URL` environment variable for the GTFS database with the new password.
-
-```bash
-export DATABASE_URL="postgres://gtfs:gtfs@postgres-app-name.flycast:5432/gtfs"
-```
+This command will create the database and run the migrations to set up the GTFS schema.
 
 ## Deploy Redis
 

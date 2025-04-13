@@ -473,4 +473,5 @@ ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
 INSERT INTO public.schema_migrations (version) VALUES
     ('20250328231057'),
     ('20250328231235'),
-    ('20250328231306');
+    ('20250328231306'),
+    ('20250413022241');

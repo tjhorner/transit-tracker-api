@@ -33,22 +33,16 @@ export async function setupTestDatabase() {
     .withPassword("postgres")
     .start()
 
-  const superuserUrl = new URL(postgresContainer.getConnectionUri())
-  superuserUrl.pathname = "/gtfs"
-  superuserUrl.searchParams.set("sslmode", "disable")
+  const connectionUrl = new URL(postgresContainer.getConnectionUri())
+  connectionUrl.pathname = "/gtfs"
+  connectionUrl.searchParams.set("sslmode", "disable")
 
   await runCmd(`pnpm gtfs:db:migrate`, {
-    SUPERUSER_DATABASE_URL: superuserUrl.toString(),
+    DATABASE_URL: connectionUrl.toString(),
   })
 
-  const gtfsUserUrl = new URL(postgresContainer.getConnectionUri())
-  gtfsUserUrl.pathname = "/gtfs"
-  gtfsUserUrl.username = "gtfs"
-  gtfsUserUrl.password = "gtfs"
-
   return {
-    superuserUrl,
-    gtfsUserUrl,
+    connectionUrl,
     postgresContainer,
   }
 }

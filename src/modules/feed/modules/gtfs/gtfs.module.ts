@@ -6,7 +6,6 @@ import { GtfsSyncService } from "./gtfs-sync.service"
 import { GtfsService } from "./gtfs.service"
 
 export const PG_POOL = Symbol.for("PG_POOL")
-export const IMPORT_PG_POOL = Symbol.for("IMPORT_PG_POOL")
 
 @Module({
   providers: [
@@ -19,13 +18,6 @@ export const IMPORT_PG_POOL = Symbol.for("IMPORT_PG_POOL")
       useFactory: () =>
         new Pool({
           connectionString: process.env.DATABASE_URL,
-        }),
-    },
-    {
-      provide: IMPORT_PG_POOL,
-      useFactory: () =>
-        new Pool({
-          connectionString: process.env.SUPERUSER_DATABASE_URL,
         }),
     },
   ],

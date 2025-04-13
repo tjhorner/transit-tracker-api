@@ -126,7 +126,9 @@ export class GtfsSyncService {
   }
 
   private async importFromDirectory(directory: string) {
-    await this.db.importTx(async (client) => {
+    await this.db.tx(async (client) => {
+      await client.query("SET LOCAL ROLE gtfs_import")
+
       const tables = [
         "stop_times",
         "trips",

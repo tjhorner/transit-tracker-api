@@ -4,7 +4,8 @@ primary_region = "sea"
 [build]
 
 [deploy]
-  strategy = "canary"
+  strategy = "bluegreen"
+  release_command = "./node_modules/.bin/dbmate up"
 
 [http_service]
   internal_port = 3000

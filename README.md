@@ -53,23 +53,9 @@ To facilitate fast queries of the static GTFS data, the API uses a PostgreSQL da
 Run the following command to perform the migrations on your PostgreSQL database:
 
 ```bash
-SUPERUSER_DATABASE_URL="postgres://postgres:your_password@localhost:5432/gtfs" pnpm gtfs:db:migrate
+# Replace your DATABASE_URL below
+DATABASE_URL="postgres://postgres:your_password@localhost:5432/gtfs?sslmode=disable" pnpm gtfs:db:migrate
 ```
-
-Once the migrations are complete, it's recommended to change the password of the `gtfs` user (it's `gtfs` by default):
-
-```sql
-ALTER ROLE gtfs WITH PASSWORD 'your_password';
-```
-
-Then set the `DATABASE_URL` environment variable to use the `gtfs` user. For example:
-
-```bash
-DATABASE_URL=postgres://gtfs:gtfs@localhost:5432/gtfs
-```
-
-> [!IMPORTANT]  
-> It's crucial to use the `gtfs` role to connect to the database since the API relies on row-level security to access the correct feed's data per-request. The default `postgres` superuser bypasses RLS and will not work.
 
 ## Usage
 
