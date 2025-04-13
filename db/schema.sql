@@ -102,7 +102,8 @@ CREATE TABLE public.feed_info (
 CREATE TABLE public.import_metadata (
     last_modified timestamp without time zone,
     feed_code text NOT NULL,
-    etag text
+    etag text,
+    imported_at timestamp with time zone DEFAULT now() NOT NULL
 );
 
 
@@ -474,4 +475,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20250328231057'),
     ('20250328231235'),
     ('20250328231306'),
-    ('20250413022241');
+    ('20250413022241'),
+    ('20250413075916');

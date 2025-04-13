@@ -15,6 +15,16 @@ class Feed {
 
   @ApiProperty({
     required: true,
+    nullable: true,
+    description:
+      "The last time this feed was synced (this can be null for feed providers that do not support or require syncing)",
+    example: "2023-05-01T12:00:00Z",
+    type: Date,
+  })
+  lastSyncedAt!: Date | null
+
+  @ApiProperty({
+    required: true,
     description: "Human-readable name for this feed",
     example: "Puget Sound Region",
   })
@@ -54,8 +64,10 @@ export class FeedsController {
     const resp: Feed[] = []
     for (const [feedCode, feed] of Object.entries(feeds)) {
       const provider = this.feedService.getFeedProvider(feedCode)!
+      const lastSync = await provider.getLastSync?.()
       resp.push({
         code: feedCode,
+        lastSyncedAt: lastSync ?? null,
         name: feed.name,
         description: feed.description,
         bounds: await provider.getAgencyBounds(),

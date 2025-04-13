@@ -27,8 +27,8 @@ const upsertImportMetadataIR: any = {
       required: false,
       transform: { type: "scalar" },
       locs: [
-        { a: 69, b: 73 },
-        { a: 151, b: 155 },
+        { a: 82, b: 86 },
+        { a: 171, b: 175 },
       ],
     },
     {
@@ -36,30 +36,31 @@ const upsertImportMetadataIR: any = {
       required: false,
       transform: { type: "scalar" },
       locs: [
-        { a: 76, b: 88 },
-        { a: 176, b: 188 },
+        { a: 89, b: 101 },
+        { a: 196, b: 208 },
       ],
     },
     {
       name: "feedCode",
       required: false,
       transform: { type: "scalar" },
-      locs: [{ a: 91, b: 99 }],
+      locs: [{ a: 104, b: 112 }],
     },
   ],
   statement:
-    "INSERT INTO import_metadata (etag, last_modified, feed_code)\nVALUES (:etag, :lastModified, :feedCode)\nON CONFLICT (feed_code) \nDO UPDATE SET \n  etag = :etag,\n  last_modified = :lastModified",
+    "INSERT INTO import_metadata (etag, last_modified, feed_code, imported_at)\nVALUES (:etag, :lastModified, :feedCode, now())\nON CONFLICT (feed_code) \nDO UPDATE SET \n  etag = :etag,\n  last_modified = :lastModified,\n  imported_at = now()",
 }
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO import_metadata (etag, last_modified, feed_code)
- * VALUES (:etag, :lastModified, :feedCode)
+ * INSERT INTO import_metadata (etag, last_modified, feed_code, imported_at)
+ * VALUES (:etag, :lastModified, :feedCode, now())
  * ON CONFLICT (feed_code)
  * DO UPDATE SET
  *   etag = :etag,
- *   last_modified = :lastModified
+ *   last_modified = :lastModified,
+ *   imported_at = now()
  * ```
  */
 export const upsertImportMetadata = new PreparedQuery<

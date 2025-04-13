@@ -44,6 +44,7 @@ export interface SyncOptions {
 
 export interface FeedProvider {
   sync?(opts?: SyncOptions): Promise<void>
+  getLastSync?(): Promise<Date | null>
 
   healthCheck(): Promise<void>
 

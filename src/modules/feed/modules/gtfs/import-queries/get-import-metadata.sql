@@ -1,6 +1,7 @@
 /* @name GetImportMetadata */
 SELECT
   last_modified,
-  etag
+  etag,
+  imported_at
 FROM
   import_metadata;

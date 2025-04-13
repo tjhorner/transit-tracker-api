@@ -17,6 +17,7 @@ import { GtfsConfig, GtfsConfigSchema } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
+import { getImportMetadata } from "./import-queries/get-import-metadata.queries"
 import { getStopBounds } from "./queries/get-stop-bounds.queries"
 import { getStop } from "./queries/get-stop.queries"
 import { listRoutesForStop } from "./queries/list-routes-for-stop.queries"
@@ -102,6 +103,19 @@ export class GtfsService implements FeedProvider {
 
   async sync(opts?: SyncOptions): Promise<void> {
     await this.syncService.import(opts)
+  }
+
+  async getLastSync(): Promise<Date> {
+    return new Date(
+      await this.cached(
+        "lastSync",
+        async () => {
+          const [metadata] = await getImportMetadata.run(undefined, this.db)
+          return metadata.imported_at
+        },
+        300_000, // 5 minutes
+      ),
+    )
   }
 
   private removeFromStart(str: string, substrs: string[]): string {

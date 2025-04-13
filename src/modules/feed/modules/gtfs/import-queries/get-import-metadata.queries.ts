@@ -7,6 +7,7 @@ export type IGetImportMetadataParams = void
 /** 'GetImportMetadata' return type */
 export interface IGetImportMetadataResult {
   etag: string | null
+  imported_at: Date
   last_modified: Date | null
 }
 
@@ -19,7 +20,8 @@ export interface IGetImportMetadataQuery {
 const getImportMetadataIR: any = {
   usedParamSet: {},
   params: [],
-  statement: "SELECT\n  last_modified,\n  etag\nFROM\n  import_metadata",
+  statement:
+    "SELECT\n  last_modified,\n  etag,\n  imported_at\nFROM\n  import_metadata",
 }
 
 /**
@@ -27,7 +29,8 @@ const getImportMetadataIR: any = {
  * ```
  * SELECT
  *   last_modified,
- *   etag
+ *   etag,
+ *   imported_at
  * FROM
  *   import_metadata
  * ```

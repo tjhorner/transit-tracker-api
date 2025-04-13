@@ -68,6 +68,16 @@ describe("E2E test", () => {
     expect(response.body).toHaveLength(1)
 
     const feed = response.body[0]
+
+    expect(feed.lastSyncedAt).toBeDefined()
+
+    const now = new Date().getTime()
+    const lastSyncedAt = new Date(feed.lastSyncedAt).getTime()
+    expect(lastSyncedAt).toBeLessThanOrEqual(now)
+    expect(lastSyncedAt).toBeGreaterThanOrEqual(
+      now - 300_000, // 5 minutes
+    )
+
     expect(feed.code).toBe("testfeed")
     expect(feed.name).toBe("Test Feed")
     expect(feed.description).toBe("Test Feed Description")
@@ -147,13 +157,9 @@ describe("E2E test", () => {
     })
 
     test("with interpolated stop_times", async () => {
-      const trips = await getTripSchedule(
-        "testfeed:CITY,testfeed:NADAV",
-      )
+      const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
 
-      const interpolatedTrip = trips.find(
-        (t) => t.tripId === "testfeed:CITY2",
-      )
+      const interpolatedTrip = trips.find((t) => t.tripId === "testfeed:CITY2")
 
       expect(interpolatedTrip).toBeDefined()
 
@@ -162,7 +168,9 @@ describe("E2E test", () => {
       expect(arrival.getUTCMinutes()).toBe(42)
       expect(arrival.getUTCSeconds()).toBe(0)
 
-      expect(interpolatedTrip!.arrivalTime).toBe(interpolatedTrip!.departureTime)
+      expect(interpolatedTrip!.arrivalTime).toBe(
+        interpolatedTrip!.departureTime,
+      )
     })
 
     describe("with GTFS-RT updates", () => {
