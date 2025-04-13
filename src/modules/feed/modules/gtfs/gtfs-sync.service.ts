@@ -12,8 +12,10 @@ import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { GtfsConfig } from "./config"
-import { DB } from "./db"
 import { GtfsDbService } from "./gtfs-db.service"
+import { getImportMetadataCount } from "./import-queries/get-import-metadata-count.queries"
+import { getImportMetadata } from "./import-queries/get-import-metadata.queries"
+import { upsertImportMetadata } from "./import-queries/upsert-import-metadata.queries"
 
 @Injectable()
 export class GtfsSyncService {
@@ -31,24 +33,15 @@ export class GtfsSyncService {
   }
 
   async hasEverSynced() {
-    return await this.db.tx(async (tx) => {
-      const lastModified = await tx
-        .selectFrom("import_metadata")
-        .select("feed_code")
-        .executeTakeFirst()
-
-      return !!lastModified
-    })
+    const [{ count }] = await getImportMetadataCount.run(undefined, this.db)
+    return count > 0
   }
 
   private async isUrlNewer(url: string) {
-    const currentImportMetadata = await this.db.tx(async (tx) => {
-      return await tx
-        .selectFrom("import_metadata")
-        .select(["last_modified", "etag"])
-        .executeTakeFirst()
-    })
-
+    const [currentImportMetadata] = await getImportMetadata.run(
+      undefined,
+      this.db,
+    )
     if (!currentImportMetadata) {
       return true
     }
@@ -119,22 +112,14 @@ export class GtfsSyncService {
     await this.importFromDirectory(zipDirectory)
 
     this.logger.log("Updating import metadata")
-    await this.db.tx(async (tx) => {
-      await tx
-        .insertInto("import_metadata")
-        .values({
-          etag: newEtag,
-          last_modified: newLastModified,
-          feed_code: this.feedCode,
-        })
-        .onConflict((oc) =>
-          oc.column("feed_code").doUpdateSet({
-            etag: newEtag,
-            last_modified: newLastModified,
-          }),
-        )
-        .execute()
-    })
+    await upsertImportMetadata.run(
+      {
+        etag: newEtag,
+        lastModified: newLastModified,
+        feedCode: this.feedCode,
+      },
+      this.db,
+    )
 
     this.logger.log("Cleaning up")
     await rimraf(directory)
@@ -195,9 +180,9 @@ export class GtfsSyncService {
     return row
   }
 
-  private async importGtfsFile<T extends keyof DB & string>(
+  private async importGtfsFile(
     client: PoolClient,
-    tableName: T,
+    tableName: string,
     filePath: string,
     mapRow: (row: any) => any,
   ): Promise<void> {

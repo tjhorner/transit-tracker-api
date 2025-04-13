@@ -3,7 +3,6 @@ import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
-import { sql } from "kysely"
 import type {
   FeedContext,
   FeedProvider,
@@ -17,6 +16,15 @@ import { GtfsConfig, GtfsConfigSchema } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
+import { getStopBounds } from "./queries/get-stop-bounds.queries"
+import { getStop } from "./queries/get-stop.queries"
+import { listRoutesForStop } from "./queries/list-routes-for-stop.queries"
+import {
+  getScheduleForRouteAtStop,
+  IGetScheduleForRouteAtStopResult,
+} from "./queries/list-schedule-for-route.queries"
+import { listStopsInArea } from "./queries/list-stops-in-area.queries"
+import { listStops } from "./queries/list-stops.queries"
 
 const TripScheduleRelationship = GtfsRt.TripDescriptor.ScheduleRelationship
 
@@ -24,20 +32,6 @@ const StopTimeScheduleRelationship =
   GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship
 
 type ITripUpdate = GtfsRt.ITripUpdate
-
-export interface TripStopRaw {
-  trip_id: string
-  stop_id: string
-  route_id: string
-  route_name: string
-  route_color: string | null
-  stop_name: string
-  stop_headsign: string
-  stop_sequence: number
-  arrival_time: number | Date
-  departure_time: number | Date
-  start_date: string
-}
 
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider {
@@ -92,27 +86,13 @@ export class GtfsService implements FeedProvider {
     return this.cached(
       "agencyBounds",
       async () => {
-        const stopBounds = await this.db.tx(async (tx) => {
-          return await sql<{
-            min_lat: number
-            min_lon: number
-            max_lat: number
-            max_lon: number
-          }>`
-          SELECT
-            MIN(stop_lat) AS min_lat,
-            MIN(stop_lon) AS min_lon,
-            MAX(stop_lat) AS max_lat,
-            MAX(stop_lon) AS max_lon
-          FROM stops;
-        `.execute(tx)
-        })
+        const [stopBounds] = await getStopBounds.run(undefined, this.db)
 
         return [
-          stopBounds.rows[0].min_lon,
-          stopBounds.rows[0].min_lat,
-          stopBounds.rows[0].max_lon,
-          stopBounds.rows[0].max_lat,
+          stopBounds.min_lon,
+          stopBounds.min_lat,
+          stopBounds.max_lon,
+          stopBounds.max_lat,
         ] as [number, number, number, number]
       },
       86_400_000,
@@ -156,7 +136,7 @@ export class GtfsService implements FeedProvider {
     routeId: string,
     stopId: string,
     dayOffset: number,
-  ): Promise<TripStopRaw[]> {
+  ): Promise<IGetScheduleForRouteAtStopResult[]> {
     const now = Date.now()
 
     const dateKey = new Date(now)
@@ -168,116 +148,17 @@ export class GtfsService implements FeedProvider {
       cacheKey,
       async () => {
         const interval = `${dayOffset} days`
-        const result = await this.db.tx(async (tx) => {
-          return await sql<TripStopRaw>`
-          WITH agency_timezone AS (
-              SELECT agency_timezone AS tz
-              FROM routes r
-              JOIN agency a ON r.agency_id = a.agency_id
-              WHERE r.route_id = ${routeId}
-              LIMIT 1
-          ),
-          current_day AS (
-              SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(${now / 1000}) + ${interval}::interval)) AS today
-          ),
-          active_services AS (
-              -- Services active according to the calendar table
-              SELECT service_id
-              FROM calendar, current_day
-              WHERE today BETWEEN start_date AND end_date
-                AND CASE
-                    WHEN EXTRACT(DOW FROM today) = 0 THEN sunday
-                    WHEN EXTRACT(DOW FROM today) = 1 THEN monday
-                    WHEN EXTRACT(DOW FROM today) = 2 THEN tuesday
-                    WHEN EXTRACT(DOW FROM today) = 3 THEN wednesday
-                    WHEN EXTRACT(DOW FROM today) = 4 THEN thursday
-                    WHEN EXTRACT(DOW FROM today) = 5 THEN friday
-                    WHEN EXTRACT(DOW FROM today) = 6 THEN saturday
-                    END = 1
-          ),
-          override_services AS (
-              -- Services added on specific dates
-              SELECT service_id
-              FROM calendar_dates, current_day
-              WHERE date = today
-                AND exception_type = 1
-          ),
-          removed_services AS (
-              -- Services removed on specific dates
-              SELECT service_id
-              FROM calendar_dates, current_day
-              WHERE date = today
-                AND exception_type = 2
-          ),
-          final_active_services AS (
-              -- Combine active services, accounting for overrides
-              SELECT DISTINCT service_id
-              FROM active_services
-              UNION
-              SELECT service_id
-              FROM override_services
-              EXCEPT
-              SELECT service_id
-              FROM removed_services
-          ),
-          route_trips AS (
-              -- Fetch trips for the specific route and active services
-              SELECT t.trip_id, t.trip_headsign, r.route_short_name, r.route_long_name, r.route_id
-              FROM trips t
-              JOIN routes r ON t.route_id = r.route_id
-              WHERE t.route_id = ${routeId}
-                AND t.service_id IN (SELECT service_id FROM final_active_services)
-          ),
-          last_stops AS (
-              SELECT 
-                  st.trip_id,
-                  st.stop_id AS last_stop_id,
-                  s.stop_name AS last_stop_name
-              FROM stop_times st
-              JOIN stops s ON st.stop_id = s.stop_id
-              WHERE st.stop_sequence = (
-                  SELECT MAX(st2.stop_sequence)
-                  FROM stop_times st2
-                  WHERE st2.trip_id = st.trip_id
-              )
-          )
-          -- Fetch stop_times with stop_timezone and route_short_name
-          SELECT 
-              st.trip_id,
-              st.stop_id,
-              st.stop_sequence,
-              rt.route_id,
-              CASE
-                  WHEN coalesce(TRIM(rt.route_short_name), '') = '' THEN rt.route_long_name
-                  ELSE rt.route_short_name
-              END AS route_name,
-              r.route_color,
-              s.stop_name,
-              CASE
-                  WHEN coalesce(TRIM(st.stop_headsign), '') = '' THEN
-                      CASE
-                          WHEN coalesce(TRIM(rt.trip_headsign), '') = '' THEN ls.last_stop_name
-                          ELSE rt.trip_headsign
-                      END
-                  ELSE
-                      st.stop_headsign
-              END AS stop_headsign,
-              TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time::interval) as arrival_time,
-              TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time::interval) as departure_time,
-              to_char(current_day.today + st.arrival_time::interval, 'YYYYMMDD') as start_date
-          FROM stop_times st
-          JOIN route_trips rt ON st.trip_id = rt.trip_id
-          JOIN routes r ON rt.route_id = r.route_id
-          JOIN stops s ON st.stop_id = s.stop_id
-          JOIN current_day ON true
-          JOIN agency_timezone ON true
-          LEFT JOIN last_stops ls ON st.trip_id = ls.trip_id
-          WHERE st.stop_id = ${stopId}
-          ORDER BY st.arrival_time;
-        `.execute(tx)
-        })
+        const result = await getScheduleForRouteAtStop.run(
+          {
+            nowUnixTime: Date.now() / 1000,
+            routeId,
+            stopId,
+            offset: interval,
+          },
+          this.db,
+        )
 
-        return result.rows
+        return result
       },
       43_200_000, // 12 hours
     )
@@ -287,20 +168,7 @@ export class GtfsService implements FeedProvider {
     return this.cached(
       "stops",
       async () => {
-        const stops = await this.db.tx(async (tx) => {
-          return await tx
-            .selectFrom("stops")
-            .select([
-              "stop_id",
-              "stop_name",
-              "stop_code",
-              "stop_lat",
-              "stop_lon",
-            ])
-            .where("stop_lat", "is not", null)
-            .where("stop_lon", "is not", null)
-            .execute()
-        })
+        const stops = await listStops.run(undefined, this.db)
 
         return stops.map((stop) => ({
           stopId: stop.stop_id,
@@ -317,16 +185,15 @@ export class GtfsService implements FeedProvider {
   async getStopsInArea(
     bbox: [number, number, number, number],
   ): Promise<Stop[]> {
-    const stops = await this.db.tx(async (tx) => {
-      return await tx
-        .selectFrom("stops")
-        .select(["stop_id", "stop_name", "stop_code", "stop_lat", "stop_lon"])
-        .where("stop_lat", "is not", null)
-        .where("stop_lon", "is not", null)
-        .where(sql<boolean>`stop_lat BETWEEN ${bbox[1]} AND ${bbox[3]}`)
-        .where(sql<boolean>`stop_lon BETWEEN ${bbox[0]} AND ${bbox[2]}`)
-        .execute()
-    })
+    const stops = await listStopsInArea.run(
+      {
+        minLon: bbox[0],
+        minLat: bbox[1],
+        maxLon: bbox[2],
+        maxLat: bbox[3],
+      },
+      this.db,
+    )
 
     return stops.map((stop) => ({
       stopId: stop.stop_id,
@@ -341,20 +208,7 @@ export class GtfsService implements FeedProvider {
     return this.cached(
       `stop-${stopId}`,
       async () => {
-        const stop = await this.db.tx(async (tx) => {
-          return await tx
-            .selectFrom("stops")
-            .select([
-              "stop_id",
-              "stop_name",
-              "stop_code",
-              "stop_lat",
-              "stop_lon",
-            ])
-            .where("stop_id", "=", stopId)
-            .execute()
-        })
-
+        const stop = await getStop.run({ stopId }, this.db)
         return {
           stopId: stop[0].stop_id,
           stopCode: stop[0].stop_code,
@@ -371,33 +225,12 @@ export class GtfsService implements FeedProvider {
     return this.cached(
       `routesForStop-${stopId}`,
       async () => {
-        const routes = await this.db.tx(async (tx) => {
-          return await tx
-            .selectFrom("stop_times")
-            .innerJoin("trips", "stop_times.trip_id", "trips.trip_id")
-            .innerJoin("routes", "trips.route_id", "routes.route_id")
-            .select([
-              "routes.route_id",
-              "routes.route_short_name",
-              "routes.route_long_name",
-              "routes.route_color",
-              sql<string[]>`
-                JSON_AGG(DISTINCT CASE 
-                    WHEN coalesce(TRIM(stop_times.stop_headsign), '') = '' THEN trips.trip_headsign
-                    ELSE stop_times.stop_headsign
-                END)
-              `.as("headsigns"),
-            ])
-            .where("stop_times.stop_id", "=", stopId)
-            .groupBy([
-              "routes.route_id",
-              "routes.route_short_name",
-              "routes.route_long_name",
-              "routes.route_color",
-            ])
-            .orderBy("routes.route_short_name")
-            .execute()
-        })
+        const routes = await listRoutesForStop.run(
+          {
+            stopId,
+          },
+          this.db,
+        )
 
         return routes.map<StopRoute>((route) => ({
           routeId: route.route_id,
@@ -406,7 +239,7 @@ export class GtfsService implements FeedProvider {
             (!route.route_short_name || route.route_short_name.trim() === ""
               ? route.route_long_name
               : route.route_short_name) ?? "Unnamed Route",
-          headsigns: route.headsigns
+          headsigns: (route.headsigns as string[])
             .filter((headsign) => headsign && headsign.trim() !== "")
             .map((headsign) =>
               this.removeRouteNameFromHeadsign(
@@ -516,13 +349,15 @@ export class GtfsService implements FeedProvider {
           tripId: staticTrip.trip_id,
           routeId: staticTrip.route_id,
           stopId: staticTrip.stop_id,
-          routeName: staticTrip.route_name,
+          routeName: staticTrip.route_name ?? "Unnamed Route",
           routeColor: staticTrip.route_color?.replaceAll("#", "") ?? null,
-          headsign: this.removeRouteNameFromHeadsign(
-            staticTrip.route_name,
-            staticTrip.stop_headsign,
-          ),
-          stopName: staticTrip.stop_name,
+          headsign: staticTrip.stop_headsign
+            ? this.removeRouteNameFromHeadsign(
+                staticTrip.route_name,
+                staticTrip.stop_headsign,
+              )
+            : "",
+          stopName: staticTrip.stop_name ?? "Unnamed Stop",
           arrivalTime,
           departureTime,
           isRealtime,

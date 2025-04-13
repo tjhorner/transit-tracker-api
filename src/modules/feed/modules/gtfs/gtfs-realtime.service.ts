@@ -5,7 +5,7 @@ import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FetchConfig, GtfsConfig } from "./config"
-import { TripStopRaw } from "./gtfs.service"
+import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-route.queries"
 
 type ITripUpdate = GtfsRt.ITripUpdate
 type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate
@@ -78,7 +78,10 @@ export class GtfsRealtimeService {
     }
   }
 
-  resolveTripTimes(trip: TripStopRaw, stopTimeUpdate?: IStopTimeUpdate) {
+  resolveTripTimes(
+    trip: IGetScheduleForRouteAtStopResult,
+    stopTimeUpdate?: IStopTimeUpdate,
+  ) {
     const scheduledArrivalTime = new Date(trip.arrival_time)
     const scheduledDepartureTime = new Date(trip.departure_time)
 
@@ -144,7 +147,7 @@ export class GtfsRealtimeService {
   }
 
   matchTripToTripUpdate(
-    trip: TripStopRaw,
+    trip: IGetScheduleForRouteAtStopResult,
     tripUpdates: ITripUpdate[],
   ): {
     tripUpdate: ITripUpdate | undefined

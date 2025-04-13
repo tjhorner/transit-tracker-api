@@ -19,10 +19,10 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "kysely-codegen": "kysely-codegen --out-file src/modules/feed/modules/gtfs/db.d.ts",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist",
     "gtfs:sync": "nest start --entryFile scripts/sync-gtfs",
-    "gtfs:db:migrate": "dbmate -e SUPERUSER_DATABASE_URL up"
+    "gtfs:db:migrate": "dbmate -e SUPERUSER_DATABASE_URL up",
+    "gtfs:db:pgtyped": "pgtyped -w -c pgtyped.json"
   },
   "dependencies": {
     "@anchan828/nest-redlock": "^0.3.10",
@@ -40,6 +40,7 @@
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/exporter-prometheus": "^0.200.0",
     "@opentelemetry/sdk-node": "^0.200.0",
+    "@pgtyped/runtime": "^2.4.2",
     "@sentry/cli": "^2.43.0",
     "@sentry/nestjs": "^9.11.0",
     "@turf/turf": "^7.2.0",
@@ -57,9 +58,7 @@
     "ioredis": "^5.6.0",
     "js-yaml": "^4.1.0",
     "keyv": "5.3.2",
-    "kysely": "^0.27.6",
     "limiter": "^3.0.0",
-    "nestjs-kysely": "^1.2.0",
     "nestjs-otel": "^6.2.0",
     "node-fetch": "3.3.2",
     "onebusaway-sdk": "^1.8.4",
@@ -79,6 +78,7 @@
     "@nestjs/cli": "^11.0.6",
     "@nestjs/schematics": "^11.0.4",
     "@nestjs/testing": "^11.0.13",
+    "@pgtyped/cli": "^2.4.3",
     "@testcontainers/postgresql": "^10.23.0",
     "@testcontainers/redis": "^10.23.0",
     "@types/archiver": "^6.0.3",
