@@ -117,11 +117,11 @@ describe("E2E test", () => {
       dateSpy.mockRestore()
     })
 
-    async function getTripSchedule() {
+    async function getTripSchedule(
+      scheduleString: string = "testfeed:AAMV,testfeed:BEATTY_AIRPORT;testfeed:STBA,testfeed:STAGECOACH",
+    ) {
       const response = await request(app.getHttpServer())
-        .get(
-          "/schedule/testfeed:AAMV,testfeed:BEATTY_AIRPORT;testfeed:STBA,testfeed:STAGECOACH",
-        )
+        .get(`/schedule/${scheduleString}`)
         .expect("Content-Type", /json/)
         .expect(200)
 
@@ -144,6 +144,25 @@ describe("E2E test", () => {
 
       // Expect trip for the 4th to be skipped
       expect(new Date(trips[0].arrivalTime * 1000).getUTCDate()).toBe(5)
+    })
+
+    test("with interpolated stop_times", async () => {
+      const trips = await getTripSchedule(
+        "testfeed:CITY,testfeed:NADAV",
+      )
+
+      const interpolatedTrip = trips.find(
+        (t) => t.tripId === "testfeed:CITY2",
+      )
+
+      expect(interpolatedTrip).toBeDefined()
+
+      const arrival = new Date(interpolatedTrip!.arrivalTime * 1000)
+      expect(arrival.getUTCHours()).toBe(15)
+      expect(arrival.getUTCMinutes()).toBe(42)
+      expect(arrival.getUTCSeconds()).toBe(0)
+
+      expect(interpolatedTrip!.arrivalTime).toBe(interpolatedTrip!.departureTime)
     })
 
     describe("with GTFS-RT updates", () => {

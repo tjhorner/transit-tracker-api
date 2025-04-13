@@ -18,6 +18,10 @@ import { GtfsConfig } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { getImportMetadataCount } from "./import-queries/get-import-metadata-count.queries"
 import { getImportMetadata } from "./import-queries/get-import-metadata.queries"
+import {
+  interpolateEmptyArrivalTimes,
+  updateEmptyDepartureTimes,
+} from "./import-queries/interpolate-empty-stop-times.queries"
 import { upsertImportMetadata } from "./import-queries/upsert-import-metadata.queries"
 
 @Injectable()
@@ -177,6 +181,33 @@ export class GtfsSyncService {
       await this.importStops(client, path.join(directory, "stops.txt"))
       await this.importTrips(client, path.join(directory, "trips.txt"))
       await this.importStopTimes(client, path.join(directory, "stop_times.txt"))
+
+      this.logger.log("Interpolating empty arrival times")
+
+      const interpolatedArrivals =
+        await interpolateEmptyArrivalTimes.runWithCounts(
+          {
+            feedCode: this.feedCode,
+          },
+          client,
+        )
+
+      this.logger.log(
+        `Interpolated ${interpolatedArrivals.rowCount.toLocaleString()} empty arrival times`,
+      )
+
+      this.logger.log("Filling in empty departure times")
+
+      const filledDepartures = await updateEmptyDepartureTimes.runWithCounts(
+        {
+          feedCode: this.feedCode,
+        },
+        client,
+      )
+
+      this.logger.log(
+        `Filled in ${filledDepartures.rowCount.toLocaleString()} empty departure times`,
+      )
 
       this.logger.log("Committing changes to database")
     })
