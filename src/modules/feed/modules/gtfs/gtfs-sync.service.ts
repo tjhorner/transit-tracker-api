@@ -369,8 +369,13 @@ export class GtfsSyncService {
     )
   }
 
-  private async importRoutes(client: PoolClient, routesPath: string): Promise<void> {
-    const { rows: [ { agency_id: defaultAgencyId } ] } = await client.query(
+  private async importRoutes(
+    client: PoolClient,
+    routesPath: string,
+  ): Promise<void> {
+    const {
+      rows: [{ agency_id: defaultAgencyId }],
+    } = await client.query(
       "SELECT agency_id FROM agency WHERE feed_code = $1 LIMIT 1",
       [this.feedCode],
     )
