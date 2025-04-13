@@ -104,13 +104,9 @@ export class FeedService implements OnModuleInit {
 
           let provider: FeedProvider
           try {
-            provider = await this.moduleRef.resolve(
-              providerType,
-              contextId,
-              {
-                strict: false,
-              },
-            )
+            provider = await this.moduleRef.resolve(providerType, contextId, {
+              strict: false,
+            })
           } catch (e: any) {
             this.logger.error(
               `Error initializing feed "${feedName}" with provider ${providerType.name}: ${e.message}`,

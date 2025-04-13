@@ -7,6 +7,8 @@ import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsSyncService } from "./gtfs-sync.service"
 import { GtfsService } from "./gtfs.service"
 
+export const IMPORT_PG_POOL = Symbol.for("IMPORT_PG_POOL")
+
 @Module({
   imports: [
     KyselyModule.forRootAsync({
@@ -20,7 +22,19 @@ import { GtfsService } from "./gtfs.service"
       }),
     }),
   ],
-  providers: [GtfsService, GtfsDbService, GtfsRealtimeService, GtfsSyncService],
+  providers: [
+    GtfsService,
+    GtfsDbService,
+    GtfsRealtimeService,
+    GtfsSyncService,
+    {
+      provide: IMPORT_PG_POOL,
+      useFactory: () =>
+        new Pool({
+          connectionString: process.env.SUPERUSER_DATABASE_URL,
+        }),
+    },
+  ],
   exports: [GtfsService],
 })
 export class GtfsModule {}

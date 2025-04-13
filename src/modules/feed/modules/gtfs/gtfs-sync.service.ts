@@ -3,10 +3,11 @@ import { REQUEST } from "@nestjs/core"
 import axios, { AxiosResponse } from "axios"
 import * as csv from "fast-csv"
 import * as fs from "fs"
-import { Transaction } from "kysely"
 import { tmpdir } from "node:os"
 import { pipeline } from "node:stream/promises"
 import * as path from "path"
+import { PoolClient } from "pg"
+import { from as copyFrom } from "pg-copy-streams"
 import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
@@ -24,9 +25,7 @@ export class GtfsSyncService {
     @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly db: GtfsDbService,
   ) {
-    this.logger = new Logger(`${GtfsSyncService.name}[${feedCode}]`, {
-      timestamp: true,
-    })
+    this.logger = new Logger(`${GtfsSyncService.name}[${feedCode}]`)
     this.feedCode = feedCode
     this.config = config
   }
@@ -101,39 +100,20 @@ export class GtfsSyncService {
 
     this.logger.log(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
 
-    let newLastModified: Date | null = null
-    let newEtag: string | null = null
-    await axios({
+    const response = await axios({
       url,
       method: "get",
       responseType: "stream",
       responseEncoding: "binary",
       headers: this.config.static.headers,
-    }).then((response) => {
-      newLastModified = new Date(
-        response.headers["last-modified"] ?? Date.now(),
-      )
-      newEtag = response.headers["etag"]
-
-      const extractor = unzipper.Extract({ path: zipDirectory })
-
-      return new Promise<void>((resolve, reject) => {
-        response.data.pipe(extractor)
-
-        let error: any = null
-        extractor.on("error", (err) => {
-          error = err
-          extractor.end()
-          reject(err)
-        })
-
-        extractor.on("close", () => {
-          if (!error) {
-            resolve()
-          }
-        })
-      })
     })
+
+    const newEtag = response.headers["etag"]
+    const newLastModified = new Date(
+      response.headers["last-modified"] ?? Date.now(),
+    )
+
+    await pipeline(response.data, unzipper.Extract({ path: zipDirectory }))
 
     this.logger.log("Importing GTFS feed")
     await this.importFromDirectory(zipDirectory)
@@ -160,43 +140,46 @@ export class GtfsSyncService {
     await rimraf(directory)
   }
 
-  async importFromDirectory(directory: string) {
-    await this.db.tx(async (tx) => {
-      await tx.deleteFrom("stop_times").execute()
-      await tx.deleteFrom("trips").execute()
-      await tx.deleteFrom("stops").execute()
-      await tx.deleteFrom("routes").execute()
-      await tx.deleteFrom("calendar_dates").execute()
-      await tx.deleteFrom("calendar").execute()
-      await tx.deleteFrom("agency").execute()
-      await tx.deleteFrom("feed_info").execute()
+  private async importFromDirectory(directory: string) {
+    await this.db.importTx(async (client) => {
+      const tables = [
+        "stop_times",
+        "trips",
+        "stops",
+        "routes",
+        "calendar_dates",
+        "calendar",
+        "agency",
+        "feed_info",
+      ]
 
-      this.logger.log("Importing feed_info")
-      await this.importFeedInfo(tx, path.join(directory, "feed_info.txt"))
+      for (const table of tables) {
+        this.logger.log(`Deleting existing data from ${table}`)
+        await client.query(`DELETE FROM ${table} WHERE feed_code = $1`, [
+          this.feedCode,
+        ])
+      }
 
-      this.logger.log("Importing agency")
-      await this.importAgency(tx, path.join(directory, "agency.txt"))
+      await this.importFeedInfo(client, path.join(directory, "feed_info.txt"))
 
-      this.logger.log("Importing calendar")
-      await this.importCalendar(tx, path.join(directory, "calendar.txt"))
+      await this.importAgency(client, path.join(directory, "agency.txt"))
 
-      this.logger.log("Importing calendar_dates")
+      await this.importCalendar(client, path.join(directory, "calendar.txt"))
+
       await this.importCalendarDates(
-        tx,
+        client,
         path.join(directory, "calendar_dates.txt"),
       )
 
-      this.logger.log("Importing routes")
-      await this.importRoutes(tx, path.join(directory, "routes.txt"))
+      await this.importRoutes(client, path.join(directory, "routes.txt"))
 
-      this.logger.log("Importing stops")
-      await this.importStops(tx, path.join(directory, "stops.txt"))
+      await this.importStops(client, path.join(directory, "stops.txt"))
 
-      this.logger.log("Importing trips")
-      await this.importTrips(tx, path.join(directory, "trips.txt"))
+      await this.importTrips(client, path.join(directory, "trips.txt"))
 
-      this.logger.log("Importing stop_times")
-      await this.importStopTimes(tx, path.join(directory, "stop_times.txt"))
+      await this.importStopTimes(client, path.join(directory, "stop_times.txt"))
+
+      this.logger.log("Committing changes to database")
     })
 
     this.logger.log("Import done")
@@ -213,7 +196,7 @@ export class GtfsSyncService {
   }
 
   private async importGtfsFile<T extends keyof DB & string>(
-    tx: Transaction<DB>,
+    client: PoolClient,
     tableName: T,
     filePath: string,
     mapRow: (row: any) => any,
@@ -223,58 +206,94 @@ export class GtfsSyncService {
       return Promise.resolve()
     }
 
-    let completedRows = 0
-    const insertRows = async (rows: any[]) => {
-      this.logger.debug(
-        `Inserting ${rows.length} ${tableName} rows ${completedRows} - ${completedRows + rows.length}`,
-      )
+    this.logger.log(`Importing ${tableName}`)
 
-      await tx.insertInto(tableName).values(rows).execute()
+    const columns = Object.keys(mapRow({}))
+    const ingestStream = client.query(
+      copyFrom(
+        `COPY ${tableName}(feed_code,${columns.join(",")}) FROM STDIN (FORMAT csv, HEADER true)`,
+      ),
+    )
 
-      completedRows += rows.length
-    }
-
-    const batch: any[] = []
-    await pipeline(
-      fs.createReadStream(filePath).pipe(
+    const outputCsv = fs
+      .createReadStream(filePath)
+      .pipe(
         csv.parse({
           headers: true,
           ignoreEmpty: true,
         }),
-      ),
-      async (rows: AsyncIterable<any>) => {
-        for await (const item of rows) {
-          batch.push(this.flushEmptyStrings(mapRow(item)))
-          if (batch.length >= 5000) {
-            await insertRows(batch)
-            batch.length = 0
-          }
-        }
-      },
+      )
+      .pipe(
+        csv.format({
+          headers: true,
+          transform: (row: any) =>
+            this.flushEmptyStrings({
+              feed_code: this.feedCode,
+              ...mapRow(row),
+            }),
+        }),
+      )
+
+    let importedRows = 0
+    let lastLoggedCount = 0
+    let lastLoggedAt = Date.now()
+    const logStatus = () => {
+      if (importedRows === lastLoggedCount) {
+        return
+      }
+
+      const rate = Math.floor(
+        (importedRows - lastLoggedCount) / ((Date.now() - lastLoggedAt) / 1000),
+      )
+
+      this.logger.log(
+        `Imported ${importedRows.toLocaleString()} ${tableName} rows (${rate.toLocaleString()} rows/s)`,
+      )
+
+      lastLoggedCount = importedRows
+      lastLoggedAt = Date.now()
+    }
+
+    let statusUpdateInterval: NodeJS.Timeout = setInterval(
+      logStatus.bind(this),
+      1000,
     )
 
-    if (batch.length > 0) {
-      await insertRows(batch)
+    try {
+      await pipeline(
+        outputCsv,
+        async function* (source) {
+          for await (const chunk of source) {
+            const rows = chunk.toString().split("\n").length - 1
+            importedRows += rows
+            yield chunk
+          }
+        },
+        ingestStream,
+      )
+
+      logStatus()
+    } finally {
+      clearInterval(statusUpdateInterval)
     }
   }
 
   private importFeedInfo(
-    tx: Transaction<DB>,
+    client: PoolClient,
     feedInfoPath: string,
   ): Promise<void> {
-    return this.importGtfsFile(tx, "feed_info", feedInfoPath, (row) => ({
+    return this.importGtfsFile(client, "feed_info", feedInfoPath, (row) => ({
       feed_publisher_name: row.feed_publisher_name,
       feed_publisher_url: row.feed_publisher_url,
       feed_lang: row.feed_lang,
       feed_start_date: row.feed_start_date,
       feed_end_date: row.feed_end_date,
       feed_version: row.feed_version,
-      feed_code: this.feedCode,
     }))
   }
 
-  private importAgency(tx: Transaction<DB>, agencyPath: string): Promise<void> {
-    return this.importGtfsFile(tx, "agency", agencyPath, (row) => ({
+  private importAgency(client: PoolClient, agencyPath: string): Promise<void> {
+    return this.importGtfsFile(client, "agency", agencyPath, (row) => ({
       agency_id: row.agency_id,
       agency_name: row.agency_name,
       agency_url: row.agency_url,
@@ -283,15 +302,14 @@ export class GtfsSyncService {
       agency_phone: row.agency_phone,
       agency_fare_url: row.agency_fare_url,
       agency_email: row.agency_email,
-      feed_code: this.feedCode,
     }))
   }
 
   private importCalendar(
-    tx: Transaction<DB>,
+    client: PoolClient,
     calendarPath: string,
   ): Promise<void> {
-    return this.importGtfsFile(tx, "calendar", calendarPath, (row) => ({
+    return this.importGtfsFile(client, "calendar", calendarPath, (row) => ({
       service_id: row.service_id,
       monday: row.monday,
       tuesday: row.tuesday,
@@ -302,29 +320,27 @@ export class GtfsSyncService {
       sunday: row.sunday,
       start_date: row.start_date,
       end_date: row.end_date,
-      feed_code: this.feedCode,
     }))
   }
 
   private importCalendarDates(
-    tx: Transaction<DB>,
+    client: PoolClient,
     calendarDatesPath: string,
   ): Promise<void> {
     return this.importGtfsFile(
-      tx,
+      client,
       "calendar_dates",
       calendarDatesPath,
       (row) => ({
         service_id: row.service_id,
         date: row.date,
         exception_type: row.exception_type,
-        feed_code: this.feedCode,
       }),
     )
   }
 
-  private importRoutes(tx: Transaction<DB>, routesPath: string): Promise<void> {
-    return this.importGtfsFile(tx, "routes", routesPath, (row) => ({
+  private importRoutes(client: PoolClient, routesPath: string): Promise<void> {
+    return this.importGtfsFile(client, "routes", routesPath, (row) => ({
       route_id: row.route_id,
       agency_id: row.agency_id,
       route_short_name: row.route_short_name,
@@ -334,12 +350,11 @@ export class GtfsSyncService {
       route_url: row.route_url,
       route_color: row.route_color,
       route_text_color: row.route_text_color,
-      feed_code: this.feedCode,
     }))
   }
 
-  private importStops(tx: Transaction<DB>, stopsPath: string): Promise<void> {
-    return this.importGtfsFile(tx, "stops", stopsPath, (row) => ({
+  private importStops(client: PoolClient, stopsPath: string): Promise<void> {
+    return this.importGtfsFile(client, "stops", stopsPath, (row) => ({
       stop_id: row.stop_id,
       stop_code: row.stop_code,
       stop_name: row.stop_name,
@@ -352,15 +367,14 @@ export class GtfsSyncService {
       parent_station: row.parent_station,
       stop_timezone: row.stop_timezone,
       wheelchair_boarding: row.wheelchair_boarding,
-      feed_code: this.feedCode,
     }))
   }
 
   private importStopTimes(
-    tx: Transaction<DB>,
+    client: PoolClient,
     stopTimesPath: string,
   ): Promise<void> {
-    return this.importGtfsFile(tx, "stop_times", stopTimesPath, (row) => ({
+    return this.importGtfsFile(client, "stop_times", stopTimesPath, (row) => ({
       trip_id: row.trip_id,
       arrival_time: row.arrival_time,
       departure_time: row.departure_time,
@@ -370,12 +384,11 @@ export class GtfsSyncService {
       pickup_type: row.pickup_type,
       drop_off_type: row.drop_off_type,
       shape_dist_traveled: row.shape_dist_traveled,
-      feed_code: this.feedCode,
     }))
   }
 
-  private importTrips(tx: Transaction<DB>, tripsPath: string): Promise<void> {
-    return this.importGtfsFile(tx, "trips", tripsPath, (row) => ({
+  private importTrips(client: PoolClient, tripsPath: string): Promise<void> {
+    return this.importGtfsFile(client, "trips", tripsPath, (row) => ({
       route_id: row.route_id,
       service_id: row.service_id,
       trip_id: row.trip_id,
@@ -386,7 +399,6 @@ export class GtfsSyncService {
       shape_id: row.shape_id,
       wheelchair_accessible: row.wheelchair_accessible,
       bikes_allowed: row.bikes_allowed,
-      feed_code: this.feedCode,
     }))
   }
 }
