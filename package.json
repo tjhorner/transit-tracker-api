@@ -23,8 +23,7 @@
     "gtfs:db:migrate": "dbmate --no-dump-schema up",
     "gtfs:db:rollback": "dbmate --no-dump-schema rollback",
     "gtfs:db:pgtyped": "pgtyped -w -c pgtyped.json",
-    "cli": "nest start --entryFile cli --",
-    "prepare": "husky"
+    "cli": "nest start --entryFile cli --"
   },
   "dependencies": {
     "@anchan828/nest-redlock": "^0.3.11",
