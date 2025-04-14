@@ -7,6 +7,7 @@ import { ScheduleModule } from "@nestjs/schedule"
 import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
+import ms from "ms"
 import { OpenTelemetryModule } from "nestjs-otel"
 import { SyncCommand } from "./commands/sync.command"
 import { HealthController } from "./health/health.controller"
@@ -27,7 +28,7 @@ import { StopsController } from "./stops/stops.controller"
           new Cacheable({
             primary: createKeyvMemory({
               lruSize: 5000,
-              checkInterval: 3_600_000, // 1 hour
+              checkInterval: ms("1h"),
             }),
             secondary: process.env.REDIS_URL
               ? createKeyvRedis(process.env.REDIS_URL, {

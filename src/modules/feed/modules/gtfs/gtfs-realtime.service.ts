@@ -3,6 +3,7 @@ import { REQUEST } from "@nestjs/core"
 import axios from "axios"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
+import ms from "ms"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FetchConfig, GtfsConfig } from "./config"
 import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-route.queries"
@@ -74,7 +75,7 @@ export class GtfsRealtimeService {
     const tripUpdates = successfulResponses.flatMap((r) => r.value)
     return {
       value: tripUpdates,
-      ttl: maxAge >= 0 ? maxAge * 1000 : 15_000,
+      ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
     }
   }
 
@@ -128,8 +129,7 @@ export class GtfsRealtimeService {
       Math.abs(arrivalTime.getTime() - scheduledArrivalTime.getTime()),
     )
 
-    const ninetyMinutes = 5400000
-    if (maximumDeviationFromSchedule > ninetyMinutes) {
+    if (maximumDeviationFromSchedule > ms("90m")) {
       // Low confidence prediction, following Transit's guidelines:
       // https://resources.transitapp.com/article/462-trip-updates#rbest
       return {

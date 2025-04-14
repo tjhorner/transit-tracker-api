@@ -25,6 +25,7 @@ import {
   Min,
 } from "class-validator"
 import { randomUUID, UUID } from "crypto"
+import ms from "ms"
 import {
   catchError,
   finalize,
@@ -139,7 +140,7 @@ export class ScheduleGateway implements OnGatewayConnection {
           throw err
         }),
         retry({
-          delay: 10_000,
+          delay: ms("10s"),
         }),
         finalize(() => {
           this.subscribers.delete(socket.id)

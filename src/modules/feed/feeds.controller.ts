@@ -3,6 +3,8 @@ import { Controller, Get, UseInterceptors } from "@nestjs/common"
 import { ApiProperty, ApiResponse } from "@nestjs/swagger"
 import * as turf from "@turf/turf"
 import { FeatureCollection } from "geojson"
+import ms from "ms"
+import exampleServiceAreas from "./example-service-areas.json"
 import { FeedService } from "./feed.service"
 
 class Feed {
@@ -17,7 +19,7 @@ class Feed {
     required: true,
     nullable: true,
     description:
-      "The last time this feed was synced (this can be null for feed providers that do not support or require syncing, e.g. OneBusAway since it's always up to date)",
+      "The last time this feed was synced (this can be null in cases where syncing is not necessary, such as with OneBusAway)",
     example: "2023-05-01T12:00:00Z",
     type: Date,
   })
@@ -46,6 +48,14 @@ class Feed {
     example: [46.93304, -123.01475, 48.59793, -121.601001],
   })
   bounds!: number[]
+
+  @ApiProperty({
+    required: true,
+    description: "Provider-specific metadata for this feed",
+    type: Object,
+    example: {},
+  })
+  metadata!: Record<string, any>
 }
 
 @Controller("feeds")
@@ -65,12 +75,15 @@ export class FeedsController {
     for (const [feedCode, feed] of Object.entries(feeds)) {
       const provider = this.feedService.getFeedProvider(feedCode)!
       const lastSync = await provider.getLastSync?.()
+      const metadata = await provider.getMetadata?.()
+
       resp.push({
         code: feedCode,
         lastSyncedAt: lastSync ?? null,
         name: feed.name,
         description: feed.description,
         bounds: await provider.getAgencyBounds(),
+        metadata: metadata ?? {},
       })
     }
 
@@ -79,13 +92,19 @@ export class FeedsController {
 
   @Get("service-areas")
   @UseInterceptors(CacheInterceptor)
-  @CacheTTL(60 * 60 * 24) // 24 hours
+  @CacheTTL(ms("24h"))
+  @ApiResponse({
+    status: 200,
+    description:
+      "[GeoJSON](https://geojson.org/) `FeatureCollection` of `Polygon`s representing all available service areas combined",
+    example: exampleServiceAreas,
+  })
   async getServiceAreas(): Promise<FeatureCollection> {
     const feeds = this.feedService.getAllFeedProviders()
 
     const polygonFeatures = (
       await Promise.all(
-        Object.entries(feeds).map(async ([, provider]) => {
+        Object.values(feeds).map(async (provider) => {
           const stops = await provider.listStops()
           return turf.convex(
             turf.featureCollection(
@@ -104,8 +123,6 @@ export class FeedsController {
       return turf.featureCollection(polygonFeatures)
     }
 
-    return turf.featureCollection([
-      turf.union(turf.featureCollection(polygonFeatures))!,
-    ])
+    return turf.flatten(turf.union(turf.featureCollection(polygonFeatures))!)
   }
 }

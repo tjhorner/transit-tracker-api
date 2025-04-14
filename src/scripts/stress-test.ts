@@ -1,3 +1,4 @@
+import ms from "ms"
 import { WebSocket } from "ws"
 import { allStops } from "./stops"
 
@@ -34,7 +35,7 @@ async function subscribe(rsps: string) {
         console.log("reconnecting")
         subscribe(rsps)
       },
-      Math.floor(Math.random() * 30_000),
+      Math.floor(Math.random() * ms("30s")),
     )
   })
 

@@ -3,6 +3,7 @@ import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
+import ms from "ms"
 import type {
   FeedContext,
   FeedProvider,
@@ -16,6 +17,7 @@ import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { GtfsConfig, GtfsConfigSchema } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
+import { getFeedInfo } from "./queries/get-feed-info.queries"
 import { getStopBounds } from "./queries/get-stop-bounds.queries"
 import { getStop } from "./queries/get-stop.queries"
 import { listRoutesForStop } from "./queries/list-routes-for-stop.queries"
@@ -97,8 +99,8 @@ export class GtfsService implements FeedProvider {
           stopBounds.max_lat,
         ] as [number, number, number, number]
       },
-      86_400_000,
-    ) // 24 hours
+      ms("24h"),
+    )
   }
 
   async sync(opts?: SyncOptions): Promise<void> {
@@ -113,8 +115,31 @@ export class GtfsService implements FeedProvider {
           const [metadata] = await getImportMetadata.run(undefined, this.db)
           return metadata.imported_at
         },
-        300_000, // 5 minutes
+        ms("5m"),
       ),
+    )
+  }
+
+  async getMetadata(): Promise<Record<string, any>> {
+    return this.cached(
+      "feedInfo",
+      async () => {
+        const [metadata] = await getFeedInfo.run(undefined, this.db)
+
+        if (!metadata) {
+          return {}
+        }
+
+        return {
+          feedPublisherName: metadata.feed_publisher_name,
+          feedPublisherUrl: metadata.feed_publisher_url,
+          feedLang: metadata.feed_lang,
+          feedStartDate: metadata.feed_start_date,
+          feedEndDate: metadata.feed_end_date,
+          feedVersion: metadata.feed_version,
+        }
+      },
+      ms("5m"),
     )
   }
 
@@ -175,7 +200,7 @@ export class GtfsService implements FeedProvider {
 
         return result
       },
-      43_200_000, // 12 hours
+      ms("12h"),
     )
   }
 
@@ -193,7 +218,7 @@ export class GtfsService implements FeedProvider {
           lon: stop.stop_lon!,
         }))
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -232,7 +257,7 @@ export class GtfsService implements FeedProvider {
           lon: stop[0].stop_lon ?? 0,
         }
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -264,7 +289,7 @@ export class GtfsService implements FeedProvider {
             ),
         }))
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -324,7 +349,7 @@ export class GtfsService implements FeedProvider {
           Math.min(
             Math.abs(arrivalTime.getTime() - now),
             Math.abs(departureTime.getTime() - now),
-          ) < 14400000
+          ) < ms("4h")
 
         // Apply cancelled or skipped updates to trips that:
         //   - we infer are active *or*

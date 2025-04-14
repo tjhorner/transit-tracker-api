@@ -1,4 +1,5 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common"
+import ms from "ms"
 import {
   concat,
   defer,
@@ -158,7 +159,7 @@ export class ScheduleService {
 
       const initialDelay = Math.floor(Math.random() * 10000)
       const jitter = Math.floor(Math.random() * 1000)
-      const period = 30000 + jitter
+      const period = ms("30s") + jitter
 
       const getTrips$ = defer(() =>
         from(this.getUpcomingTrips(feedProvider, subscription)),

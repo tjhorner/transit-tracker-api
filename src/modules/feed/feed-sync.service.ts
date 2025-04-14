@@ -1,6 +1,7 @@
 import { Redlock } from "@anchan828/nest-redlock"
 import { Injectable, Logger } from "@nestjs/common"
 import { Cron } from "@nestjs/schedule"
+import ms from "ms"
 import { FeedService } from "./feed.service"
 
 @Injectable()
@@ -10,7 +11,7 @@ export class FeedSyncService {
   constructor(private readonly feedService: FeedService) {}
 
   @Cron("0 0 * * *")
-  @Redlock("feed-sync", 60_000, { retryCount: 0 })
+  @Redlock("feed-sync", ms("1m"), { retryCount: 0 })
   async syncAllFeeds() {
     this.logger.log("Running scheduled sync of all feeds")
     const feedProviders = this.feedService.getAllFeedProviders()

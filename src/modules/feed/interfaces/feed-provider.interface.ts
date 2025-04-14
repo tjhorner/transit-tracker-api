@@ -45,6 +45,7 @@ export interface SyncOptions {
 export interface FeedProvider {
   sync?(opts?: SyncOptions): Promise<void>
   getLastSync?(): Promise<Date | null>
+  getMetadata?(): Promise<Record<string, any>>
 
   healthCheck(): Promise<void>
 

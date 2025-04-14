@@ -10,6 +10,7 @@ import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { RateLimiter } from "limiter"
+import ms from "ms"
 import { MetricService } from "nestjs-otel"
 import OnebusawaySDK from "onebusaway-sdk"
 import type {
@@ -124,6 +125,28 @@ export class OneBusAwayService implements FeedProvider {
     await this.obaSdk.currentTime.retrieve()
   }
 
+  async getMetadata(): Promise<Record<string, any>> {
+    return this.cached(
+      "metadata",
+      async () => {
+        const obaConfig = await this.obaSdk.config.retrieve()
+
+        return {
+          oneBusAwayServer: this.obaSdk.baseURL,
+          bundleId: obaConfig.data.entry.id,
+          bundleName: obaConfig.data.entry.name,
+          serviceDateFrom: obaConfig.data.entry.serviceDateFrom
+            ? new Date(parseInt(obaConfig.data.entry.serviceDateFrom))
+            : null,
+          serviceDateTo: obaConfig.data.entry.serviceDateTo
+            ? new Date(parseInt(obaConfig.data.entry.serviceDateTo))
+            : null,
+        }
+      },
+      ms("12h"),
+    )
+  }
+
   private async instrumentedFetch(url: any, init?: any): Promise<any> {
     await this.obaRateLimiter.removeTokens(1)
 
@@ -202,7 +225,7 @@ export class OneBusAwayService implements FeedProvider {
 
         return turf.bbox(bboxes)
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -229,7 +252,7 @@ export class OneBusAwayService implements FeedProvider {
 
         return names
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -267,7 +290,7 @@ export class OneBusAwayService implements FeedProvider {
 
         return stopRoutes
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -320,7 +343,7 @@ export class OneBusAwayService implements FeedProvider {
 
         return allStops
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -347,7 +370,7 @@ export class OneBusAwayService implements FeedProvider {
           lon: stop.data.entry.lon,
         }
       },
-      86_400_000,
+      ms("24h"),
     )
   }
 
@@ -366,19 +389,19 @@ export class OneBusAwayService implements FeedProvider {
           this.logger.warn(
             `getArrivalsAndDeparturesForStop: Requested stop ${stopId} not found`,
           )
-          return { value: null, ttl: 3_600_000 }
+          return { value: null, ttl: ms("1h") }
         }
 
         throw new InternalServerErrorException(e)
       }
 
-      let ttl = 18_000
+      let ttl = ms("30m")
       if (resp === null) {
         // doesn't support this stop, I guess? undocumented behavior
-        ttl = 3_600_000
+        ttl = ms("1h")
       } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
         // no arrivals for the next hour so we can cache for longer
-        ttl = 300_000
+        ttl = ms("5m")
       }
 
       return { value: resp, ttl }
@@ -467,16 +490,16 @@ export class OneBusAwayService implements FeedProvider {
           }
         }
 
-        let ttl = 15_000
+        let ttl = ms("15s")
         if (tripStops.length === 0) {
-          ttl = 300_000
+          ttl = ms("5m")
         } else {
           const earliestArrival = Math.min(
             ...tripStops.map((ts) => ts.arrivalTime.getTime()),
           )
 
-          if (earliestArrival > Date.now() + 300_000) {
-            ttl = 30_000
+          if (earliestArrival > Date.now() + ms("5m")) {
+            ttl = ms("30s")
           }
         }
 

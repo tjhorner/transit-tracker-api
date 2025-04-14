@@ -5,6 +5,7 @@ import { StartedPostgreSqlContainer } from "@testcontainers/postgresql"
 import { RedisContainer, StartedRedisContainer } from "@testcontainers/redis"
 import fs from "fs/promises"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
+import ms from "ms"
 import path from "path"
 import { AppModule } from "src/app.module"
 import { FeedSyncService } from "src/modules/feed/feed-sync.service"
@@ -48,7 +49,7 @@ describe("E2E test", () => {
     await app.init()
 
     await app.get(FeedSyncService).syncAllFeeds()
-  }, 120_000)
+  }, ms("2m"))
 
   afterAll(async () => {
     await app.close()
@@ -74,9 +75,7 @@ describe("E2E test", () => {
     const now = new Date().getTime()
     const lastSyncedAt = new Date(feed.lastSyncedAt).getTime()
     expect(lastSyncedAt).toBeLessThanOrEqual(now)
-    expect(lastSyncedAt).toBeGreaterThanOrEqual(
-      now - 300_000, // 5 minutes
-    )
+    expect(lastSyncedAt).toBeGreaterThanOrEqual(now - ms("5m"))
 
     expect(feed.code).toBe("testfeed")
     expect(feed.name).toBe("Test Feed")
