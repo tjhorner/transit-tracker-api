@@ -395,7 +395,7 @@ export class OneBusAwayService implements FeedProvider {
         throw new InternalServerErrorException(e)
       }
 
-      let ttl = ms("30m")
+      let ttl = ms("20s")
       if (resp === null) {
         // doesn't support this stop, I guess? undocumented behavior
         ttl = ms("1h")
