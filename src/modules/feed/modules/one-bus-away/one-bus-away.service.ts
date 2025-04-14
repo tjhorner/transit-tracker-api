@@ -1,4 +1,3 @@
-import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager"
 import {
   Inject,
   InternalServerErrorException,
@@ -22,6 +21,7 @@ import type {
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { OneBusAwayConfig, OneBusAwayConfigSchema } from "./config"
 
 export interface StopGroup {
@@ -65,12 +65,10 @@ export class OneBusAwayService implements FeedProvider {
   private obaRequestCounter: Counter
   private obaResponseCounter: Counter
   private obaRequestDuration: Histogram
-  private obaCacheHits: Counter
-  private obaCacheMisses: Counter
 
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
+    private readonly cache: FeedCacheService,
     metricService: MetricService,
   ) {
     this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
@@ -109,16 +107,6 @@ export class OneBusAwayService implements FeedProvider {
         valueType: ValueType.DOUBLE,
       },
     )
-
-    this.obaCacheHits = metricService.getCounter("onebusaway_cache_hits", {
-      description: "Number of cache hits for OneBusAway requests",
-      unit: "hits",
-    })
-
-    this.obaCacheMisses = metricService.getCounter("onebusaway_cache_misses", {
-      description: "Number of cache misses for OneBusAway requests",
-      unit: "misses",
-    })
   }
 
   async healthCheck(): Promise<void> {
@@ -126,7 +114,7 @@ export class OneBusAwayService implements FeedProvider {
   }
 
   async getMetadata(): Promise<Record<string, any>> {
-    return this.cached(
+    return this.cache.cached(
       "metadata",
       async () => {
         const obaConfig = await this.obaSdk.config.retrieve()
@@ -176,36 +164,8 @@ export class OneBusAwayService implements FeedProvider {
     return resp
   }
 
-  private async cached<T>(
-    key: string,
-    fn: () => Promise<T | { value: T; ttl: number }>,
-    ttl?: number,
-  ): Promise<T> {
-    const cacheKey = `${this.feedCode}-${key}`
-    const cached = await this.cacheManager.get<T>(cacheKey)
-    if (cached) {
-      this.obaCacheHits.add(1, {
-        feed_code: this.feedCode,
-      })
-      return cached
-    }
-
-    this.obaCacheMisses.add(1, {
-      feed_code: this.feedCode,
-    })
-
-    const result = await fn()
-    if (result instanceof Object && "value" in result && "ttl" in result) {
-      this.cacheManager.set(cacheKey, result.value, result.ttl)
-      return result.value
-    }
-
-    this.cacheManager.set(cacheKey, result, ttl)
-    return result
-  }
-
   async getAgencyBounds(): Promise<BBox> {
-    return this.cached(
+    return this.cache.cached(
       "agencyBounds",
       async () => {
         const resp = await this.obaSdk.agenciesWithCoverage.list()
@@ -233,7 +193,7 @@ export class OneBusAwayService implements FeedProvider {
     routeId: string,
     stopId: string,
   ): Promise<string[]> {
-    return this.cached(
+    return this.cache.cached(
       `headsigns-${routeId}-${stopId}`,
       async () => {
         const stopsForRoute = await this.obaSdk.stopsForRoute.list(routeId, {
@@ -257,7 +217,7 @@ export class OneBusAwayService implements FeedProvider {
   }
 
   async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
-    return this.cached(
+    return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {
         let stop: OnebusawaySDK.Stop.StopRetrieveResponse
@@ -317,7 +277,7 @@ export class OneBusAwayService implements FeedProvider {
   }
 
   async listStops(): Promise<Stop[]> {
-    return this.cached(
+    return this.cache.cached(
       "allStops",
       async () => {
         const boundingBox = await this.getAgencyBounds()
@@ -348,7 +308,7 @@ export class OneBusAwayService implements FeedProvider {
   }
 
   async getStop(stopId: string): Promise<Stop> {
-    return this.cached(
+    return this.cache.cached(
       `stop-${stopId}`,
       async () => {
         let stop: OnebusawaySDK.Stop.StopRetrieveResponse
@@ -377,7 +337,7 @@ export class OneBusAwayService implements FeedProvider {
   async getArrivalsAndDeparturesForStop(
     stopId: string,
   ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null> {
-    return this.cached(`arrivalsAndDepartures-${stopId}`, async () => {
+    return this.cache.cached(`arrivalsAndDepartures-${stopId}`, async () => {
       let resp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse
       try {
         resp = await this.obaSdk.arrivalAndDeparture.list(stopId, {
@@ -411,7 +371,7 @@ export class OneBusAwayService implements FeedProvider {
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
-    return this.cached(
+    return this.cache.cached(
       `upcomingTrips-${routes.map((r) => `${r.routeId}-${r.stopId}`).join(",")}`,
       async () => {
         const stopRouteMap = routes.reduce(

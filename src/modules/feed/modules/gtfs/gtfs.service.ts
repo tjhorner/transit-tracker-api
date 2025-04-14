@@ -1,4 +1,3 @@
-import { Cache, CACHE_MANAGER } from "@nestjs/cache-manager"
 import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
@@ -14,6 +13,7 @@ import type {
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { GtfsConfig, GtfsConfigSchema } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
@@ -40,43 +40,17 @@ type ITripUpdate = GtfsRt.ITripUpdate
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
-  private feedCode: string
   private config: GtfsConfig
 
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
     @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    private readonly cache: FeedCacheService,
     private readonly db: GtfsDbService,
     private readonly syncService: GtfsSyncService,
     private readonly realtimeService: GtfsRealtimeService,
   ) {
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
-    this.feedCode = feedCode
     this.config = GtfsConfigSchema.parse(config)
-  }
-
-  private async cached<T>(
-    key: string,
-    fn: () => Promise<T | { value: T; ttl: number }>,
-    ttl?: number,
-  ): Promise<T> {
-    const cacheKey = `${this.feedCode}-${key}`
-    const cached = await this.cacheManager.get<T>(cacheKey)
-    if (cached) {
-      return cached
-    }
-
-    const result = await fn()
-    if (result instanceof Object && "value" in result && "ttl" in result) {
-      if (result.ttl > 0) {
-        this.cacheManager.set(cacheKey, result.value, result.ttl)
-      }
-
-      return result.value
-    }
-
-    this.cacheManager.set(cacheKey, result, ttl)
-    return result
   }
 
   async healthCheck(): Promise<void> {
@@ -87,7 +61,7 @@ export class GtfsService implements FeedProvider {
   }
 
   async getAgencyBounds(): Promise<BBox> {
-    return this.cached(
+    return this.cache.cached(
       "agencyBounds",
       async () => {
         const [stopBounds] = await getStopBounds.run(undefined, this.db)
@@ -109,7 +83,7 @@ export class GtfsService implements FeedProvider {
 
   async getLastSync(): Promise<Date> {
     return new Date(
-      await this.cached(
+      await this.cache.cached(
         "lastSync",
         async () => {
           const [metadata] = await getImportMetadata.run(undefined, this.db)
@@ -121,7 +95,7 @@ export class GtfsService implements FeedProvider {
   }
 
   async getMetadata(): Promise<Record<string, any>> {
-    return this.cached(
+    return this.cache.cached(
       "feedInfo",
       async () => {
         const [metadata] = await getFeedInfo.run(undefined, this.db)
@@ -184,7 +158,7 @@ export class GtfsService implements FeedProvider {
     dateKey.setHours(12 % (dateKey.getHours() + 1), 0, 0, 0)
 
     const cacheKey = `schedule-${routeId}-${stopId}-${dateKey.getTime()}`
-    return this.cached(
+    return this.cache.cached(
       cacheKey,
       async () => {
         const interval = `${dayOffset} days`
@@ -205,7 +179,7 @@ export class GtfsService implements FeedProvider {
   }
 
   async listStops(): Promise<Stop[]> {
-    return this.cached(
+    return this.cache.cached(
       "stops",
       async () => {
         const stops = await listStops.run(undefined, this.db)
@@ -245,7 +219,7 @@ export class GtfsService implements FeedProvider {
   }
 
   async getStop(stopId: string): Promise<Stop> {
-    return this.cached(
+    return this.cache.cached(
       `stop-${stopId}`,
       async () => {
         const stop = await getStop.run({ stopId }, this.db)
@@ -262,7 +236,7 @@ export class GtfsService implements FeedProvider {
   }
 
   async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
-    return this.cached(
+    return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {
         const routes = await listRoutesForStop.run(
@@ -298,7 +272,7 @@ export class GtfsService implements FeedProvider {
       return []
     }
 
-    const allFeedEntities: GtfsRt.IFeedEntity[] = await this.cached(
+    const allFeedEntities: GtfsRt.IFeedEntity[] = await this.cache.cached(
       "tripUpdates",
       this.realtimeService.getTripUpdates.bind(this.realtimeService),
     )
