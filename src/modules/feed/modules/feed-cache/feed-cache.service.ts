@@ -1,7 +1,7 @@
 import { CACHE_MANAGER, Cache } from "@nestjs/cache-manager"
 import { Inject, Injectable, Optional } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
-import { Counter, Histogram } from "@opentelemetry/api"
+import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 
@@ -33,7 +33,8 @@ export class FeedCacheService {
 
     this.cacheTtlMetric = metricService?.getHistogram("feed_cache_ttl", {
       description: "Cache TTL for a specified feed",
-      unit: "seconds",
+      unit: "ms",
+      valueType: ValueType.DOUBLE,
     })
   }
 
