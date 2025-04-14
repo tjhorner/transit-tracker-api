@@ -42,10 +42,10 @@ class Feed {
   @ApiProperty({
     required: true,
     description:
-      "Bounding box for this feed in the format [lat1, lon1, lat2, lon2]",
+      "Bounding box for this feed in the format [lon1, lat1, lon2, lat2]",
     isArray: true,
     type: Number,
-    example: [46.93304, -123.01475, 48.59793, -121.601001],
+    example: [-123.01475, 46.93304, -121.601001, 48.59793],
   })
   bounds!: number[]
 
