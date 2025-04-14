@@ -1,2 +1,2 @@
-pnpm format
-pnpm test
+pnpm format --log-level silent
+pnpm test --silent
