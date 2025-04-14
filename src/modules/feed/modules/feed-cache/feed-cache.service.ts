@@ -35,6 +35,12 @@ export class FeedCacheService {
       description: "Cache TTL for a specified feed",
       unit: "ms",
       valueType: ValueType.DOUBLE,
+      advice: {
+        explicitBucketBoundaries: [
+          0, 1000, 5000, 10000, 30000, 60000, 120000, 300000, 600000, 1200000,
+          3000000, 6000000, 86400000,
+        ],
+      },
     })
   }
 
