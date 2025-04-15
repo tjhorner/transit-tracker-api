@@ -17,9 +17,6 @@ importers:
       '@nest-lab/throttler-storage-redis':
         specifier: ^1.1.0
         version: 1.1.0(@nestjs/common@11.0.16(class-transformer@0.5.1)(class-validator@0.14.1)(file-type@20.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.0.16)(@nestjs/throttler@6.4.0(@nestjs/common@11.0.16(class-transformer@0.5.1)(class-validator@0.14.1)(file-type@20.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.0.16)(reflect-metadata@0.2.2))(ioredis@5.6.1)(reflect-metadata@0.2.2)
-      '@nestjs/cache-manager':
-        specifier: ^3.0.1
-        version: 3.0.1(@nestjs/common@11.0.16(class-transformer@0.5.1)(class-validator@0.14.1)(file-type@20.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.0.16)(cache-manager@6.4.2)(keyv@5.3.2)(rxjs@7.8.2)
       '@nestjs/common':
         specifier: ^11.0.16
         version: 11.0.16(class-transformer@0.5.1)(class-validator@0.14.1)(file-type@20.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -71,9 +68,6 @@ importers:
       cache-control-parser:
         specifier: ^2.0.6
         version: 2.0.6
-      cache-manager:
-        specifier: ^6.4.2
-        version: 6.4.2
       cacheable:
         specifier: ^1.8.10
         version: 1.8.10
@@ -152,6 +146,9 @@ importers:
       zod:
         specifier: ^3.24.2
         version: 3.24.2
+      zod-validation-error:
+        specifier: ^3.4.0
+        version: 3.4.0(zod@3.24.2)
     devDependencies:
       '@flydotio/dockerfile':
         specifier: ^0.7.10
@@ -966,15 +963,6 @@ packages:
       '@nestjs/throttler': '>=6.0.0'
       ioredis: '>=5.0.0'
       reflect-metadata: ^0.2.1
-
-  '@nestjs/cache-manager@3.0.1':
-    resolution: {integrity: sha512-4UxTnR0fsmKL5YDalU2eLFVnL+OBebWUpX+hEduKGncrVKH4PPNoiRn1kXyOCjmzb0UvWgqubpssNouc8e0MCw==}
-    peerDependencies:
-      '@nestjs/common': ^9.0.0 || ^10.0.0 || ^11.0.0
-      '@nestjs/core': ^9.0.0 || ^10.0.0 || ^11.0.0
-      cache-manager: '>=6'
-      keyv: '>=5'
-      rxjs: ^7.8.1
 
   '@nestjs/cli@11.0.6':
     resolution: {integrity: sha512-Xco8pTdWHCpTXPTYMkUGAE+C7JXvAv38oVUaQeL81o7UOAi39w8p456r+IjONN/7ekjzakWnqepDzuTtH5Xk5w==}
@@ -2614,9 +2602,6 @@ packages:
 
   cache-control-parser@2.0.6:
     resolution: {integrity: sha512-N4rxCk7V8NLfUVONXG0d7S4IyTQh3KEDW5k2I4CAcEUcMQCmVkfAMn37JSWfUQudiR883vDBy5XM5+TS2Xo7uQ==}
-
-  cache-manager@6.4.2:
-    resolution: {integrity: sha512-oT0d1cGWZAlqEGDPjOfhmldTS767jT6kBT3KIdn7MX5OevlRVYqJT+LxRv5WY4xW9heJtYxeRRXaoKlEW+Biew==}
 
   cacheable@1.8.10:
     resolution: {integrity: sha512-0ZnbicB/N2R6uziva8l6O6BieBklArWyiGx4GkwAhLKhSHyQtRfM9T1nx7HHuHDKkYB/efJQhz3QJ6x/YqoZzA==}
@@ -5272,6 +5257,12 @@ packages:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
 
+  zod-validation-error@3.4.0:
+    resolution: {integrity: sha512-ZOPR9SVY6Pb2qqO5XHt+MkkTRxGXb4EVtnjc9JpXUOtUB1T9Ru7mZOT361AN3MsetVe7R0a1KZshJDZdgp9miQ==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      zod: ^3.18.0
+
   zod@3.24.2:
     resolution: {integrity: sha512-lY7CDW43ECgW9u1TcT3IoXHflywfVqDYze4waEz812jR/bZ8FHDsl7pFQoSZTz5N+2NqRXs8GBwnAwo3ZNxqhQ==}
 
@@ -6087,14 +6078,6 @@ snapshots:
       ioredis: 5.6.1
       reflect-metadata: 0.2.2
       tslib: 2.8.1
-
-  '@nestjs/cache-manager@3.0.1(@nestjs/common@11.0.16(class-transformer@0.5.1)(class-validator@0.14.1)(file-type@20.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.0.16)(cache-manager@6.4.2)(keyv@5.3.2)(rxjs@7.8.2)':
-    dependencies:
-      '@nestjs/common': 11.0.16(class-transformer@0.5.1)(class-validator@0.14.1)(file-type@20.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      '@nestjs/core': 11.0.16(@nestjs/common@11.0.16(class-transformer@0.5.1)(class-validator@0.14.1)(file-type@20.4.1)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/platform-express@11.0.16)(@nestjs/websockets@11.0.16)(reflect-metadata@0.2.2)(rxjs@7.8.2)
-      cache-manager: 6.4.2
-      keyv: 5.3.2
-      rxjs: 7.8.2
 
   '@nestjs/cli@11.0.6(@types/node@22.14.1)':
     dependencies:
@@ -8854,10 +8837,6 @@ snapshots:
   bytes@3.1.2: {}
 
   cache-control-parser@2.0.6: {}
-
-  cache-manager@6.4.2:
-    dependencies:
-      keyv: 5.3.2
 
   cacheable@1.8.10:
     dependencies:
@@ -11732,5 +11711,9 @@ snapshots:
       archiver-utils: 5.0.2
       compress-commons: 6.0.2
       readable-stream: 4.7.0
+
+  zod-validation-error@3.4.0(zod@3.24.2):
+    dependencies:
+      zod: 3.24.2
 
   zod@3.24.2: {}

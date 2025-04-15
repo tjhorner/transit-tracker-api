@@ -1,7 +1,7 @@
-import { CACHE_MANAGER, Cache } from "@nestjs/cache-manager"
 import { Inject, Injectable, Optional } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
+import { Cacheable } from "cacheable"
 import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 
@@ -15,7 +15,7 @@ export class FeedCacheService {
   private readonly pendingCache = new Map<string, Promise<any>>()
 
   constructor(
-    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly cacheManager: Cacheable,
     @Inject(REQUEST) { feedCode }: FeedContext,
     @Optional() metricService?: MetricService,
   ) {

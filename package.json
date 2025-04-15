@@ -29,7 +29,6 @@
     "@anchan828/nest-redlock": "^0.3.11",
     "@keyv/redis": "4.3.3",
     "@nest-lab/throttler-storage-redis": "^1.1.0",
-    "@nestjs/cache-manager": "^3.0.1",
     "@nestjs/common": "^11.0.16",
     "@nestjs/core": "^11.0.16",
     "@nestjs/platform-express": "^11.0.16",
@@ -47,7 +46,6 @@
     "@turf/turf": "^7.2.0",
     "axios": "^1.8.4",
     "cache-control-parser": "^2.0.6",
-    "cache-manager": "^6.4.2",
     "cacheable": "^1.8.10",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
@@ -73,7 +71,8 @@
     "temp-dir": "^3.0.0",
     "unzipper": "^0.12.3",
     "ws": "^8.18.1",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",

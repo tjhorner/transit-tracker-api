@@ -5,7 +5,7 @@ WITH interp AS (
     st.trip_id,
     st.stop_sequence,
     st.shape_dist_traveled,
-    -- Convert known arrival times to an interval
+    -- Get previous known arrival time as interval
     (
       SELECT s_prev.arrival_time::interval
       FROM stop_times s_prev
@@ -16,6 +16,7 @@ WITH interp AS (
       ORDER BY s_prev.stop_sequence DESC
       LIMIT 1
     ) AS prev_time,
+    -- Get next known arrival time as interval
     (
       SELECT s_next.arrival_time::interval
       FROM stop_times s_next
@@ -26,6 +27,7 @@ WITH interp AS (
       ORDER BY s_next.stop_sequence ASC
       LIMIT 1
     ) AS next_time,
+    -- Get previous known shape_dist_traveled value
     (
       SELECT s_prev.shape_dist_traveled
       FROM stop_times s_prev
@@ -36,6 +38,7 @@ WITH interp AS (
       ORDER BY s_prev.stop_sequence DESC
       LIMIT 1
     ) AS prev_shape,
+    -- Get next known shape_dist_traveled value
     (
       SELECT s_next.shape_dist_traveled
       FROM stop_times s_next
@@ -46,6 +49,7 @@ WITH interp AS (
       ORDER BY s_next.stop_sequence ASC
       LIMIT 1
     ) AS next_shape,
+    -- Get previous stop_sequence with known arrival
     (
       SELECT s_prev.stop_sequence
       FROM stop_times s_prev
@@ -56,6 +60,7 @@ WITH interp AS (
       ORDER BY s_prev.stop_sequence DESC
       LIMIT 1
     ) AS prev_seq,
+    -- Get next stop_sequence with known arrival
     (
       SELECT s_next.stop_sequence
       FROM stop_times s_next
@@ -67,55 +72,53 @@ WITH interp AS (
       LIMIT 1
     ) AS next_seq
   FROM stop_times st
-  WHERE st.arrival_time IS NULL AND feed_code = :feedCode!
-)
-UPDATE stop_times st
-SET arrival_time =
-  (
-    SELECT
-      -- Compute the total seconds of the interpolated interval.
-      -- We compute the interpolated interval as:
-      --   prev_time + (next_time - prev_time) * fraction
-      -- where the fraction comes from shape_dist_traveled differences, or fallback to stop_sequence.
-      ( (total_seconds/3600)::int )::text
+  WHERE st.arrival_time IS NULL 
+    AND st.feed_code = :feedCode!
+),
+computed AS (
+  SELECT
+    sub.feed_code,
+    sub.trip_id,
+    sub.stop_sequence,
+    (
+      ((sub.total_seconds / 3600)::int)::text
       || ':' ||
       to_char(
-        (
-          interval '1 second' * (total_seconds::int)
-          - interval '1 hour' * ((total_seconds/3600)::int)
+        (interval '1 second' * (sub.total_seconds::int)
+         - interval '1 hour' * ((sub.total_seconds / 3600)::int)
         )::time,
         'MI:SS'
       )
-    FROM (
-      SELECT
-        extract(
-          epoch FROM (
-            interp.prev_time
-            + (
-                interp.next_time - interp.prev_time
-              ) * (
-                CASE
-                  WHEN interp.prev_shape IS NOT NULL AND interp.next_shape IS NOT NULL THEN
-                    (st.shape_dist_traveled - interp.prev_shape)
-                    / (interp.next_shape - interp.prev_shape)
-                  ELSE
-                    (st.stop_sequence - interp.prev_seq)::numeric
-                    / (interp.next_seq - interp.prev_seq)
-                END
-              )
+    ) AS interpolated_arrival_time
+  FROM (
+    SELECT
+      i.*,
+      extract(
+        epoch FROM (
+          i.prev_time +
+          (
+            i.next_time - i.prev_time
+          ) * (
+            CASE
+              WHEN i.prev_shape IS NOT NULL AND i.next_shape IS NOT NULL THEN
+                (i.shape_dist_traveled - i.prev_shape) /
+                (i.next_shape - i.prev_shape)
+              ELSE
+                (i.stop_sequence - i.prev_seq)::numeric /
+                (i.next_seq - i.prev_seq)
+            END
           )
-        ) AS total_seconds
-      FROM interp
-      WHERE interp.feed_code = st.feed_code
-        AND interp.trip_id = st.trip_id
-        AND interp.stop_sequence = st.stop_sequence
-    ) sub
-  )
-WHERE EXISTS (
-  SELECT 1 FROM interp
-  WHERE interp.trip_id = st.trip_id
-    AND interp.stop_sequence = st.stop_sequence
-) AND feed_code = :feedCode!;
+        )
+      ) AS total_seconds
+    FROM interp i
+  ) sub
+)
+UPDATE stop_times st
+SET arrival_time = comp.interpolated_arrival_time
+FROM computed comp
+WHERE st.feed_code = comp.feed_code
+  AND st.trip_id = comp.trip_id
+  AND st.stop_sequence = comp.stop_sequence;
 
 /* @name UpdateEmptyDepartureTimes */
 UPDATE stop_times

@@ -1,9 +1,10 @@
-import { CacheInterceptor, CacheTTL } from "@nestjs/cache-manager"
 import { Controller, Get, UseInterceptors } from "@nestjs/common"
 import { ApiProperty, ApiResponse } from "@nestjs/swagger"
 import * as turf from "@turf/turf"
 import { FeatureCollection } from "geojson"
 import ms from "ms"
+import { CacheTTL } from "../cache/decorators/cache-ttl.decorator"
+import { CacheInterceptor } from "../cache/interceptors/cache.interceptor"
 import exampleServiceAreas from "./example-service-areas.json"
 import { FeedService } from "./feed.service"
 
@@ -101,10 +102,16 @@ export class FeedsController {
   })
   async getServiceAreas(): Promise<FeatureCollection> {
     const feeds = this.feedService.getAllFeedProviders()
+    const configs = this.feedService.getAllFeeds()
 
     const polygonFeatures = (
       await Promise.all(
-        Object.values(feeds).map(async (provider) => {
+        Object.entries(feeds).map(async ([feedKey, provider]) => {
+          const config = configs[feedKey]
+          if (config.serviceArea) {
+            return turf.polygon(config.serviceArea)
+          }
+
           const stops = await provider.listStops()
           return turf.convex(
             turf.featureCollection(

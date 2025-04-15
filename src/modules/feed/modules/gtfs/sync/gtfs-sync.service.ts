@@ -16,6 +16,7 @@ import type {
 } from "../../../interfaces/feed-provider.interface"
 import { GtfsConfig } from "../config"
 import { GtfsDbService } from "../gtfs-db.service"
+import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
 import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
 import { getImportMetadata } from "./queries/get-import-metadata.queries"
@@ -195,7 +196,9 @@ export class GtfsSyncService {
   private async runPostProcessors(client: PoolClient) {
     this.logger.log("Running post-processing tasks")
 
-    const postProcessors = [new InterpolateEmptyStopTimesPostProcessor()]
+    const postProcessors: SyncPostProcessor[] = [
+      new InterpolateEmptyStopTimesPostProcessor(),
+    ]
 
     for (const processor of postProcessors) {
       this.logger.log(`Running ${processor.constructor.name}`)

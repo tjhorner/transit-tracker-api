@@ -8,14 +8,20 @@ import {
   FeedContext,
   FeedProvider,
 } from "src/modules/feed/interfaces/feed-provider.interface"
+import z from "zod"
+import { fromError } from "zod-validation-error"
 import { AllFeedsService } from "./all-feeds.service"
 import { ProviderKey } from "./decorators/feed-provider.decorator"
 
-export interface FeedConfig {
-  name: string
-  description?: string
-  [key: string]: unknown
-}
+export const FeedConfigSchema = z
+  .object({
+    name: z.string(),
+    description: z.string().optional(),
+    serviceArea: z.array(z.array(z.tuple([z.number(), z.number()]))).optional(),
+  })
+  .catchall(z.unknown())
+
+export type FeedConfig = z.infer<typeof FeedConfigSchema>
 
 @Injectable()
 export class FeedService implements OnModuleInit {
@@ -86,7 +92,17 @@ export class FeedService implements OnModuleInit {
 
     this.logger.log(`Loaded ${Object.keys(feeds).length} feeds`)
 
-    for (const [feedName, config] of Object.entries(feeds)) {
+    for (const [feedName, rawConfig] of Object.entries(feeds)) {
+      const result = FeedConfigSchema.safeParse(rawConfig)
+      if (!result.success) {
+        const error = fromError(result.error)
+        this.logger.error(
+          `Validation failed for feed "${feedName}". This feed will not be loaded until the following error is resolved. ${error.toString()}`,
+        )
+        continue
+      }
+
+      const config = result.data
       for (const [key, providerType] of Object.entries(registeredProviders)) {
         if (config[key]) {
           this.logger.log(
