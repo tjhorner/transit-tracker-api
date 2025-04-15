@@ -355,13 +355,29 @@ export class OneBusAwayService implements FeedProvider {
         throw new InternalServerErrorException(e)
       }
 
-      let ttl = ms("20s")
+      resp.data.entry.arrivalsAndDepartures.sort(
+        (a, b) =>
+          (a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime) -
+          (b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime),
+      )
+
+      let ttl = ms("30s")
       if (resp === null) {
         // doesn't support this stop, I guess? undocumented behavior
         ttl = ms("1h")
       } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
-        // no arrivals for the next hour so we can cache for longer
-        ttl = ms("5m")
+        // no arrivals for the next two hours so we can cache for longer
+        ttl = ms("2h")
+      } else {
+        const firstArrival = resp.data.entry.arrivalsAndDepartures[0]
+        const firstArrivalTime = firstArrival.predicted
+          ? firstArrival.predictedArrivalTime
+          : firstArrival.scheduledArrivalTime
+
+        const timeUntilFirstArrival = firstArrivalTime - Date.now()
+        if (timeUntilFirstArrival > ms("5m")) {
+          ttl = ms("1m")
+        }
       }
 
       return { value: resp, ttl }
@@ -371,100 +387,81 @@ export class OneBusAwayService implements FeedProvider {
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
-    return this.cache.cached(
-      `upcomingTrips-${routes.map((r) => `${r.routeId}-${r.stopId}`).join(",")}`,
-      async () => {
-        const stopRouteMap = routes.reduce(
-          (acc, { routeId, stopId }) => {
-            if (!acc[stopId]) {
-              acc[stopId] = []
-            }
-            acc[stopId].push(routeId)
-            return acc
-          },
-          {} as Record<string, string[]>,
+    const stopRouteMap = routes.reduce(
+      (acc, { routeId, stopId }) => {
+        if (!acc[stopId]) {
+          acc[stopId] = []
+        }
+        acc[stopId].push(routeId)
+        return acc
+      },
+      {} as Record<string, string[]>,
+    )
+
+    const tripStops: TripStop[] = []
+    for (const stopId of Object.keys(stopRouteMap)) {
+      const routeIds = stopRouteMap[stopId]
+      const arrivalsAndDeparturesResp =
+        await this.getArrivalsAndDeparturesForStop(stopId)
+
+      if (!arrivalsAndDeparturesResp) {
+        continue
+      }
+
+      const arrivalsAndDepartures =
+        arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
+          (ad) => routeIds.includes(ad.routeId),
         )
 
-        const tripStops: TripStop[] = []
-        for (const stopId of Object.keys(stopRouteMap)) {
-          const routeIds = stopRouteMap[stopId]
-          const arrivalsAndDeparturesResp =
-            await this.getArrivalsAndDeparturesForStop(stopId)
-
-          if (!arrivalsAndDeparturesResp) {
-            continue
-          }
-
-          const arrivalsAndDepartures =
-            arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
-              (ad) => routeIds.includes(ad.routeId),
-            )
-
-          for (const ad of arrivalsAndDepartures) {
-            if (
-              tripStops.some(
-                (ts) => ts.tripId === ad.tripId && ts.stopId === stopId,
-              )
-            ) {
-              continue
-            }
-
-            const staticStop =
-              arrivalsAndDeparturesResp.data.references.stops.find(
-                (s) => s.id === stopId,
-              )
-
-            const staticRoute =
-              arrivalsAndDeparturesResp.data.references.routes.find(
-                (r) => r.id === ad.routeId,
-              )
-
-            const departureTime =
-              ad.predicted && ad.predictedDepartureTime
-                ? new Date(ad.predictedDepartureTime)
-                : new Date(ad.scheduledDepartureTime)
-
-            if (departureTime < new Date()) {
-              continue
-            }
-
-            const arrivalTime =
-              ad.predicted && ad.predictedArrivalTime
-                ? new Date(ad.predictedArrivalTime)
-                : new Date(ad.scheduledArrivalTime)
-
-            const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
-
-            tripStops.push({
-              tripId: ad.tripId,
-              stopId,
-              routeId: ad.routeId,
-              routeName: ad.routeShortName ?? "Unnamed Route",
-              routeColor: color?.trim() !== "" ? color : null,
-              stopName: staticStop?.name ?? "Unnamed Stop",
-              headsign: ad.tripHeadsign,
-              arrivalTime,
-              departureTime,
-              isRealtime: ad.predicted ?? false,
-            })
-          }
+      for (const ad of arrivalsAndDepartures) {
+        if (
+          tripStops.some(
+            (ts) => ts.tripId === ad.tripId && ts.stopId === stopId,
+          )
+        ) {
+          continue
         }
 
-        let ttl = ms("15s")
-        if (tripStops.length === 0) {
-          ttl = ms("5m")
-        } else {
-          const earliestArrival = Math.min(
-            ...tripStops.map((ts) => ts.arrivalTime.getTime()),
+        const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
+          (s) => s.id === stopId,
+        )
+
+        const staticRoute =
+          arrivalsAndDeparturesResp.data.references.routes.find(
+            (r) => r.id === ad.routeId,
           )
 
-          if (earliestArrival > Date.now() + ms("5m")) {
-            ttl = ms("30s")
-          }
+        const departureTime =
+          ad.predicted && ad.predictedDepartureTime
+            ? new Date(ad.predictedDepartureTime)
+            : new Date(ad.scheduledDepartureTime)
+
+        if (departureTime < new Date()) {
+          continue
         }
 
-        return { value: tripStops, ttl }
-      },
-    )
+        const arrivalTime =
+          ad.predicted && ad.predictedArrivalTime
+            ? new Date(ad.predictedArrivalTime)
+            : new Date(ad.scheduledArrivalTime)
+
+        const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
+
+        tripStops.push({
+          tripId: ad.tripId,
+          stopId,
+          routeId: ad.routeId,
+          routeName: ad.routeShortName ?? "Unnamed Route",
+          routeColor: color?.trim() !== "" ? color : null,
+          stopName: staticStop?.name ?? "Unnamed Stop",
+          headsign: ad.tripHeadsign,
+          arrivalTime,
+          departureTime,
+          isRealtime: ad.predicted ?? false,
+        })
+      }
+    }
+
+    return tripStops
   }
 }
