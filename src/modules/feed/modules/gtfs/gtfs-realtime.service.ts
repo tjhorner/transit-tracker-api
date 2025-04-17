@@ -5,6 +5,7 @@ import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
+import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { FetchConfig, GtfsConfig } from "./config"
 import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-route.queries"
 
@@ -16,67 +17,80 @@ export class GtfsRealtimeService {
   private readonly config: GtfsConfig
   private readonly logger: Logger
 
-  constructor(@Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>) {
+  constructor(
+    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    private readonly cache: FeedCacheService,
+  ) {
     this.logger = new Logger(`${GtfsRealtimeService.name}[${feedCode}]`)
     this.config = config
   }
 
   async getTripUpdates() {
-    let fetchConfigs: FetchConfig[] = []
-    if (Array.isArray(this.config.rtTripUpdates)) {
-      fetchConfigs = this.config.rtTripUpdates
-    } else if (typeof this.config.rtTripUpdates === "object") {
-      fetchConfigs = [this.config.rtTripUpdates]
+    if (!this.config.rtTripUpdates) {
+      return []
     }
 
-    let maxAge = -1
-    const responses = await Promise.allSettled(
-      fetchConfigs.map(async (config) => {
-        const resp = await axios.get(config.url, {
-          responseType: "arraybuffer",
-          responseEncoding: "binary",
-          headers: config.headers,
-        })
+    return this.cache.cached("tripUpdates", async () => {
+      let fetchConfigs: FetchConfig[] = []
+      if (Array.isArray(this.config.rtTripUpdates)) {
+        fetchConfigs = this.config.rtTripUpdates
+      } else if (typeof this.config.rtTripUpdates === "object") {
+        fetchConfigs = [this.config.rtTripUpdates]
+      }
 
-        if (resp.headers["cache-control"]) {
-          const directives = parseCacheControl(resp.headers["cache-control"])
-          if (typeof directives["max-age"] === "number") {
-            maxAge = Math.max(maxAge, directives["max-age"])
-          } else if (directives["no-cache"]) {
-            maxAge = Math.max(maxAge, 0)
+      let maxAge = -1
+      const responses = await Promise.allSettled(
+        fetchConfigs.map(async (config) => {
+          const resp = await axios.get(config.url, {
+            responseType: "arraybuffer",
+            responseEncoding: "binary",
+            headers: config.headers,
+          })
+
+          if (resp.headers["cache-control"]) {
+            const directives = parseCacheControl(resp.headers["cache-control"])
+            if (typeof directives["max-age"] === "number") {
+              maxAge = Math.max(maxAge, directives["max-age"])
+            } else if (directives["no-cache"]) {
+              maxAge = Math.max(maxAge, 0)
+            }
           }
+
+          const feedMessage = GtfsRt.FeedMessage.toObject(
+            GtfsRt.FeedMessage.decode(Uint8Array.from(resp.data)),
+            { longs: Number },
+          ) as GtfsRt.IFeedMessage
+
+          return feedMessage.entity ?? []
+        }),
+      )
+
+      for (const response of responses) {
+        if (response.status === "rejected") {
+          this.logger.warn(`Failed to fetch trip updates`, response.reason)
         }
-
-        const feedMessage = GtfsRt.FeedMessage.toObject(
-          GtfsRt.FeedMessage.decode(Uint8Array.from(resp.data)),
-          { longs: Number },
-        )
-
-        return feedMessage.entity ?? []
-      }),
-    )
-
-    for (const response of responses) {
-      if (response.status === "rejected") {
-        this.logger.warn(`Failed to fetch trip updates`, response.reason)
       }
-    }
 
-    const successfulResponses = responses.filter(
-      (r) => r.status === "fulfilled",
-    )
-    if (successfulResponses.length === 0) {
+      const successfulResponses = responses.filter(
+        (r) => r.status === "fulfilled",
+      )
+      if (successfulResponses.length === 0) {
+        return {
+          value: [],
+          ttl: 0,
+        }
+      }
+
+      const tripUpdates = successfulResponses
+        .flatMap((r) => r.value)
+        .map((entity) => entity.tripUpdate)
+        .filter((tripUpdate) => !!tripUpdate)
+
       return {
-        value: [],
-        ttl: 0,
+        value: tripUpdates,
+        ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
       }
-    }
-
-    const tripUpdates = successfulResponses.flatMap((r) => r.value)
-    return {
-      value: tripUpdates,
-      ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
-    }
+    })
   }
 
   resolveTripTimes(

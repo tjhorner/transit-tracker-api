@@ -267,21 +267,6 @@ export class GtfsService implements FeedProvider {
     )
   }
 
-  async getTripUpdates(): Promise<ITripUpdate[]> {
-    if (!this.config.rtTripUpdates) {
-      return []
-    }
-
-    const allFeedEntities: GtfsRt.IFeedEntity[] = await this.cache.cached(
-      "tripUpdates",
-      this.realtimeService.getTripUpdates.bind(this.realtimeService),
-    )
-
-    return allFeedEntities
-      .map((entity) => entity.tripUpdate)
-      .filter((tripUpdate) => !!tripUpdate)
-  }
-
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
@@ -290,7 +275,7 @@ export class GtfsService implements FeedProvider {
 
     let tripUpdates: ITripUpdate[] = []
     try {
-      tripUpdates = await this.getTripUpdates()
+      tripUpdates = await this.realtimeService.getTripUpdates()
     } catch (e: any) {
       this.logger.warn("Failed to fetch trip updates, using schedule", e.stack)
     }

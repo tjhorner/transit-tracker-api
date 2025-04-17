@@ -82,8 +82,7 @@ export class ScheduleService {
     if (listMode === "nextPerRoute") {
       const pairKey = (trip: ScheduleTrip) => `${trip.routeId}-${trip.stopId}`
 
-      const pairs = new Set<string>()
-      trips.forEach((trip) => pairs.add(pairKey(trip)))
+      const pairs = new Set<string>(trips.map((trip) => pairKey(trip)))
 
       trips = trips.filter((trip) => {
         const key = pairKey(trip)
