@@ -18,7 +18,7 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:e2e": "jest --config ./test/jest-e2e.json --forceExit",
     "sentry:sourcemaps": "sentry-cli sourcemaps inject --org tj-horner-dw --project transit-tracker-api ./dist && sentry-cli sourcemaps upload --org tj-horner-dw --project transit-tracker-api ./dist",
     "gtfs:db:migrate": "dbmate --no-dump-schema up",
     "gtfs:db:rollback": "dbmate --no-dump-schema rollback",
