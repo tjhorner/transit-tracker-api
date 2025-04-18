@@ -20,13 +20,19 @@ Most transit agencies will support GTFS. [Transitland](https://www.transit.land/
 > [!NOTE]  
 > Not all parts of the GTFS specification are supported. For example, [`frequencies.txt`](https://gtfs.org/documentation/schedule/reference/#frequenciestxt) is not supported, so if your transit agency uses it you will see incorrect or missing trips. PRs are welcome to add support for more GTFS features.
 
-You can create a `feeds.yaml` in the working directory, or provide it as a `FEEDS_CONFIG` environment variable. Here is an example configuration:
+You can create a `feeds.yaml` in the working directory, or provide it as a `FEEDS_CONFIG` environment variable. A [JSON Schema](./feed-schema.json) is available. Here is an example configuration:
 
 ```yaml
 feeds:
   st:
     name: Puget Sound Region
     description: All transit agencies in the Puget Sound region
+    # You can optionally override the service area polygon for a feed.
+    # By default this is determined by the locations of the feed's stops.
+    # It's advisable to set for OneBusAway-based feeds since OneBusAway can only
+    # return up to 250 stops at a time and does not support pagination, so the
+    # service area can potentially be incomplete.
+    serviceArea: [[[-122.97713,47.071983],[-123.01475,48.535065],[-122.9441,48.59793],[-121.633194,48.26319],[-121.60341,48.255344],[-121.6016,48.25484],[-121.60102,48.251865],[-121.601,48.25134],[-121.6923,47.85279],[-121.78612,47.491642],[-121.98235,47.199947],[-122.57929,46.933628],[-122.58955,46.93304],[-122.91552,46.979607],[-122.931404,46.98552],[-122.97713,47.071983]]]
     onebusaway:
       baseUrl: https://api.pugetsound.onebusaway.org
       apiKey: your_oba_api_key

@@ -1,5 +1,8 @@
 {
   "typescript.tsdk": "node_modules/typescript/lib",
+  "yaml.schemas": {
+    "./feed-schema.json": "/*feeds.yaml"
+  },
   "jest.virtualFolders": [
     {
       "name": "unit-tests",

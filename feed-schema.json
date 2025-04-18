@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/tjhorner/transit-tracker-api/refs/heads/main/feed-schema.json",
+  "type": "object",
+  "title": "Transit Tracker API Feed Configuration",
+  "properties": {
+    "feeds": {
+      "type": "object",
+      "description": "Feeds available to source data from.",
+      "patternProperties": {
+        "^[a-zA-Z0-9_-]+$": {
+          "type": "object",
+          "description": "The key of this object is used to identify the feed in the API. It should be short and unique.",
+          "examples": [
+            "st",
+            "nctd"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "description": "The name of the feed. This will be shown to end users.",
+              "examples": [
+                "Puget Sound Region",
+                "North County Transit District"
+              ]
+            },
+            "description": {
+              "type": "string",
+              "description": "A description of the feed. This will be shown to end users.",
+              "examples": [
+                "All transit agencies in the Puget Sound region",
+                "San Diego, California, USA"
+              ]
+            },
+            "serviceArea": {
+              "type": "array",
+              "description": "An optional override to the feed's service area polygon. If not provided, the service area will be derived from the locations of stops provided by the feed.\n\nThis should be in the same format as the \"coordinates\" property of a GeoJSON Polygon.",
+              "items": {
+                "type": "array",
+                "minItems": 4,
+                "items": {
+                  "type": "array",
+                  "items": [
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "minItems": 2,
+                  "maxItems": 2,
+                  "additionalItems": false
+                }
+              }
+            },
+            "gtfs": {
+              "type": "object",
+              "description": "Configuration parameters for a GTFS feed.",
+              "properties": {
+                "static": {
+                  "$ref": "#/$defs/HttpRequestOptions",
+                  "description": "Where to fetch the static GTFS zip file from."
+                },
+                "rtTripUpdates": {
+                  "description": "Optional reference to a GTFS-RT Trip Updates feed. Will supply real-time data if available.\n\nMultiple may be specified, in which case their results will be merged.",
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/HttpRequestOptions"
+                    },
+                    {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/HttpRequestOptions"
+                      }
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "static"
+              ],
+              "additionalProperties": false
+            },
+            "onebusaway": {
+              "type": "object",
+              "description": "Configuration parameters for a OneBusAway feed.",
+              "properties": {
+                "baseUrl": {
+                  "type": "string",
+                  "examples": [
+                    "https://api.pugetsound.onebusaway.org"
+                  ],
+                  "description": "Base URL to the OneBusAway instance to use.",
+                  "format": "uri"
+                },
+                "apiKey": {
+                  "type": "string",
+                  "description": "Your OneBusAway API key."
+                }
+              },
+              "required": [
+                "baseUrl",
+                "apiKey"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "name",
+            "description"
+          ],
+          "oneOf": [
+            {
+              "required": [
+                "gtfs"
+              ],
+              "not": {
+                "required": [
+                  "onebusaway"
+                ]
+              }
+            },
+            {
+              "required": [
+                "onebusaway"
+              ],
+              "not": {
+                "required": [
+                  "gtfs"
+                ]
+              }
+            }
+          ],
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "feeds"
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "HttpRequestOptions": {
+      "type": "object",
+      "properties": {
+        "url": {
+          "type": "string",
+          "description": "Full URL to the resource.",
+          "format": "uri"
+        },
+        "headers": {
+          "type": "object",
+          "description": "Optional headers to send with the request. Useful if authorization is required.",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "url"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

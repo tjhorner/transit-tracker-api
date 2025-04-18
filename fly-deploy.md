@@ -34,37 +34,11 @@ fly postgres create
 
 It will ask a few questions like name, region, and database size. You can change these, but the defaults are sufficient for this guide.
 
-Once the database is created, take note of the connection string it gives you and export it to your environment, for example:
+Once the database is created, export the provided connection string as `DATABASE_URL`. For example:
 
 ```shell
-export DATABASE_URL="postgres://username:password@postgres-app-name.flycast:5432/gtfs?sslmode=disable"
+export DATABASE_URL="postgres://username:password@postgres-app-name.flycast:5432"
 ```
-
-### Initialize Database
-
-Now let's initialize the database with the GTFS schema.
-
-Proxy the database to your local machine so we can connect to it:
-
-```bash
-# Replace the below app name with the one you created earlier
-fly proxy 5432 -a postgres-app-name
-```
-
-Modify the connection string you saved earlier to point to the local proxy, for example:
-
-```
-postgres://username:password@localhost:5432
-```
-
-Then run the following command in a new shell session to initialize the database:
-
-```bash
-# Using the modified connection string
-DATABASE_URL="postgres://username:password@localhost:5432/gtfs?sslmode=disable" pnpm gtfs:db:migrate
-```
-
-This command will create the database and run the migrations to set up the GTFS schema.
 
 ## Deploy Redis
 
@@ -80,7 +54,7 @@ fly redis create
 
 It will ask a few questions like name and region. You can change these, but the defaults are sufficient for this guide.
 
-The command will output the name and connection string for your new Redis instance. Save this in your environment with this command:
+The command will output the name and connection string for your new Redis instance. Export it as `REDIS_URL`. For example:
 
 ```bash
 export REDIS_URL="redis://default:abcd1234@fly-redis-app-name.upstash.io:6379"
@@ -115,7 +89,7 @@ Now that we have our Postgres database, Redis instance, and feed configuration r
 Let's set the appropriate secrets for the app now:
 
 ```bash
-fly secrets set --stage "DATABASE_URL=$DATABASE_URL" "REDIS_URL=$REDIS_URL/?family=6" "FEEDS_CONFIG=$(cat feeds.yaml)"
+fly secrets set --stage "DATABASE_URL=$DATABASE_URL/gtfs?sslmode=disable" "REDIS_URL=$REDIS_URL/?family=6" "FEEDS_CONFIG=$(cat feeds.yaml)"
 ```
 
 And deploy the app:
@@ -134,4 +108,4 @@ To deploy updates from upstream, run the following command:
 git stash push fly.toml && git pull origin main && git stash pop
 ```
 
-This will retain the local changes made to your `fly.toml` file but update the rest of the repository. You can then run `fly deploy` to deploy the changes.
+This will retain the local changes made to your `fly.toml` file but update the rest of the repository. You can then run `fly deploy` to deploy the changes. (Yes, this is unfortunately a bit annoying.)
