@@ -31,6 +31,6 @@ primary_region = "sea"
   path = "/metrics"
 
 [[vm]]
-  memory = "1gb"
+  memory = "512mb"
   cpu_kind = "shared"
   cpus = 1
