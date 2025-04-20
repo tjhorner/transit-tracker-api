@@ -8,6 +8,7 @@ import {
 import {
   ApiBadRequestResponse,
   ApiOkResponse,
+  ApiOperation,
   ApiParam,
   ApiProperty,
 } from "@nestjs/swagger"
@@ -18,14 +19,14 @@ export class TripDto {
     required: true,
     description:
       "The ID of the trip (note this is not globally unique and can be repeated for multiple days)",
-    example: "1_123456",
+    example: "st:1_123456",
   })
   tripId!: string
 
   @ApiProperty({
     required: true,
     description: "The ID of the route",
-    example: "1_123456",
+    example: "st:1_123456",
   })
   routeId!: string
 
@@ -47,7 +48,7 @@ export class TripDto {
   @ApiProperty({
     required: true,
     description: "The ID of the stop",
-    example: "1_123456",
+    example: "st:1_123456",
   })
   stopId!: string
 
@@ -88,7 +89,7 @@ export class TripDto {
   isRealtime!: boolean
 }
 
-export class Trips {
+export class ScheduleDto {
   @ApiProperty({
     isArray: true,
     type: TripDto,
@@ -102,15 +103,20 @@ export class ScheduleController {
   constructor(private readonly scheduleService: ScheduleService) {}
 
   @Get(":routeStopPairs")
+  @ApiOperation({
+    description:
+      "Get the combined schedule (upcoming arrivals and departures) for a list of route-stop pairs",
+  })
   @ApiOkResponse({
     description: "List of upcoming trips",
-    type: Trips,
+    type: ScheduleDto,
   })
   @ApiBadRequestResponse()
   @ApiParam({
     name: "routeStopPairs",
-    description: "A semicolon-separated list of routeId,stopId pairs to query",
-    example: "1_100113,1_71971;1_102704,1_71971",
+    description:
+      "A semicolon-separated list of `routeId,stopId` pairs to query",
+    example: "st:1_100113,st:1_71971;st:1_102704,st:1_71971",
   })
   @ApiParam({
     name: "limit",
@@ -121,7 +127,7 @@ export class ScheduleController {
   async getArrivals(
     @Param("routeStopPairs") routeStopPairsRaw: string,
     @Query("limit") limit: number = 10,
-  ): Promise<Trips> {
+  ): Promise<ScheduleDto> {
     limit = Math.min(limit, 10)
 
     const routeStopPairs =

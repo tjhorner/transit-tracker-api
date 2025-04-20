@@ -231,6 +231,10 @@ export class OneBusAwayService implements FeedProvider {
           throw new InternalServerErrorException(e)
         }
 
+        if (stop === null) {
+          throw new NotFoundException(`Stop ${stopId} not found`)
+        }
+
         const stopRoutes: StopRoute[] = []
         for (const route of stop.data.references.routes) {
           const headsigns = await this.getPossibleHeadsignsForRouteAtStop(

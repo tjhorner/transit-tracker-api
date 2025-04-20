@@ -73,12 +73,17 @@ There is also a WebSocket interface that can be used to subscribe to real-time s
 {
   "event": "schedule:subscribe",
   "data": {
-    "feedCode": "st",
-    "routeStopPairs": "1_100113,1_71971;1_102704,1_71971",
+    "routeStopPairs": "st:1_100113,st:1_71971;st:1_102704,st:1_71971",
     "limit": 3
   }
 }
 ```
+
+The following parameters are available to tweak the schedule data:
+
+- `limit`: The maximum number of trips to return in a single update.
+- `sortByDeparture`: Sort trips by departure time rather than arrival time. This is useful for routes with long dwell times at stops.
+- `listMode`: If `sequential`, then all trips across all routes will be returned in order of arrival or departure time. If `nextPerRoute`, then only the next trip for each route will be returned.
 
 Once subscribed, you will receive updates to your desired schedule in the following format:
 

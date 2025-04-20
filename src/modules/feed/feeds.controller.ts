@@ -8,7 +8,7 @@ import { CacheInterceptor } from "../cache/interceptors/cache.interceptor"
 import exampleServiceAreas from "./example-service-areas.json"
 import { FeedService } from "./feed.service"
 
-class Feed {
+class FeedDto {
   @ApiProperty({
     required: true,
     description: "The code used to identify this feed",
@@ -67,12 +67,12 @@ export class FeedsController {
   @ApiResponse({
     status: 200,
     description: "List of all feeds",
-    type: [Feed],
+    type: [FeedDto],
   })
-  async getFeeds(): Promise<Feed[]> {
+  async getFeeds(): Promise<FeedDto[]> {
     const feeds = this.feedService.getAllFeeds()
 
-    const resp: Feed[] = []
+    const resp: FeedDto[] = []
     for (const [feedCode, feed] of Object.entries(feeds)) {
       const provider = this.feedService.getFeedProvider(feedCode)!
       const lastSync = await provider.getLastSync?.()
