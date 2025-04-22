@@ -4,6 +4,11 @@ import { Global, Module } from "@nestjs/common"
 import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
 import Keyv from "keyv"
 import ms from "ms"
+import zlib from "node:zlib"
+
+const {
+  constants: { BROTLI_PARAM_QUALITY },
+} = zlib
 
 @Global()
 @Module({
@@ -18,7 +23,13 @@ import ms from "ms"
           }),
           secondary: process.env.REDIS_URL
             ? new Keyv({
-                compression: new KeyvBrotli(),
+                compression: new KeyvBrotli({
+                  compressOptions: {
+                    params: {
+                      [BROTLI_PARAM_QUALITY]: 7,
+                    },
+                  },
+                }),
                 store: new KeyvRedis(process.env.REDIS_URL, {
                   namespace: "cache",
                 }),
