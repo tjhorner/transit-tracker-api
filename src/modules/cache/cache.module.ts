@@ -1,6 +1,8 @@
-import { createKeyv as createKeyvRedis } from "@keyv/redis"
+import KeyvBrotli from "@keyv/compress-brotli"
+import KeyvRedis from "@keyv/redis"
 import { Global, Module } from "@nestjs/common"
 import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
+import Keyv from "keyv"
 import ms from "ms"
 
 @Global()
@@ -15,8 +17,11 @@ import ms from "ms"
             checkInterval: ms("1h"),
           }),
           secondary: process.env.REDIS_URL
-            ? createKeyvRedis(process.env.REDIS_URL, {
-                namespace: "cache",
+            ? new Keyv({
+                compression: new KeyvBrotli(),
+                store: new KeyvRedis(process.env.REDIS_URL, {
+                  namespace: "cache",
+                }),
               })
             : undefined,
         }),

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@anchan828/nest-redlock": "^0.3.11",
+    "@keyv/compress-brotli": "^2.0.4",
     "@keyv/redis": "4.3.3",
     "@nest-lab/throttler-storage-redis": "^1.1.0",
     "@nestjs/common": "^11.0.16",
