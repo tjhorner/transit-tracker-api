@@ -342,12 +342,12 @@ export class OneBusAwayService implements FeedProvider {
     stopId: string,
   ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null> {
     return this.cache.cached(`arrivalsAndDepartures-${stopId}`, async () => {
-      let resp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse
+      let resp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
       try {
-        resp = await this.obaSdk.arrivalAndDeparture.list(stopId, {
+        resp = (await this.obaSdk.arrivalAndDeparture.list(stopId, {
           minutesBefore: 0,
           minutesAfter: 120,
-        })
+        })) as OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
       } catch (e: any) {
         if (e?.error?.code === 404) {
           this.logger.warn(
@@ -359,12 +359,6 @@ export class OneBusAwayService implements FeedProvider {
         throw new InternalServerErrorException(e)
       }
 
-      resp.data.entry.arrivalsAndDepartures.sort(
-        (a, b) =>
-          (a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime) -
-          (b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime),
-      )
-
       let ttl = ms("30s")
       if (resp === null) {
         // doesn't support this stop, I guess? undocumented behavior
@@ -373,6 +367,12 @@ export class OneBusAwayService implements FeedProvider {
         // no arrivals for the next two hours so we can cache for longer
         ttl = ms("2h")
       } else {
+        resp.data.entry.arrivalsAndDepartures.sort(
+          (a, b) =>
+            (a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime) -
+            (b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime),
+        )
+
         const firstArrival = resp.data.entry.arrivalsAndDepartures[0]
         const firstArrivalTime = firstArrival.predicted
           ? firstArrival.predictedArrivalTime

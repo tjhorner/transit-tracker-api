@@ -26,7 +26,7 @@ const {
                 compression: new KeyvBrotli({
                   compressOptions: {
                     params: {
-                      [BROTLI_PARAM_QUALITY]: 7,
+                      [BROTLI_PARAM_QUALITY]: 5,
                     },
                   },
                 }),
