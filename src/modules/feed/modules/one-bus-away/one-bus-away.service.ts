@@ -56,6 +56,7 @@ function latLonSpanToBounds(
 export class OneBusAwayService implements FeedProvider {
   private logger: Logger
   private feedCode: string
+  private config: Readonly<OneBusAwayConfig>
   private obaSdk: OnebusawaySDK
   private obaRateLimiter = new RateLimiter({
     tokensPerInterval: 1,
@@ -73,6 +74,7 @@ export class OneBusAwayService implements FeedProvider {
   ) {
     this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
     this.feedCode = feedCode
+    this.config = config
 
     config = OneBusAwayConfigSchema.parse(config)
 
@@ -120,7 +122,7 @@ export class OneBusAwayService implements FeedProvider {
         const obaConfig = await this.obaSdk.config.retrieve()
 
         return {
-          oneBusAwayServer: this.obaSdk.baseURL,
+          oneBusAwayServer: this.config.baseUrl,
           bundleId: obaConfig.data.entry.id,
           bundleName: obaConfig.data.entry.name,
           serviceDateFrom: obaConfig.data.entry.serviceDateFrom
