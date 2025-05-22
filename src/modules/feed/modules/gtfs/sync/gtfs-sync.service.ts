@@ -185,15 +185,18 @@ export class GtfsSyncService {
         path.join(directory, "frequencies.txt"),
       )
 
-      await this.runPostProcessors(client)
-
       this.logger.log("Committing changes to database")
     })
+
+    // We run post-processors in separate transactions
+    // because they would be very very slow if run in
+    // the main import transaction
+    await this.runPostProcessors()
 
     this.logger.log("Import done")
   }
 
-  private async runPostProcessors(client: PoolClient) {
+  private async runPostProcessors() {
     this.logger.log("Running post-processing tasks")
 
     const postProcessors: SyncPostProcessor[] = [
@@ -202,10 +205,13 @@ export class GtfsSyncService {
 
     for (const processor of postProcessors) {
       this.logger.log(`Running ${processor.constructor.name}`)
-      await processor.process(client, {
-        feedCode: this.feedCode,
-        config: this.config,
-      })
+      await this.db.tx(
+        async (client) =>
+          await processor.process(client, {
+            feedCode: this.feedCode,
+            config: this.config,
+          }),
+      )
     }
   }
 
