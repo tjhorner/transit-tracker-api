@@ -12,11 +12,13 @@ import {
   timer,
 } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
-import {
+import type {
   FeedProvider,
   RouteAtStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
+import { SentryTraced } from "@sentry/nestjs"
+import * as Sentry from "@sentry/node"
 
 export interface ScheduleTrip {
   tripId: string
@@ -54,10 +56,19 @@ export class ScheduleService {
     private readonly metricsService: ScheduleMetricsService,
   ) {}
 
+  @SentryTraced()
   private async getUpcomingTrips(
     provider: FeedProvider,
     { routes, limit, sortByDeparture, listMode }: ScheduleOptions,
   ): Promise<ScheduleUpdate> {
+    const span = Sentry.getActiveSpan()
+    if (span) {
+      span.setAttribute("schedule_options.routes", JSON.stringify(routes))
+      span.setAttribute("schedule_options.limit", limit)
+      span.setAttribute("schedule_options.sortByDeparture", sortByDeparture)
+      span.setAttribute("schedule_options.listMode", listMode)
+    }
+
     const upcomingTrips =
       await provider.getUpcomingTripsForRoutesAtStops(routes)
 

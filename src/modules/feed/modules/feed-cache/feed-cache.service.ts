@@ -4,6 +4,8 @@ import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import { Cacheable } from "cacheable"
 import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
+import { SentryTraced } from "@sentry/nestjs"
+import * as Sentry from "@sentry/node"
 
 @Injectable()
 export class FeedCacheService {
@@ -44,11 +46,19 @@ export class FeedCacheService {
     })
   }
 
+  @SentryTraced()
   async cached<T>(
     key: string,
     fn: () => Promise<T | { value: T; ttl: number }>,
     ttl?: number,
   ): Promise<T> {
+    const span = Sentry.getActiveSpan()
+    if (span) {
+      Sentry.updateSpanName(span, `cached ${key}`)
+      span.setAttribute("cache.key", key)
+      span.setAttribute("cache.feed_code", this.feedCode)
+    }
+
     if (this.pendingCache.has(key)) {
       return this.pendingCache.get(key)!
     }
@@ -57,12 +67,14 @@ export class FeedCacheService {
       const cacheKey = `${this.feedCode}-${key}`
       const cached = await this.cacheManager.get<T>(cacheKey)
       if (cached) {
+        span?.setAttribute("cache.hit", true)
         this.cacheHitsMetric?.add(1, {
           feed_code: this.feedCode,
         })
         return cached
       }
 
+      span?.setAttribute("cache.hit", false)
       this.cacheMissesMetric?.add(1, {
         feed_code: this.feedCode,
       })

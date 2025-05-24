@@ -1,9 +1,10 @@
+// organize-imports-ignore
+import "./sentry"
 import { NestFactory } from "@nestjs/core"
 import { NestExpressApplication } from "@nestjs/platform-express"
 import { WsAdapter } from "@nestjs/platform-ws"
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger"
 import { AppModule } from "./app.module"
-import "./sentry"
 import otelSDK from "./tracing"
 
 function configureForFly(app: NestExpressApplication) {
