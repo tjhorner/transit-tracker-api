@@ -1,6 +1,6 @@
 # Deploying with Docker
 
-This service is distributed as a Docker image accessible as `ghcr.io/tjhorner/transit-tracker-api:latest`. You can deploy it on any platform where OCI images are supported.
+This service is distributed as a Docker image accessible as `ghcr.io/tjhorner/transit-tracker-api:main`. You can deploy it on any platform where OCI images are supported.
 
 ## Example: Docker Compose
 
