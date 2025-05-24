@@ -1,0 +1,46 @@
+services:
+  api:
+    image: ghcr.io/tjhorner/transit-tracker-api:latest
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      # Uncomment the below line if running through a reverse proxy (e.g., nginx, caddy, traefik)
+      # TRUST_PROXY: "true"
+      REDIS_URL: redis://redis:6379
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/gtfs
+      # You can provide your feeds configuration as an environment variable
+      # or as a bind mount. See the `volumes:` section below for an example.
+      FEEDS_CONFIG: |
+        feeds:
+          kcm:
+            name: King County Metro
+            description: King County, Washington
+            gtfs:
+              static:
+                url: https://metro.kingcounty.gov/GTFS/google_transit.zip
+              rtTripUpdates:
+                url: https://s3.amazonaws.com/kcm-alerts-realtime-prod/tripupdates.pb
+    # volumes:
+    #   - "./feeds.yaml:/app/feeds.yaml"
+    ports:
+      - "3000:3000"
+
+  postgres:
+    image: postgres:17
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: gtfs
+    volumes:
+      - "db:/var/lib/postgresql/data"
+  
+  redis:
+    image: redis:6
+    expose:
+      - "6379"
+
+volumes:
+  db:

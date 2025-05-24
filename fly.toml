@@ -1,11 +1,15 @@
 app = "transit-tracker-api"
 primary_region = "sea"
 
-[build]
+[build.args]
+  BUILD_FOR_FLY = "true"
 
 [deploy]
   strategy = "bluegreen"
-  release_command = "./node_modules/.bin/dbmate up && node dist/cli sync"
+  release_command = '"pnpm sentry:sourcemaps ; pnpm gtfs:db:migrate"'
+
+[env]
+  GTFS_RT_MIN_CACHE_AGE = "15s"
 
 [http_service]
   internal_port = 3000

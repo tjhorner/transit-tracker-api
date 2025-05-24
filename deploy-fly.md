@@ -1,5 +1,8 @@
 # Deploying on Fly.io
 
+> [!WARNING]  
+> This guide is partially outdated and contains some slightly incorrect information. It will be updated soon™.
+
 If you want to easily stand up your own Transit Tracker API server then Fly.io is a great option since it's cheap but easy to scale if you need to. This guide will walk you through the steps to deploy your own instance on Fly.io.
 
 ## Prerequisites

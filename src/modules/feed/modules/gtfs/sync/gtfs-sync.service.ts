@@ -14,7 +14,7 @@ import type {
   FeedContext,
   SyncOptions,
 } from "../../../interfaces/feed-provider.interface"
-import { GtfsConfig } from "../config"
+import { FetchConfig, GtfsConfig } from "../config"
 import { GtfsDbService } from "../gtfs-db.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
@@ -42,7 +42,7 @@ export class GtfsSyncService {
     return count > 0
   }
 
-  private async isUrlNewer(url: string) {
+  private async isResourceNewer(config: FetchConfig) {
     const [currentImportMetadata] = await getImportMetadata.run(
       undefined,
       this.db,
@@ -53,10 +53,15 @@ export class GtfsSyncService {
 
     let response: AxiosResponse
     try {
-      response = await axios.head(url)
+      response = await axios.head(config.url, {
+        headers: config.headers,
+      })
     } catch (e: any) {
       if (e.status < 500) {
-        response = await axios.get(url)
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        response = await axios.get(config.url, {
+          headers: config.headers,
+        })
       } else {
         throw e
       }
@@ -81,7 +86,7 @@ export class GtfsSyncService {
       `Starting import of feed "${this.feedCode}" from URL ${url}`,
     )
 
-    if (!opts?.force && !(await this.isUrlNewer(url))) {
+    if (!opts?.force && !(await this.isResourceNewer(this.config.static))) {
       this.logger.log("Feed is not newer; import not required")
       return
     }
@@ -238,10 +243,29 @@ export class GtfsSyncService {
 
     this.logger.log(`Importing ${tableName}`)
 
+    const outputRow = (row: any) =>
+      this.flushEmptyStrings({
+        feed_code: this.feedCode,
+        ...mapRow(row),
+      })
+
+    if (process.env.GTFS_IMPORT_METHOD === "insert") {
+      await this.importGtfsWithInsert(client, tableName, filePath, outputRow)
+    } else {
+      await this.importGtfsWithCopy(client, tableName, filePath, outputRow)
+    }
+  }
+
+  private async importGtfsWithCopy(
+    client: PoolClient,
+    tableName: string,
+    filePath: string,
+    mapRow: (row: any) => any,
+  ) {
     const columns = Object.keys(mapRow({}))
     const ingestStream = client.query(
       copyFrom(
-        `COPY ${tableName}(feed_code,${columns.join(",")}) FROM STDIN (FORMAT csv, HEADER true)`,
+        `COPY ${tableName}(${columns.join(",")}) FROM STDIN (FORMAT csv, HEADER true)`,
       ),
     )
 
@@ -256,11 +280,7 @@ export class GtfsSyncService {
       .pipe(
         csv.format({
           headers: true,
-          transform: (row: any) =>
-            this.flushEmptyStrings({
-              feed_code: this.feedCode,
-              ...mapRow(row),
-            }),
+          transform: mapRow,
         }),
       )
 
@@ -305,6 +325,64 @@ export class GtfsSyncService {
       logStatus()
     } finally {
       clearInterval(statusUpdateInterval)
+    }
+  }
+
+  private async importGtfsWithInsert(
+    client: PoolClient,
+    tableName: string,
+    filePath: string,
+    mapRow: (row: any) => any,
+  ) {
+    const batchSize = process.env.GTFS_IMPORT_BATCH_SIZE
+      ? parseInt(process.env.GTFS_IMPORT_BATCH_SIZE)
+      : 5000
+
+    if (isNaN(batchSize)) {
+      throw new Error("GTFS_IMPORT_BATCH_SIZE must be a number")
+    }
+
+    let completedRows = 0
+    const insertRows = async (rows: any[]) => {
+      this.logger.log(
+        `Inserting ${rows.length.toLocaleString()} ${tableName} rows ${completedRows.toLocaleString()} - ${(completedRows + rows.length).toLocaleString()}`,
+      )
+
+      for (const row of rows) {
+        const columns = Object.keys(row)
+        const values = columns.map((column) => row[column])
+        await client.query(
+          `INSERT INTO ${tableName} (${columns.join(",")}) VALUES (${values
+            .map((_, i) => `$${i + 1}`)
+            .join(",")})`,
+          values,
+        )
+      }
+
+      completedRows += rows.length
+    }
+
+    const batch: any[] = []
+    await pipeline(
+      fs.createReadStream(filePath).pipe(
+        csv.parse({
+          headers: true,
+          ignoreEmpty: true,
+        }),
+      ),
+      async (rows: AsyncIterable<any>) => {
+        for await (const item of rows) {
+          batch.push(mapRow(item))
+          if (batch.length >= batchSize) {
+            await insertRows(batch)
+            batch.length = 0
+          }
+        }
+      },
+    )
+
+    if (batch.length > 0) {
+      await insertRows(batch)
     }
   }
 

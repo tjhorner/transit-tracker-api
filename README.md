@@ -4,9 +4,9 @@ This is an API that is intended to be used to power a live arrivals or departure
 
 ## Installation
 
-The service is distributed as a Docker image that runs on port 3000 by default. You can find an example `docker-compose.yml` in the root of this repo.
+The service is distributed as a Docker image that runs on port 3000 by default. You can learn how to deploy it with the [Docker deployment guide](./deploy-docker.md).
 
-To easily deploy an instance of the API, check out the [Fly.io deployment guide](./fly-deploy.md).
+To easily deploy a hosted instance of the API, check out the [Fly.io deployment guide](./deploy-fly.md).
 
 ### Feed Configuration
 

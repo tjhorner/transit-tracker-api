@@ -21,6 +21,13 @@ export async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule)
 
   configureForFly(app)
+
+  if (process.env.TRUST_PROXY) {
+    const trustProxy =
+      process.env.TRUST_PROXY === "true" ? true : process.env.TRUST_PROXY
+    app.set("trust proxy", trustProxy)
+  }
+
   app.useWebSocketAdapter(new WsAdapter(app))
   app.enableCors()
 

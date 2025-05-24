@@ -3,7 +3,7 @@ import { REQUEST } from "@nestjs/core"
 import axios from "axios"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
-import ms from "ms"
+import ms, { StringValue } from "ms"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { FetchConfig, GtfsConfig } from "./config"
@@ -38,7 +38,11 @@ export class GtfsRealtimeService {
         fetchConfigs = [this.config.rtTripUpdates]
       }
 
-      let maxAge = -1
+      const minCacheAge = process.env.GTFS_RT_MIN_CACHE_AGE
+        ? ms(process.env.GTFS_RT_MIN_CACHE_AGE as StringValue) / 1000
+        : -1
+
+      let maxAge = isNaN(minCacheAge) ? -1 : minCacheAge
       const responses = await Promise.allSettled(
         fetchConfigs.map(async (config) => {
           const resp = await axios.get(config.url, {

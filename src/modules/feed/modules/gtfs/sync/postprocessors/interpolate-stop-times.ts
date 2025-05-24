@@ -3,6 +3,7 @@ import { PoolClient } from "pg"
 import { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface"
 import { SyncPostProcessor } from "../interface/sync-post-processor.interface"
 import {
+  emptyArrivalTimesExist,
   interpolateEmptyArrivalTimes,
   updateEmptyDepartureTimes,
 } from "../queries/interpolate-empty-stop-times.queries"
@@ -15,6 +16,15 @@ export class InterpolateEmptyStopTimesPostProcessor
   )
 
   async process(client: PoolClient, { feedCode }: FeedContext) {
+    const [{ exists }] = await emptyArrivalTimesExist.run({ feedCode }, client)
+
+    if (!exists) {
+      this.logger.log(
+        "No empty arrival times were found; skipping interpolation",
+      )
+      return
+    }
+
     this.logger.log("Interpolating empty arrival times")
 
     const interpolatedArrivals =

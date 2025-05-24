@@ -1,3 +1,11 @@
+/* @name EmptyArrivalTimesExist */
+SELECT EXISTS (
+  SELECT 1
+  FROM stop_times st
+  WHERE st.arrival_time IS NULL
+    AND st.feed_code = :feedCode!
+);
+
 /* @name InterpolateEmptyArrivalTimes */
 WITH interp AS (
   SELECT

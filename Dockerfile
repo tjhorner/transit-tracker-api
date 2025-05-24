@@ -13,14 +13,23 @@ FROM base AS build
 WORKDIR /app
 COPY . .
 COPY --from=dependencies /app/node_modules ./node_modules
-RUN pnpm build:prod
+RUN pnpm build
 RUN pnpm prune --prod
 
 FROM base AS deploy
 
 WORKDIR /app
+COPY --from=build /app/package.json ./
 COPY --from=build /app/db ./db
 COPY --from=build /app/dist/ ./dist/
 COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/scripts ./scripts
 
-CMD [ "node", "dist/main.js" ]
+ARG BUILD_FOR_FLY
+
+RUN if [[ -n "${BUILD_FOR_FLY}" ]] ; then apk add curl jq && \ 
+  curl -L https://fly.io/install.sh | sh && \ 
+  ln -s /root/.fly/bin/fly /usr/local/bin/fly ; fi
+
+ENTRYPOINT [ "/bin/sh", "-c" ]
+CMD [ "node dist/main.js" ]

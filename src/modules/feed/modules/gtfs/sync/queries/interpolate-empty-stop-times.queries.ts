@@ -1,6 +1,52 @@
 /** Types generated for queries found in "src/modules/feed/modules/gtfs/sync/queries/interpolate-empty-stop-times.sql" */
 import { PreparedQuery } from "@pgtyped/runtime"
 
+/** 'EmptyArrivalTimesExist' parameters type */
+export interface IEmptyArrivalTimesExistParams {
+  feedCode: string
+}
+
+/** 'EmptyArrivalTimesExist' return type */
+export interface IEmptyArrivalTimesExistResult {
+  exists: boolean | null
+}
+
+/** 'EmptyArrivalTimesExist' query type */
+export interface IEmptyArrivalTimesExistQuery {
+  params: IEmptyArrivalTimesExistParams
+  result: IEmptyArrivalTimesExistResult
+}
+
+const emptyArrivalTimesExistIR: any = {
+  usedParamSet: { feedCode: true },
+  params: [
+    {
+      name: "feedCode",
+      required: true,
+      transform: { type: "scalar" },
+      locs: [{ a: 103, b: 112 }],
+    },
+  ],
+  statement:
+    "SELECT EXISTS (\n  SELECT 1\n  FROM stop_times st\n  WHERE st.arrival_time IS NULL\n    AND st.feed_code = :feedCode!\n)",
+}
+
+/**
+ * Query generated from SQL:
+ * ```
+ * SELECT EXISTS (
+ *   SELECT 1
+ *   FROM stop_times st
+ *   WHERE st.arrival_time IS NULL
+ *     AND st.feed_code = :feedCode!
+ * )
+ * ```
+ */
+export const emptyArrivalTimesExist = new PreparedQuery<
+  IEmptyArrivalTimesExistParams,
+  IEmptyArrivalTimesExistResult
+>(emptyArrivalTimesExistIR)
+
 /** 'InterpolateEmptyArrivalTimes' parameters type */
 export interface IInterpolateEmptyArrivalTimesParams {
   feedCode: string

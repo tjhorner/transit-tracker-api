@@ -390,6 +390,40 @@ export class OneBusAwayService implements FeedProvider {
     })
   }
 
+  // duplicated logic from GTFS but whatever
+  private removeFromStart(str: string, substrs: string[]): string {
+    for (const substr of substrs) {
+      if (str.startsWith(substr)) {
+        return str.slice(substr.length).trim()
+      }
+    }
+
+    return str
+  }
+
+  private removeRouteNameFromHeadsign(
+    routeShortName: string | undefined,
+    headsign: string,
+  ): string {
+    if (!routeShortName) {
+      return headsign.trim()
+    }
+
+    if (!headsign) {
+      return ""
+    }
+
+    if (!headsign.startsWith(routeShortName)) {
+      return headsign.trim()
+    }
+
+    return this.removeFromStart(headsign.trim(), [
+      `${routeShortName} `,
+      `${routeShortName} - `,
+      `${routeShortName}: `,
+    ])
+  }
+
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
@@ -460,7 +494,10 @@ export class OneBusAwayService implements FeedProvider {
           routeName: ad.routeShortName ?? "Unnamed Route",
           routeColor: color?.trim() !== "" ? color : null,
           stopName: staticStop?.name ?? "Unnamed Stop",
-          headsign: ad.tripHeadsign,
+          headsign: this.removeRouteNameFromHeadsign(
+            ad.routeShortName,
+            ad.tripHeadsign,
+          ),
           arrivalTime,
           departureTime,
           isRealtime: ad.predicted ?? false,
