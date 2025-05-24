@@ -7,8 +7,8 @@ services:
     environment:
       # Uncomment the below line if running through a reverse proxy (e.g., nginx, caddy, traefik)
       # TRUST_PROXY: "true"
-      REDIS_URL: redis://redis:6379
-      DATABASE_URL: postgres://postgres:postgres@postgres:5432/gtfs
+      REDIS_URL: "redis://redis:6379"
+      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/gtfs?sslmode=disable"
       # You can provide your feeds configuration as an environment variable
       # or as a bind mount. See the `volumes:` section below for an example.
       FEEDS_CONFIG: |
