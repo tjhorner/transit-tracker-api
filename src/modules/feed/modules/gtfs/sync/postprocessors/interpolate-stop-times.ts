@@ -1,6 +1,6 @@
 import { Logger } from "@nestjs/common"
-import { PoolClient } from "pg"
 import { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface"
+import { GtfsDbService } from "../../gtfs-db.service"
 import { SyncPostProcessor } from "../interface/sync-post-processor.interface"
 import {
   emptyArrivalTimesExist,
@@ -15,8 +15,8 @@ export class InterpolateEmptyStopTimesPostProcessor
     InterpolateEmptyStopTimesPostProcessor.name,
   )
 
-  async process(client: PoolClient, { feedCode }: FeedContext) {
-    const [{ exists }] = await emptyArrivalTimesExist.run({ feedCode }, client)
+  async process(db: GtfsDbService, { feedCode }: FeedContext) {
+    const [{ exists }] = await emptyArrivalTimesExist.run({ feedCode }, db)
 
     if (!exists) {
       this.logger.log(
@@ -32,7 +32,7 @@ export class InterpolateEmptyStopTimesPostProcessor
         {
           feedCode,
         },
-        client,
+        db,
       )
 
     this.logger.log(
@@ -45,7 +45,7 @@ export class InterpolateEmptyStopTimesPostProcessor
       {
         feedCode,
       },
-      client,
+      db,
     )
 
     this.logger.log(

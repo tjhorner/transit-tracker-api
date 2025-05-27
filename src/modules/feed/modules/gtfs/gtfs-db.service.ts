@@ -62,4 +62,8 @@ export class GtfsDbService
       async (client) => client.query(query, bindings) as Promise<any>,
     )
   }
+
+  obtainConnection(): Promise<PoolClient> {
+    return this.pool.connect()
+  }
 }

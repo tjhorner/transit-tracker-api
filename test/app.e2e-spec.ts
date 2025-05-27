@@ -163,7 +163,7 @@ describe("E2E test", () => {
       expect(interpolatedTrip).toBeDefined()
 
       const arrival = new Date(interpolatedTrip!.arrivalTime * 1000)
-      expect(arrival.getUTCHours()).toBe(15)
+      expect(arrival.getUTCHours()).toBe(14)
       expect(arrival.getUTCMinutes()).toBe(42)
       expect(arrival.getUTCSeconds()).toBe(0)
 

@@ -96,9 +96,9 @@ SELECT
         ELSE
             st.stop_headsign
     END AS stop_headsign,
-    TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time::interval) as "arrival_time!",
-    TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time::interval) as "departure_time!",
-    to_char(current_day.today + st.arrival_time::interval, 'YYYYMMDD') as start_date
+    TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time) as "arrival_time!",
+    TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time) as "departure_time!",
+    to_char(current_day.today + st.arrival_time, 'YYYYMMDD') as start_date
 FROM stop_times st
 JOIN route_trips rt ON st.trip_id = rt.trip_id
 JOIN routes r ON rt.route_id = r.route_id

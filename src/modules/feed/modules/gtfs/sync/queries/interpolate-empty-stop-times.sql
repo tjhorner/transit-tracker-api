@@ -15,7 +15,7 @@ WITH interp AS (
     st.shape_dist_traveled,
     -- Get previous known arrival time as interval
     (
-      SELECT s_prev.arrival_time::interval
+      SELECT s_prev.arrival_time
       FROM stop_times s_prev
       WHERE s_prev.feed_code = st.feed_code
         AND s_prev.trip_id = st.trip_id
@@ -26,7 +26,7 @@ WITH interp AS (
     ) AS prev_time,
     -- Get next known arrival time as interval
     (
-      SELECT s_next.arrival_time::interval
+      SELECT s_next.arrival_time
       FROM stop_times s_next
       WHERE s_next.feed_code = st.feed_code
         AND s_next.trip_id = st.trip_id
@@ -88,36 +88,25 @@ computed AS (
     sub.feed_code,
     sub.trip_id,
     sub.stop_sequence,
-    (
-      ((sub.total_seconds / 3600)::int)::text
-      || ':' ||
-      to_char(
-        (interval '1 second' * (sub.total_seconds::int)
-         - interval '1 hour' * ((sub.total_seconds / 3600)::int)
-        )::time,
-        'MI:SS'
-      )
-    ) AS interpolated_arrival_time
+    sub.interpolated_arrival_time
   FROM (
     SELECT
       i.*,
-      extract(
-        epoch FROM (
-          i.prev_time +
-          (
-            i.next_time - i.prev_time
-          ) * (
-            CASE
-              WHEN i.prev_shape IS NOT NULL AND i.next_shape IS NOT NULL THEN
-                (i.shape_dist_traveled - i.prev_shape) /
-                (i.next_shape - i.prev_shape)
-              ELSE
-                (i.stop_sequence - i.prev_seq)::numeric /
-                (i.next_seq - i.prev_seq)
-            END
-          )
+      (
+        i.prev_time +
+        (
+          i.next_time - i.prev_time
+        ) * (
+          CASE
+            WHEN i.prev_shape IS NOT NULL AND i.next_shape IS NOT NULL THEN
+              (i.shape_dist_traveled - i.prev_shape) /
+              (i.next_shape - i.prev_shape)
+            ELSE
+              (i.stop_sequence - i.prev_seq)::numeric /
+              (i.next_seq - i.prev_seq)
+          END
         )
-      ) AS total_seconds
+      ) AS interpolated_arrival_time
     FROM interp i
   ) sub
 )
