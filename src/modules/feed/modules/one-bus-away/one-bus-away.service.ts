@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
+import * as Sentry from "@sentry/node"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { RateLimiter } from "limiter"
@@ -23,7 +24,6 @@ import type {
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { OneBusAwayConfig, OneBusAwayConfigSchema } from "./config"
-import * as Sentry from "@sentry/node"
 
 export interface StopGroup {
   id: string
@@ -139,13 +139,16 @@ export class OneBusAwayService implements FeedProvider {
   }
 
   private async instrumentedFetch(url: any, init?: any): Promise<any> {
-    await Sentry.startSpan({
-      op: "throttle.wait",
-      name: "obaRateLimiter"
-    }, async (span) => {
-      const remainingTokens = await this.obaRateLimiter.removeTokens(1)
-      span.setAttribute("throttle.remaining_tokens", remainingTokens)
-    })
+    await Sentry.startSpan(
+      {
+        op: "throttle.wait",
+        name: "obaRateLimiter",
+      },
+      async (span) => {
+        const remainingTokens = await this.obaRateLimiter.removeTokens(1)
+        span.setAttribute("throttle.remaining_tokens", remainingTokens)
+      },
+    )
 
     const methodName = new URL(url).pathname.split("/")[3].split(".")[0]
 

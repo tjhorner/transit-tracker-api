@@ -18,6 +18,8 @@ RUN pnpm prune --prod
 
 FROM base AS deploy
 
+RUN apk add --no-cache apprise
+
 WORKDIR /app
 COPY --from=build /app/package.json ./
 COPY --from=build /app/db ./db

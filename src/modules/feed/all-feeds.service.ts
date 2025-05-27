@@ -1,4 +1,5 @@
 import { BadRequestException, NotFoundException } from "@nestjs/common"
+import * as Sentry from "@sentry/node"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { FeedService } from "./feed.service"
@@ -9,7 +10,6 @@ import {
   StopRoute,
   TripStop,
 } from "./interfaces/feed-provider.interface"
-import * as Sentry from "@sentry/node"
 
 type GlobalId = `${string}:${string}`
 
@@ -95,16 +95,19 @@ export class AllFeedsService implements FeedProvider {
           )
         }
 
-        const result = await Sentry.startSpan({
-          op: "function",
-          name: `getUpcomingTripsForRoutesAtStops:${feedCode}`,
-          attributes: {
-            feed_code: feedCode,
-            route_stops: JSON.stringify(routeStops),
-          }
-        }, async () => {
-          return await provider.getUpcomingTripsForRoutesAtStops(routeStops)
-        })
+        const result = await Sentry.startSpan(
+          {
+            op: "function",
+            name: `getUpcomingTripsForRoutesAtStops:${feedCode}`,
+            attributes: {
+              feed_code: feedCode,
+              route_stops: JSON.stringify(routeStops),
+            },
+          },
+          async () => {
+            return await provider.getUpcomingTripsForRoutesAtStops(routeStops)
+          },
+        )
 
         return result.map((trip) => ({
           ...trip,

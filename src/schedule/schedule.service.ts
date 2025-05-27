@@ -1,4 +1,6 @@
 import { BadRequestException, Injectable, Logger } from "@nestjs/common"
+import { SentryTraced } from "@sentry/nestjs"
+import * as Sentry from "@sentry/node"
 import ms from "ms"
 import {
   concat,
@@ -17,8 +19,6 @@ import type {
   RouteAtStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
-import { SentryTraced } from "@sentry/nestjs"
-import * as Sentry from "@sentry/node"
 
 export interface ScheduleTrip {
   tripId: string

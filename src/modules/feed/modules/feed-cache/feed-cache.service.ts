@@ -1,11 +1,11 @@
 import { Inject, Injectable, Optional } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
+import { SentryTraced } from "@sentry/nestjs"
+import * as Sentry from "@sentry/node"
 import { Cacheable } from "cacheable"
 import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
-import { SentryTraced } from "@sentry/nestjs"
-import * as Sentry from "@sentry/node"
 
 @Injectable()
 export class FeedCacheService {

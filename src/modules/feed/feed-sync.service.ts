@@ -1,6 +1,9 @@
 import { Redlock } from "@anchan828/nest-redlock"
 import { Injectable, Logger } from "@nestjs/common"
+import { EventEmitter2 } from "@nestjs/event-emitter"
 import { Cron } from "@nestjs/schedule"
+import { SentryCron } from "@sentry/nestjs"
+import * as Sentry from "@sentry/node"
 import ms from "ms"
 import { exec } from "node:child_process"
 import { FeedService } from "./feed.service"
@@ -9,18 +12,43 @@ import { FeedService } from "./feed.service"
 export class FeedSyncService {
   private readonly logger = new Logger(FeedSyncService.name)
 
-  constructor(private readonly feedService: FeedService) {}
+  constructor(
+    private readonly feedService: FeedService,
+    private readonly eventEmitter: EventEmitter2,
+  ) {}
 
   @Cron("0 0 * * *")
+  @SentryCron("feed-sync", {
+    schedule: {
+      type: "crontab",
+      value: "0 0 * * *",
+    },
+  })
   @Redlock("feed-sync", ms("1m"), { retryCount: 0 })
   async syncAllFeeds(force: boolean = false) {
+    this.eventEmitter.emit("feed.sync.start")
+
     this.logger.log("Running sync of all feeds")
 
     if (process.env.PRE_IMPORT_HOOK) {
       this.logger.log(`Running pre-import hook: ${process.env.PRE_IMPORT_HOOK}`)
+
       try {
         await this.runScript(process.env.PRE_IMPORT_HOOK)
       } catch (e: any) {
+        Sentry.captureException(e, {
+          level: "fatal",
+          tags: {
+            module: "feed-sync",
+            action: "pre-import-hook",
+          },
+        })
+
+        this.eventEmitter.emit("feed.sync.error", {
+          message: `Pre-import hook failed: ${e.message}`,
+          stack: e.stack,
+        })
+
         this.logger.error(`Pre-import hook failed: ${e.message}`, e.stack)
         return
       }
@@ -38,6 +66,21 @@ export class FeedSyncService {
       try {
         await provider.sync({ force })
       } catch (e: any) {
+        Sentry.captureException(e, {
+          level: "warning",
+          tags: {
+            module: "feed-sync",
+            action: "sync-individual-feed",
+            feedCode,
+          },
+        })
+
+        this.eventEmitter.emit("feed.sync.warn", {
+          feedCode,
+          message: e.message,
+          stack: e.stack,
+        })
+
         this.logger.warn(
           `Sync of feed "${feedCode}" failed: ${e.message}`,
           e.stack,
@@ -53,12 +96,27 @@ export class FeedSyncService {
       try {
         await this.runScript(process.env.POST_IMPORT_HOOK)
       } catch (e: any) {
+        Sentry.captureException(e, {
+          level: "fatal",
+          tags: {
+            module: "feed-sync",
+            action: "post-import-hook",
+          },
+        })
+
+        this.eventEmitter.emit("feed.sync.error", {
+          message: `Post-import hook failed: ${e.message}`,
+          stack: e.stack,
+        })
+
         this.logger.error(`Post-import hook failed: ${e.message}`, e.stack)
         return
       }
     }
 
     this.logger.log("Sync of all feeds completed")
+
+    this.eventEmitter.emit("feed.sync.completed")
   }
 
   private async runScript(script: string) {

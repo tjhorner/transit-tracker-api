@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node"
 
 Sentry.init({
-  tracesSampleRate: 0.25,
+  tracesSampleRate: 0.15,
 })
