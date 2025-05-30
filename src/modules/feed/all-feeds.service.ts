@@ -169,13 +169,11 @@ export class AllFeedsService implements FeedProvider {
   }
 
   async getAgencyBounds(): Promise<BBox> {
-    const bounds = await this.onAllProviders(async (_, provider) =>
-      provider.getAgencyBounds(),
+    const serviceArea = await this.onAllProviders(async (feedCode) =>
+      this.feedService.getServiceArea(feedCode),
     )
 
-    const allBounds = turf.bbox(
-      turf.featureCollection(bounds.map((b) => turf.bboxPolygon(b))),
-    )
+    const allBounds = turf.bbox(turf.featureCollection(serviceArea))
 
     return allBounds
   }

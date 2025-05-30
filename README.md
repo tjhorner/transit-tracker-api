@@ -14,6 +14,7 @@ After installation, you will need to set up a feeds configuration. This will tel
 
 - [GTFS / GTFS-realtime](https://gtfs.org/documentation/overview/)
 - [OneBusAway](https://developer.onebusaway.org/)
+- [HAFAS](https://github.com/public-transport/hafas-client) (⚠️ experimental ⚠️)
 
 Most transit agencies will support GTFS. [Transitland](https://www.transit.land/operators) keeps an index of all known GTFS/GTFS-rt feeds, so you can use that to find the feed URL for yours.
 

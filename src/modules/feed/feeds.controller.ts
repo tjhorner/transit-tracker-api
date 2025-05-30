@@ -83,7 +83,7 @@ export class FeedsController {
         lastSyncedAt: lastSync ?? null,
         name: feed.name,
         description: feed.description,
-        bounds: await provider.getAgencyBounds(),
+        bounds: turf.bbox(await this.feedService.getServiceArea(feedCode)),
         metadata: metadata ?? {},
       })
     }

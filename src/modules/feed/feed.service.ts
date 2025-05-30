@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleInit, Type } from "@nestjs/common"
 import { ContextIdFactory, DiscoveryService, ModuleRef } from "@nestjs/core"
 import * as turf from "@turf/turf"
 import fs from "fs/promises"
-import { BBox } from "geojson"
+import { BBox, Feature, Polygon } from "geojson"
 import * as yaml from "js-yaml"
 import {
   FeedContext,
@@ -156,6 +156,32 @@ export class FeedService implements OnModuleInit {
     ) as T[]
   }
 
+  async getServiceArea(feedName: string): Promise<Feature<Polygon>> {
+    const config = this.feeds[feedName]
+    if (!config) {
+      throw new Error(`Feed "${feedName}" not found`)
+    }
+
+    if (config.serviceArea) {
+      return turf.polygon(config.serviceArea)
+    }
+
+    const provider = this.getFeedProvider(feedName)
+    if (!provider) {
+      throw new Error(`Feed provider for "${feedName}" not found`)
+    }
+
+    if (!provider.getAgencyBounds) {
+      this.logger.warn(
+        `Feed provider for "${feedName}" does not support dynamic bounds, please define a serviceArea in feeds.yaml`,
+      )
+      return turf.bboxPolygon([-180, -90, 180, 90])
+    }
+
+    const agencyBounds = await provider.getAgencyBounds()
+    return turf.bboxPolygon(agencyBounds)
+  }
+
   async getFeedProvidersInBounds(targetBbox: BBox): Promise<
     {
       feedCode: string
@@ -165,13 +191,11 @@ export class FeedService implements OnModuleInit {
     const providersInBounds = await Promise.all(
       Array.from(this.feedProviders.entries()).map(
         async ([feedCode, provider]) => {
-          const agencyBbox = await provider.getAgencyBounds()
+          const serviceArea = await this.getServiceArea(feedCode)
+
           if (
-            agencyBbox &&
-            turf.booleanIntersects(
-              turf.bboxPolygon(agencyBbox),
-              turf.bboxPolygon(targetBbox),
-            )
+            serviceArea &&
+            turf.booleanIntersects(serviceArea, turf.bboxPolygon(targetBbox))
           ) {
             return { feedCode, provider }
           }

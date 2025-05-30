@@ -56,5 +56,5 @@ export interface FeedProvider {
   getRoutesForStop(stopId: string): Promise<StopRoute[]>
   getStopsInArea(bbox: BBox): Promise<Stop[]>
 
-  getAgencyBounds(): Promise<BBox>
+  getAgencyBounds?(): Promise<BBox>
 }

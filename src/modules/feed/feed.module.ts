@@ -7,6 +7,7 @@ import { OneBusAwayModule } from "src/modules/feed/modules/one-bus-away/one-bus-
 import { FeedSyncService } from "./feed-sync.service"
 import { FeedService } from "./feed.service"
 import { FeedsController } from "./feeds.controller"
+import { HafasModule } from "./modules/hafas/hafas.module"
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { FeedsController } from "./feeds.controller"
     DiscoveryModule,
     GtfsModule,
     OneBusAwayModule,
+    HafasModule,
   ],
   controllers: [FeedsController],
   providers: [FeedService, FeedSyncService],

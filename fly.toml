@@ -1,5 +1,6 @@
 app = "transit-tracker-api"
 primary_region = "sea"
+swap_size_mb = 512
 
 [build.args]
   BUILD_FOR_FLY = "true"
@@ -10,6 +11,7 @@ primary_region = "sea"
 
 [env]
   GTFS_RT_MIN_CACHE_AGE = "15s"
+  NODE_OPTIONS = "--max-old-space-size=512"
 
 [http_service]
   internal_port = 3000

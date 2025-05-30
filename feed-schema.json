@@ -104,6 +104,26 @@
                 "apiKey"
               ],
               "additionalProperties": false
+            },
+            "hafas": {
+              "type": "object",
+              "description": "Configuration parameters for a HAFAS feed.",
+              "properties": {
+                "profile": {
+                  "type": "string",
+                  "examples": [ "vbb", "db" ],
+                  "description": "A preset HAFAS profile to use for `hafas-client`. See: https://github.com/public-transport/hafas-client/blob/main/p/readme.md#built-in-profiles"
+                },
+                "userAgent": {
+                  "type": "string",
+                  "description": "A string containing your project name and contact information."
+                }
+              },
+              "required": [
+                "profile",
+                "userAgent"
+              ],
+              "additionalProperties": false
             }
           },
           "required": [
@@ -117,7 +137,8 @@
               ],
               "not": {
                 "required": [
-                  "onebusaway"
+                  "onebusaway",
+                  "hafas"
                 ]
               }
             },
@@ -127,7 +148,19 @@
               ],
               "not": {
                 "required": [
-                  "gtfs"
+                  "gtfs",
+                  "hafas"
+                ]
+              }
+            },
+            {
+              "required": [
+                "hafas"
+              ],
+              "not": {
+                "required": [
+                  "gtfs",
+                  "onebusaway"
                 ]
               }
             }
