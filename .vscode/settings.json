@@ -2,17 +2,5 @@
   "typescript.tsdk": "node_modules/typescript/lib",
   "yaml.schemas": {
     "./feed-schema.json": "/*feeds.yaml"
-  },
-  "jest.virtualFolders": [
-    {
-      "name": "unit-tests",
-      "jestCommandLine": "npm test --",
-      "runMode": "watch",
-    },
-    {
-      "name": "e2e-tests",
-      "jestCommandLine": "npm run test:e2e --",
-      "runMode": "on-demand",
-    }
-  ]
+  }
 }

@@ -1,16 +1,17 @@
 import { BadRequestException } from "@nestjs/common"
 import { Test, TestingModule } from "@nestjs/testing"
 import { randomUUID } from "crypto"
-import { mock, MockProxy } from "jest-mock-extended"
+import { mock, MockProxy } from "vitest-mock-extended"
 import ms from "ms"
 import { firstValueFrom, Observable, of } from "rxjs"
 import { ScheduleGateway, ScheduleSubscriptionDto } from "./schedule.gateway"
 import { ScheduleService, ScheduleUpdate } from "./schedule.service"
+import { vi } from "vitest"
 
 // Mock the WebSocket exception filters
-jest.mock("src/filters/ws-exception.filter", () => ({
-  WebSocketExceptionFilter: jest.fn(),
-  WebSocketHttpExceptionFilter: jest.fn(),
+vi.mock("src/filters/ws-exception.filter", () => ({
+  WebSocketExceptionFilter: vi.fn(),
+  WebSocketHttpExceptionFilter: vi.fn(),
 }))
 
 describe("ScheduleGateway", () => {
@@ -34,7 +35,7 @@ describe("ScheduleGateway", () => {
     gateway = moduleRef.get<ScheduleGateway>(ScheduleGateway)
 
     // Reset mocks
-    jest.clearAllMocks()
+    vi.clearAllMocks()
   })
 
   afterEach(async () => {
@@ -63,11 +64,11 @@ describe("ScheduleGateway", () => {
 
   describe("subscribeToSchedule", () => {
     beforeEach(() => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
     })
 
     afterEach(() => {
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
 
     it("should throw if client already has a subscription", () => {
@@ -249,7 +250,7 @@ describe("ScheduleGateway", () => {
       })
 
       // Advance time to trigger heartbeat
-      await jest.advanceTimersByTimeAsync(30000)
+      await vi.advanceTimersByTimeAsync(30000)
 
       // Should have heartbeat event
       expect(emittedEvents.length).toBe(2)
@@ -259,7 +260,7 @@ describe("ScheduleGateway", () => {
       })
 
       // Advance time again
-      await jest.advanceTimersByTimeAsync(30000)
+      await vi.advanceTimersByTimeAsync(30000)
 
       // Should have another heartbeat
       expect(emittedEvents.length).toBe(3)
@@ -353,7 +354,7 @@ describe("ScheduleGateway", () => {
       })
 
       // Advance time to trigger the scheduled update
-      await jest.advanceTimersByTimeAsync(ms("15s"))
+      await vi.advanceTimersByTimeAsync(ms("15s"))
 
       // Should have a new schedule event
       expect(emittedEvents.length).toBe(2)
@@ -363,7 +364,7 @@ describe("ScheduleGateway", () => {
       })
 
       // Advance time to trigger heartbeat (15 more seconds = 30 total)
-      await jest.advanceTimersByTimeAsync(ms("15s"))
+      await vi.advanceTimersByTimeAsync(ms("15s"))
 
       // Should have heartbeat event
       expect(emittedEvents.length).toBe(3)

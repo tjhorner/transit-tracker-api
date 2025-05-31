@@ -1,5 +1,5 @@
 import { BBox } from "geojson"
-import { mock, MockProxy } from "jest-mock-extended"
+import { mock, MockProxy } from "vitest-mock-extended"
 import { AllFeedsService } from "./all-feeds.service"
 import { FeedService } from "./feed.service"
 import {

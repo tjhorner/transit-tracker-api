@@ -14,6 +14,7 @@ import request from "supertest"
 import { promisify } from "util"
 import { setupFakeGtfsServer } from "./helpers/gtfs-server"
 import { setupTestDatabase } from "./helpers/postgres"
+import { MockInstance, vi } from "vitest"
 
 describe("E2E test", () => {
   let postgresContainer: StartedPostgreSqlContainer
@@ -113,10 +114,10 @@ describe("E2E test", () => {
   })
 
   describe("GET /schedule/:routeStopPairs", () => {
-    let dateSpy: jest.SpyInstance<number, [], any>
+    let dateSpy: MockInstance<() => any>
 
     beforeEach(() => {
-      dateSpy = jest.spyOn(Date, "now")
+      dateSpy = vi.spyOn(Date, "now")
       dateSpy.mockImplementation(() =>
         new Date("2008-01-04T13:30:00Z").getTime(),
       )

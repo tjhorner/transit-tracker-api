@@ -1,5 +1,5 @@
 import { randomUUID } from "crypto"
-import { mock, MockProxy } from "jest-mock-extended"
+import { mock, MockProxy } from "vitest-mock-extended"
 import { firstValueFrom, Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
 import {
@@ -8,6 +8,7 @@ import {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
 import { ScheduleOptions, ScheduleService } from "./schedule.service"
+import { vi } from "vitest"
 
 describe("ScheduleService", () => {
   let scheduleService: ScheduleService
@@ -238,11 +239,11 @@ describe("ScheduleService", () => {
 
   describe("subscribeToSchedule", () => {
     beforeEach(() => {
-      jest.useFakeTimers()
+      vi.useFakeTimers()
     })
 
     afterEach(() => {
-      jest.useRealTimers()
+      vi.useRealTimers()
     })
 
     it("throws if the feed code is invalid", async () => {
@@ -354,7 +355,7 @@ describe("ScheduleService", () => {
       const observable = scheduleService.subscribeToSchedule(scheduleOptions)
       observable.subscribe().unsubscribe()
 
-      await jest.advanceTimersByTimeAsync(120000)
+      await vi.advanceTimersByTimeAsync(120000)
 
       // Assert
       expect(
@@ -386,7 +387,7 @@ describe("ScheduleService", () => {
         secondTrips,
       )
 
-      await jest.advanceTimersByTimeAsync(45000)
+      await vi.advanceTimersByTimeAsync(45000)
 
       const scheduleUpdates = finish()
 
@@ -412,7 +413,7 @@ describe("ScheduleService", () => {
         scheduleService.subscribeToSchedule(scheduleOptions),
       )
 
-      await jest.advanceTimersByTimeAsync(45000)
+      await vi.advanceTimersByTimeAsync(45000)
 
       const scheduleUpdates = finish()
 
