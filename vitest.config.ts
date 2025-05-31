@@ -6,6 +6,9 @@ export default defineConfig({
   test: {
     globals: true,
     root: "./",
+    coverage: {
+      include: ["src/**/*.ts"],
+    },
     workspace: [
       {
         extends: true,

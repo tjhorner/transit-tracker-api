@@ -16,6 +16,15 @@ import { MockInstance, vi } from "vitest"
 import { setupFakeGtfsServer } from "./helpers/gtfs-server"
 import { setupTestDatabase } from "./helpers/postgres"
 
+const testTmpDir = path.join(
+  __dirname,
+  "tmp",
+  `test-${Date.now()}`,
+)
+
+const preImportHookPath = path.join(testTmpDir, "pre-import-hook.txt")
+const postImportHookPath = path.join(testTmpDir, "post-import-hook.txt")
+
 describe("E2E test", () => {
   let postgresContainer: StartedPostgreSqlContainer
   let redisContainer: StartedRedisContainer
@@ -23,6 +32,8 @@ describe("E2E test", () => {
   let app: INestApplication
 
   beforeAll(async () => {
+    await fs.mkdir(testTmpDir, { recursive: true })
+
     const { postgresContainer: pgContainer, connectionUrl } =
       await setupTestDatabase()
 
@@ -36,6 +47,9 @@ describe("E2E test", () => {
       path.join(__dirname, "fixtures", "feeds.test.yaml"),
       "utf-8",
     )
+
+    process.env.PRE_IMPORT_HOOK = `touch ${preImportHookPath}`
+    process.env.POST_IMPORT_HOOK = `touch ${postImportHookPath}`
 
     fakeGtfs = await setupFakeGtfsServer()
 
@@ -53,12 +67,29 @@ describe("E2E test", () => {
   }, ms("2m"))
 
   afterAll(async () => {
+    await fs.rm(testTmpDir, { recursive: true, force: true })
+
     await app.close()
     await Promise.all([
       postgresContainer.stop(),
       redisContainer.stop(),
       promisify(fakeGtfs.server.close).bind(fakeGtfs.server)(),
     ])
+  })
+
+  test("import hooks were executed", async () => {
+    const preImportHookExists = await fs
+      .access(preImportHookPath)
+      .then(() => true)
+      .catch(() => false)
+
+    const postImportHookExists = await fs
+      .access(postImportHookPath)
+      .then(() => true)
+      .catch(() => false)
+
+    expect(preImportHookExists).toBe(true)
+    expect(postImportHookExists).toBe(true)
   })
 
   test("GET /feeds", async () => {
