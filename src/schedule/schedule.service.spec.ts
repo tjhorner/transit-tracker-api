@@ -1,14 +1,14 @@
 import { randomUUID } from "crypto"
-import { mock, MockProxy } from "vitest-mock-extended"
 import { firstValueFrom, Observable } from "rxjs"
 import { FeedService } from "src/modules/feed/feed.service"
 import {
   FeedProvider,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
+import { vi } from "vitest"
+import { mock, MockProxy } from "vitest-mock-extended"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
 import { ScheduleOptions, ScheduleService } from "./schedule.service"
-import { vi } from "vitest"
 
 describe("ScheduleService", () => {
   let scheduleService: ScheduleService

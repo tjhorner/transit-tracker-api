@@ -1,12 +1,12 @@
 import { BadRequestException } from "@nestjs/common"
 import { Test, TestingModule } from "@nestjs/testing"
 import { randomUUID } from "crypto"
-import { mock, MockProxy } from "vitest-mock-extended"
 import ms from "ms"
 import { firstValueFrom, Observable, of } from "rxjs"
+import { vi } from "vitest"
+import { mock, MockProxy } from "vitest-mock-extended"
 import { ScheduleGateway, ScheduleSubscriptionDto } from "./schedule.gateway"
 import { ScheduleService, ScheduleUpdate } from "./schedule.service"
-import { vi } from "vitest"
 
 // Mock the WebSocket exception filters
 vi.mock("src/filters/ws-exception.filter", () => ({

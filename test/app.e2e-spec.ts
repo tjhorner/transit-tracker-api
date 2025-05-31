@@ -12,9 +12,9 @@ import { FeedSyncService } from "src/modules/feed/feed-sync.service"
 import { TripDto } from "src/schedule/schedule.controller"
 import request from "supertest"
 import { promisify } from "util"
+import { MockInstance, vi } from "vitest"
 import { setupFakeGtfsServer } from "./helpers/gtfs-server"
 import { setupTestDatabase } from "./helpers/postgres"
-import { MockInstance, vi } from "vitest"
 
 describe("E2E test", () => {
   let postgresContainer: StartedPostgreSqlContainer
