@@ -21,6 +21,7 @@ services:
                 url: https://metro.kingcounty.gov/GTFS/google_transit.zip
               rtTripUpdates:
                 url: https://s3.amazonaws.com/kcm-alerts-realtime-prod/tripupdates.pb
+    # 👇 Alternative way to provide feeds configuration
     # volumes:
     #   - "./feeds.yaml:/app/feeds.yaml"
     ports:

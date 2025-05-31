@@ -1,5 +1,4 @@
 /* @name GetFeedInfo */
-
 SELECT
   feed_publisher_name,
   feed_publisher_url,

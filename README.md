@@ -32,7 +32,7 @@ feeds:
     # By default this is determined by the locations of the feed's stops.
     # It's advisable to set for OneBusAway-based feeds since OneBusAway can only
     # return up to 250 stops at a time and does not support pagination, so the
-    # service area can potentially be incomplete.
+    # calculated service area can potentially be incomplete.
     serviceArea: [[[-122.97713,47.071983],[-123.01475,48.535065],[-122.9441,48.59793],[-121.633194,48.26319],[-121.60341,48.255344],[-121.6016,48.25484],[-121.60102,48.251865],[-121.601,48.25134],[-121.6923,47.85279],[-121.78612,47.491642],[-121.98235,47.199947],[-122.57929,46.933628],[-122.58955,46.93304],[-122.91552,46.979607],[-122.931404,46.98552],[-122.97713,47.071983]]]
     onebusaway:
       baseUrl: https://api.pugetsound.onebusaway.org
@@ -53,7 +53,7 @@ feeds:
 ### GTFS Database Setup
 
 > [!NOTE]  
-> This setup is only required if one of your feeds is a GTFS feed. If you are only using OneBusAway feeds, you can skip it.
+> This setup is only required if one or more of your feeds is a GTFS feed.
 
 To facilitate fast queries of the static GTFS data, the API uses a PostgreSQL database to store and index it.
 
