@@ -6,6 +6,22 @@ export default defineConfig({
   test: {
     globals: true,
     root: "./",
+    workspace: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["src/**/*.spec.ts", "src/**/*.test.ts"],
+        }
+      },
+      {
+        extends: true,
+        test: {
+          name: "e2e",
+          include: ["test/**/*.e2e-spec.ts"],
+        }
+      }
+    ]
   },
   plugins: [
     // This is required to build the test files with SWC
