@@ -1,3 +1,4 @@
+import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { mock, MockProxy } from "vitest-mock-extended"
 import { AllFeedsService } from "./all-feeds.service"
@@ -9,7 +10,6 @@ import {
   StopRoute,
   TripStop,
 } from "./interfaces/feed-provider.interface"
-import * as turf from "@turf/turf"
 
 describe("AllFeedsService", () => {
   let allFeedsService: AllFeedsService
@@ -35,11 +35,12 @@ describe("AllFeedsService", () => {
       { feedCode: "feed2", provider: mockFeedProvider2 },
     ])
     mockFeedService.getServiceArea.mockImplementation(
-      async (feedCode: string) => (
+      async (feedCode: string) =>
         mockFeedProviders[feedCode]?.getAgencyBounds
-          ? (turf.bboxPolygon(await mockFeedProviders[feedCode].getAgencyBounds()))
-          : Promise.resolve(turf.bboxPolygon([-180, -90, 180, 90]))
-      )
+          ? turf.bboxPolygon(
+              await mockFeedProviders[feedCode].getAgencyBounds(),
+            )
+          : Promise.resolve(turf.bboxPolygon([-180, -90, 180, 90])),
     )
 
     allFeedsService = new AllFeedsService(mockFeedService)

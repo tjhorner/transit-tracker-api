@@ -16,11 +16,7 @@ import { MockInstance, vi } from "vitest"
 import { setupFakeGtfsServer } from "./helpers/gtfs-server"
 import { setupTestDatabase } from "./helpers/postgres"
 
-const testTmpDir = path.join(
-  __dirname,
-  "tmp",
-  `test-${Date.now()}`,
-)
+const testTmpDir = path.join(__dirname, "tmp", `test-${Date.now()}`)
 
 const preImportHookPath = path.join(testTmpDir, "pre-import-hook.txt")
 const postImportHookPath = path.join(testTmpDir, "post-import-hook.txt")
