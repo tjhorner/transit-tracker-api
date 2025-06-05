@@ -277,7 +277,7 @@ export class GtfsService implements FeedProvider {
     try {
       tripUpdates = await this.realtimeService.getTripUpdates()
     } catch (e: any) {
-      this.logger.warn("Failed to fetch trip updates, using schedule", e.stack)
+      this.logger.warn(`Failed to fetch trip updates, using schedule: ${e.message}\n${e.stack}`)
     }
 
     const tripStops: TripStop[] = []

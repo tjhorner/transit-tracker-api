@@ -82,8 +82,7 @@ export class FeedSyncService {
         })
 
         this.logger.warn(
-          `Sync of feed "${feedCode}" failed: ${e.message}`,
-          e.stack,
+          `Sync of feed "${feedCode}" failed: ${e.message}\n${e.stack}`,
         )
       }
     }

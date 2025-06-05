@@ -12,6 +12,7 @@ swap_size_mb = 512
 [env]
   GTFS_RT_MIN_CACHE_AGE = "15s"
   NODE_OPTIONS = "--max-old-space-size=512"
+  LOG_COMPACT = "true"
 
 [http_service]
   internal_port = 3000

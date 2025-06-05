@@ -71,7 +71,7 @@ export class GtfsRealtimeService {
 
       for (const response of responses) {
         if (response.status === "rejected") {
-          this.logger.warn(`Failed to fetch trip updates`, response.reason)
+          this.logger.warn(`Failed to fetch trip updates: ${response.reason}`)
         }
       }
 
