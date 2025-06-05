@@ -1,29 +1,53 @@
 import { Redlock } from "@anchan828/nest-redlock"
-import { Injectable, Logger } from "@nestjs/common"
+import { Injectable, Logger, OnModuleInit } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
-import { Cron } from "@nestjs/schedule"
-import { SentryCron } from "@sentry/nestjs"
+import { SchedulerRegistry } from "@nestjs/schedule"
 import * as Sentry from "@sentry/node"
+import { CronJob, validateCronExpression } from "cron"
 import ms from "ms"
 import { exec } from "node:child_process"
 import { FeedService } from "./feed.service"
 
 @Injectable()
-export class FeedSyncService {
+export class FeedSyncService implements OnModuleInit {
   private readonly logger = new Logger(FeedSyncService.name)
 
   constructor(
     private readonly feedService: FeedService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
 
-  @Cron("0 0 * * *")
-  @SentryCron("feed-sync", {
-    schedule: {
-      type: "crontab",
-      value: "0 0 * * *",
-    },
-  })
+  onModuleInit() {
+    this.scheduleSyncJob()
+  }
+
+  private scheduleSyncJob() {
+    if (!process.env.FEED_SYNC_SCHEDULE) {
+      this.logger.log("No FEED_SYNC_SCHEDULE environment variable provided; feeds will not automatically sync")
+      return
+    }
+
+    const scheduleCron = process.env.FEED_SYNC_SCHEDULE
+
+    const validation = validateCronExpression(scheduleCron)
+    if (!validation.valid) {
+      this.logger.error(
+        `Invalid cron expression for FEED_SYNC_SCHEDULE: ${validation.error?.message}`,
+      )
+      return
+    }
+
+    this.logger.log(
+      `Scheduling feed sync according to cron expression: ${scheduleCron}`,
+    )
+
+    const job = new CronJob(scheduleCron, this.syncAllFeeds.bind(this))
+
+    this.schedulerRegistry.addCronJob("feed-sync", job)
+    job.start()
+  }
+
   @Redlock("feed-sync", ms("1m"), { retryCount: 0 })
   async syncAllFeeds(force: boolean = false) {
     this.eventEmitter.emit("feed.sync.start")
