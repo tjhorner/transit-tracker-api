@@ -44,7 +44,8 @@ export class FeedSyncService implements OnModuleInit {
       `Scheduling feed sync according to cron expression: ${scheduleCron}`,
     )
 
-    const job = new CronJob(scheduleCron, this.syncAllFeeds.bind(this))
+    const InstrumentedCronJob = Sentry.cron.instrumentCron(CronJob, "feed-sync")
+    const job = new InstrumentedCronJob(scheduleCron, this.syncAllFeeds.bind(this))
 
     this.schedulerRegistry.addCronJob("feed-sync", job)
     job.start()
