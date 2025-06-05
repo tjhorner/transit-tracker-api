@@ -28,6 +28,7 @@ fi
 echo "Scaling $APP_NAME to $SIZE"
 
 for MACHINE_ID in $MACHINE_IDS; do
+  fly machine cordon -a $APP_NAME $MACHINE_ID
   fly machine update -y -a $APP_NAME $MACHINE_ID --vm-size $SIZE --wait-timeout 120
 
   if [ $? -ne 0 ]; then
@@ -41,4 +42,6 @@ for MACHINE_ID in $MACHINE_IDS; do
       echo "Successfully restarted machine $MACHINE_ID"
     fi
   fi
+
+  fly machine uncordon -a $APP_NAME $MACHINE_ID
 done
