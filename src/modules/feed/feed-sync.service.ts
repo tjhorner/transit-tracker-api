@@ -24,7 +24,9 @@ export class FeedSyncService implements OnModuleInit {
 
   private scheduleSyncJob() {
     if (!process.env.FEED_SYNC_SCHEDULE) {
-      this.logger.log("No FEED_SYNC_SCHEDULE environment variable provided; feeds will not automatically sync")
+      this.logger.log(
+        "No FEED_SYNC_SCHEDULE environment variable provided; feeds will not automatically sync",
+      )
       return
     }
 
