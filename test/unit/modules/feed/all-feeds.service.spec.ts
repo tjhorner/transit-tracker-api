@@ -1,15 +1,15 @@
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
-import { mock, MockProxy } from "vitest-mock-extended"
-import { AllFeedsService } from "./all-feeds.service"
-import { FeedService } from "./feed.service"
+import { AllFeedsService } from "src/modules/feed/all-feeds.service"
+import { FeedService } from "src/modules/feed/feed.service"
 import {
   FeedProvider,
   RouteAtStop,
   Stop,
   StopRoute,
   TripStop,
-} from "./interfaces/feed-provider.interface"
+} from "src/modules/feed/interfaces/feed-provider.interface"
+import { mock, MockProxy } from "vitest-mock-extended"
 
 describe("AllFeedsService", () => {
   let allFeedsService: AllFeedsService

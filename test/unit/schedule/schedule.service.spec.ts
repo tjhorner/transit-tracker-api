@@ -5,10 +5,10 @@ import {
   FeedProvider,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
+import { ScheduleMetricsService } from "src/schedule/schedule-metrics.service"
+import { ScheduleOptions, ScheduleService } from "src/schedule/schedule.service"
 import { vi } from "vitest"
 import { mock, MockProxy } from "vitest-mock-extended"
-import { ScheduleMetricsService } from "./schedule-metrics.service"
-import { ScheduleOptions, ScheduleService } from "./schedule.service"
 
 describe("ScheduleService", () => {
   let scheduleService: ScheduleService

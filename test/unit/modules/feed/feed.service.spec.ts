@@ -3,10 +3,10 @@ import { DiscoveryModule, REQUEST } from "@nestjs/core"
 import { Test } from "@nestjs/testing"
 import { BBox } from "geojson"
 import * as yaml from "js-yaml"
+import { RegisterFeedProvider } from "src/modules/feed/decorators/feed-provider.decorator"
+import { FeedService } from "src/modules/feed/feed.service"
+import type { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface"
 import z from "zod"
-import { RegisterFeedProvider } from "./decorators/feed-provider.decorator"
-import { FeedService } from "./feed.service"
-import type { FeedContext } from "./interfaces/feed-provider.interface"
 
 describe("FeedService", () => {
   let feedService: FeedService

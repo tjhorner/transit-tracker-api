@@ -3,10 +3,13 @@ import { Test, TestingModule } from "@nestjs/testing"
 import { randomUUID } from "crypto"
 import ms from "ms"
 import { firstValueFrom, Observable, of } from "rxjs"
+import {
+  ScheduleGateway,
+  ScheduleSubscriptionDto,
+} from "src/schedule/schedule.gateway"
+import { ScheduleService, ScheduleUpdate } from "src/schedule/schedule.service"
 import { vi } from "vitest"
 import { mock, MockProxy } from "vitest-mock-extended"
-import { ScheduleGateway, ScheduleSubscriptionDto } from "./schedule.gateway"
-import { ScheduleService, ScheduleUpdate } from "./schedule.service"
 
 // Mock the WebSocket exception filters
 vi.mock("src/filters/ws-exception.filter", () => ({
