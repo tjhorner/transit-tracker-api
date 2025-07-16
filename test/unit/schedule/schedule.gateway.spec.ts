@@ -7,7 +7,11 @@ import {
   ScheduleGateway,
   ScheduleSubscriptionDto,
 } from "src/schedule/schedule.gateway"
-import { ScheduleService, ScheduleUpdate } from "src/schedule/schedule.service"
+import {
+  RouteAtStopWithOffset,
+  ScheduleService,
+  ScheduleUpdate,
+} from "src/schedule/schedule.service"
 import { vi } from "vitest"
 import { mock, MockProxy } from "vitest-mock-extended"
 
@@ -100,25 +104,27 @@ describe("ScheduleGateway", () => {
       // Arrange
       const { mockClient } = makeMockClient()
       const dto = new ScheduleSubscriptionDto()
-      dto.routeStopPairs =
-        "route1,stop1;route2,stop2;route3,stop3;route4,stop4;route5,stop5;route6,stop6"
+      dto.routeStopPairs = ""
 
-      // Mock the parseRouteStopPairs method to return 6 pairs
-      mockScheduleService.parseRouteStopPairs.mockReturnValue([
-        { routeId: "route1", stopId: "stop1", offset: 0 },
-        { routeId: "route2", stopId: "stop2", offset: 0 },
-        { routeId: "route3", stopId: "stop3", offset: 0 },
-        { routeId: "route4", stopId: "stop4", offset: 0 },
-        { routeId: "route5", stopId: "stop5", offset: 0 },
-        { routeId: "route6", stopId: "stop6", offset: 0 },
-      ])
+      let pairs: RouteAtStopWithOffset[] = []
+      for (let i = 1; i <= 26; i++) {
+        dto.routeStopPairs += `route${i},stop${i}`
+        if (i < 26) {
+          dto.routeStopPairs += ";"
+        }
+
+        pairs.push({ routeId: `route${i}`, stopId: `stop${i}`, offset: 0 })
+      }
+
+      // Mock the parseRouteStopPairs method to return 26 pairs
+      mockScheduleService.parseRouteStopPairs.mockReturnValue(pairs)
 
       // Act & Assert
       expect(() => gateway.subscribeToSchedule(dto, mockClient)).toThrow(
         BadRequestException,
       )
       expect(() => gateway.subscribeToSchedule(dto, mockClient)).toThrow(
-        "Too many route-stop pairs; maximum 5",
+        "Too many route-stop pairs; maximum 25",
       )
     })
 

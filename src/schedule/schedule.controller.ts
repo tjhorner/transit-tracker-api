@@ -133,8 +133,8 @@ export class ScheduleController {
     const routeStopPairs =
       this.scheduleService.parseRouteStopPairs(routeStopPairsRaw)
 
-    if (routeStopPairs.length > 5) {
-      throw new BadRequestException("Too many route-stop pairs; maximum 5")
+    if (routeStopPairs.length > 25) {
+      throw new BadRequestException("Too many route-stop pairs; maximum 25")
     }
 
     const schedule = await this.scheduleService.getSchedule({

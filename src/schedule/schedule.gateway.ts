@@ -99,8 +99,8 @@ export class ScheduleGateway implements OnGatewayConnection {
       subscriptionDto.routeStopPairs,
     )
 
-    if (routeStopPairs.length > 5) {
-      throw new BadRequestException("Too many route-stop pairs; maximum 5")
+    if (routeStopPairs.length > 25) {
+      throw new BadRequestException("Too many route-stop pairs; maximum 25")
     }
 
     if (subscriptionDto.feedCode === "") {

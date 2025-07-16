@@ -148,6 +148,8 @@ export class GtfsSyncService {
       this.db,
     )
 
+    await this.runPostProcessors()
+
     this.logger.log("Cleaning up")
     await rimraf(directory)
   }
@@ -193,11 +195,6 @@ export class GtfsSyncService {
 
       this.logger.log("Committing changes to database")
     })
-
-    // We run post-processors in separate transactions
-    // because they would be very very slow if run in
-    // the main import transaction
-    await this.runPostProcessors()
 
     this.logger.log("Import done")
   }
