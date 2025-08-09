@@ -161,7 +161,7 @@ export class ScheduleService {
     const feedProvider = this.getFeedProvider(subscription)
 
     return defer(() => {
-      this.logger.debug(
+      this.logger.verbose(
         `Subscribed to schedule updates: ${JSON.stringify(subscription)}`,
       )
 
@@ -183,7 +183,7 @@ export class ScheduleService {
           (prev, curr) => JSON.stringify(prev) === JSON.stringify(curr),
         ),
         finalize(() => {
-          this.logger.debug(
+          this.logger.verbose(
             `Unsubscribed from schedule updates: ${JSON.stringify(subscription)}`,
           )
 

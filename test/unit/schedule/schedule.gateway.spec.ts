@@ -1,7 +1,9 @@
 import { BadRequestException } from "@nestjs/common"
 import { Test, TestingModule } from "@nestjs/testing"
 import { randomUUID } from "crypto"
+import { IncomingMessage } from "http"
 import ms from "ms"
+import { Socket } from "net"
 import { firstValueFrom, Observable, of } from "rxjs"
 import {
   ScheduleGateway,
@@ -14,6 +16,7 @@ import {
 } from "src/schedule/schedule.service"
 import { vi } from "vitest"
 import { mock, MockProxy } from "vitest-mock-extended"
+import { WebSocket } from "ws"
 
 // Mock the WebSocket exception filters
 vi.mock("src/filters/ws-exception.filter", () => ({
@@ -58,14 +61,45 @@ describe("ScheduleGateway", () => {
   describe("handleConnection", () => {
     it("should assign a UUID to the client", () => {
       // Arrange
-      const mockClient = { id: undefined } as any
+      const mockClient = mock<WebSocket>() as any
 
       // Act
-      gateway.handleConnection(mockClient)
+      gateway.handleConnection(mockClient, mock<IncomingMessage>())
 
       // Assert
       expect(mockClient.id).toBeDefined()
       expect(typeof mockClient.id).toBe("string")
+    })
+
+    it("should add the ipAddress based on socket IP if not proxied", () => {
+      // Arrange
+      const mockClient = mock<WebSocket>() as any
+      const mockRequest = mock<IncomingMessage>()
+      const mockSocket = mock<Socket>()
+
+      // @ts-ignore
+      mockSocket.remoteAddress = "1.1.1.1"
+      mockRequest.socket = mockSocket
+
+      // Act
+      gateway.handleConnection(mockClient, mockRequest)
+
+      // Assert
+      expect(mockClient.ipAddress).toBe("1.1.1.1")
+    })
+
+    it("should add the ipAddress based on x-forwarded-for header", () => {
+      // Arrange
+      const mockClient = mock<WebSocket>() as any
+      const mockRequest = mock<IncomingMessage>()
+      mockRequest.headers["x-forwarded-for"] =
+        "1.1.1.1, 2.2.2.2, 3.3.3.3, 4.4.4.4"
+
+      // Act
+      gateway.handleConnection(mockClient, mockRequest)
+
+      // Assert
+      expect(mockClient.ipAddress).toBe("3.3.3.3")
     })
   })
 

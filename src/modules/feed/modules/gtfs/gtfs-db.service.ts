@@ -25,7 +25,9 @@ export class GtfsDbService
   ) {
     this.feedCode = feedCode
     this.pool.on("error", (err) => {
-      this.logger.warn(`Unexpected error on idle client: ${err.message}\n${err.stack}`)
+      this.logger.warn(
+        `Unexpected error on idle client: ${err.message}\n${err.stack}`,
+      )
     })
   }
 

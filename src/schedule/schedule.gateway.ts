@@ -9,6 +9,7 @@ import {
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
+  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
   WsResponse,
@@ -25,7 +26,9 @@ import {
   Min,
 } from "class-validator"
 import { randomUUID, UUID } from "crypto"
+import { IncomingMessage } from "http"
 import ms from "ms"
+import proxyAddr from "proxy-addr"
 import {
   catchError,
   finalize,
@@ -69,18 +72,46 @@ export class ScheduleSubscriptionDto {
   listMode?: "sequential" | "nextPerRoute"
 }
 
-type WebSocket = BaseWebSocket & { id: UUID }
+type WebSocket = BaseWebSocket & {
+  id: UUID
+  ipAddress: string
+  connectedAt: Date
+}
 
 @WebSocketGateway()
 @UseFilters(WebSocketExceptionFilter, WebSocketHttpExceptionFilter)
-export class ScheduleGateway implements OnGatewayConnection {
+export class ScheduleGateway
+  implements OnGatewayConnection<WebSocket>, OnGatewayDisconnect<WebSocket>
+{
   private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Set<UUID> = new Set()
 
   constructor(private readonly scheduleService: ScheduleService) {}
 
-  handleConnection(client: WebSocket) {
+  handleConnection(client: WebSocket, request: IncomingMessage) {
+    client.connectedAt = new Date()
     client.id = randomUUID()
+    client.ipAddress = proxyAddr(request, (_, i) => i < 2)
+
+    client.on("error", (err) => {
+      this.logger.warn(
+        `WebSocket error for client ${client.id} - ${client.ipAddress}: ${err.message}`,
+      )
+    })
+
+    this.logger.debug(`Client connected: ${client.id} - ${client.ipAddress}`)
+  }
+
+  handleDisconnect(client: WebSocket) {
+    this.logger.debug(
+      `Client disconnected: ${client.id} - ${client.ipAddress} (code: ${(client as any)._closeCode}, session duration: ${(Date.now() - client.connectedAt.getTime()) / 1000}s)`,
+    )
+
+    if ((client as any)._closeCode === 1006) {
+      this.logger.warn(
+        `Client ${client.id} - ${client.ipAddress} disconnected unexpectedly (code 1006)`,
+      )
+    }
   }
 
   @UsePipes(new ValidationPipe())
@@ -147,7 +178,7 @@ export class ScheduleGateway implements OnGatewayConnection {
         }),
       )
 
-    const heartbeat$ = interval(30000).pipe(
+    const heartbeat$ = interval(ms("30s")).pipe(
       map(() => ({ event: "heartbeat", data: null })),
     )
 

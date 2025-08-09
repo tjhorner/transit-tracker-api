@@ -137,6 +137,9 @@ importers:
       pg-copy-streams:
         specifier: ^6.0.6
         version: 6.0.6
+      proxy-addr:
+        specifier: ^2.0.7
+        version: 2.0.7
       reflect-metadata:
         specifier: ^0.2.2
         version: 0.2.2
@@ -216,6 +219,9 @@ importers:
       '@types/pg-copy-streams':
         specifier: ^1.2.5
         version: 1.2.5
+      '@types/proxy-addr':
+        specifier: ^2.0.3
+        version: 2.0.3
       '@types/redlock':
         specifier: ^4.0.7
         version: 4.0.7
@@ -2367,6 +2373,9 @@ packages:
 
   '@types/pg@8.6.1':
     resolution: {integrity: sha512-1Kc4oAGzAl7uqUStZCDvaLFqZrW9qWSjXOmBfdgyBP5La7Us6Mg4GBvRlSoaZMhQF/zSj1C8CtKMBkoiT8eL8w==}
+
+  '@types/proxy-addr@2.0.3':
+    resolution: {integrity: sha512-TgAHHO4tNG3HgLTUhB+hM4iwW6JUNeQHCLnF1DjaDA9c69PN+IasoFu2MYDhubFc+ZIw5c5t9DMtjvrD6R3Egg==}
 
   '@types/qs@6.14.0':
     resolution: {integrity: sha512-eOunJqu0K1923aExK6y8p6fsihYEn/BYuQ4g0CxAAgFc4b/ZLN4CrsRZ55srTdqoiLzU2B2evC+apEIxprEzkQ==}
@@ -8550,6 +8559,10 @@ snapshots:
       '@types/node': 22.15.21
       pg-protocol: 1.10.0
       pg-types: 2.2.0
+
+  '@types/proxy-addr@2.0.3':
+    dependencies:
+      '@types/node': 22.15.21
 
   '@types/qs@6.14.0': {}
 

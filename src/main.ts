@@ -24,7 +24,7 @@ export async function bootstrap() {
     logger: new ConsoleLogger({
       json: process.env.LOG_JSON === "true",
       compact: process.env.LOG_COMPACT === "true",
-    })
+    }),
   })
 
   configureForFly(app)

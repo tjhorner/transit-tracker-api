@@ -19,6 +19,7 @@ export const PG_POOL = Symbol.for("PG_POOL")
       provide: PG_POOL,
       useFactory: () =>
         new Pool({
+          max: 1,
           connectionString: process.env.DATABASE_URL,
         }),
     },
