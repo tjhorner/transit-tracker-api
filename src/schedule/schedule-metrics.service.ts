@@ -13,26 +13,21 @@ interface RouteStopMetric {
 @Injectable()
 export class ScheduleMetricsService {
   private readonly subscribers: Set<ScheduleOptions> = new Set()
+  private readonly subscribersByFeedCode: Map<string, number> = new Map()
   private readonly routeStopMetrics: Map<string, RouteStopMetric> = new Map()
 
   constructor(feedService: FeedService, metricService: MetricService) {
+    this.subscribersByFeedCode = new Map<string, number>(
+      Object.keys(feedService.getAllFeeds()).map((feed) => [feed, 0]),
+    )
+
     metricService
       .getObservableGauge("schedule_subscriptions", {
         description: "Number of active schedule subscriptions per feed",
         unit: "subscriptions",
       })
       .addCallback((observable) => {
-        const subscribersByFeedCode = new Map<string, number>(
-          Object.keys(feedService.getAllFeeds()).map((feed) => [feed, 0]),
-        )
-
-        this.subscribers.forEach((subscription) => {
-          const feedCode = subscription.feedCode ?? "all"
-          const count = subscribersByFeedCode.get(feedCode) ?? 0
-          subscribersByFeedCode.set(feedCode, count + 1)
-        })
-
-        for (const [feedCode, count] of subscribersByFeedCode) {
+        for (const [feedCode, count] of this.subscribersByFeedCode) {
           observable.observe(count, { feed_code: feedCode })
         }
       })
@@ -60,6 +55,7 @@ export class ScheduleMetricsService {
   add(subscription: ScheduleOptions) {
     this.subscribers.add(subscription)
     this.incrementRouteStopMetrics(1, subscription)
+    this.incrementFeedCodeMetrics(1, subscription)
   }
 
   remove(subscription: ScheduleOptions) {
@@ -69,6 +65,31 @@ export class ScheduleMetricsService {
 
     this.subscribers.delete(subscription)
     this.incrementRouteStopMetrics(-1, subscription)
+    this.incrementFeedCodeMetrics(-1, subscription)
+  }
+
+  private incrementFeedCodeMetrics(
+    value: number,
+    subscription: ScheduleOptions,
+  ) {
+    const feedCodes: Set<string> = new Set()
+
+    if (subscription.feedCode) {
+      feedCodes.add(subscription.feedCode)
+    } else {
+      for (const { routeId } of subscription.routes) {
+        const [feedCode] = routeId.split(":")
+        feedCodes.add(feedCode)
+      }
+    }
+
+    for (const feedCode of feedCodes) {
+      const currentCount = this.subscribersByFeedCode.get(feedCode) ?? 0
+      this.subscribersByFeedCode.set(
+        feedCode,
+        Math.max(0, currentCount + value),
+      )
+    }
   }
 
   private incrementRouteStopMetrics(
