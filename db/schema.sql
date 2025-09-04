@@ -364,20 +364,6 @@ CREATE INDEX idx_stop_times_stop_id ON public.stop_times USING btree (feed_code,
 
 
 --
--- Name: idx_stop_times_trip_id; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_stop_times_trip_id ON public.stop_times USING btree (feed_code, trip_id);
-
-
---
--- Name: idx_stop_times_trip_stop; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_stop_times_trip_stop ON public.stop_times USING btree (feed_code, trip_id, stop_id);
-
-
---
 -- Name: idx_stops_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -588,4 +574,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20250415032110'),
     ('20250523143453'),
     ('20250527154346'),
-    ('20250527155135');
+    ('20250527155135'),
+    ('20250904192825');

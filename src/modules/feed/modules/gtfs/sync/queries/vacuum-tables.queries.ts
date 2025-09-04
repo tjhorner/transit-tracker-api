@@ -17,13 +17,13 @@ const vacuumTablesIR: any = {
   usedParamSet: {},
   params: [],
   statement:
-    "VACUUM FULL stop_times,\n  trips,\n  routes,\n  calendar_dates,\n  calendar,\n  stops,\n  agency,\n  feed_info,\n  import_metadata",
+    "VACUUM stop_times,\n  trips,\n  routes,\n  calendar_dates,\n  calendar,\n  stops,\n  agency,\n  feed_info,\n  import_metadata",
 }
 
 /**
  * Query generated from SQL:
  * ```
- * VACUUM FULL stop_times,
+ * VACUUM stop_times,
  *   trips,
  *   routes,
  *   calendar_dates,

@@ -1,5 +1,5 @@
 /* @name VacuumTables */
-VACUUM FULL stop_times,
+VACUUM stop_times,
   trips,
   routes,
   calendar_dates,
