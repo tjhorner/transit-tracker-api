@@ -155,12 +155,12 @@ CREATE TABLE public.stop_times (
     arrival_time interval hour to second,
     departure_time interval hour to second,
     stop_id text NOT NULL,
-    stop_sequence integer NOT NULL,
+    stop_sequence smallint NOT NULL,
     stop_headsign text,
-    pickup_type integer,
-    drop_off_type integer,
+    pickup_type smallint,
+    drop_off_type smallint,
     shape_dist_traveled real,
-    timepoint integer
+    timepoint boolean
 );
 
 
@@ -575,4 +575,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20250523143453'),
     ('20250527154346'),
     ('20250527155135'),
-    ('20250904192825');
+    ('20250904192825'),
+    ('20250904213046');
