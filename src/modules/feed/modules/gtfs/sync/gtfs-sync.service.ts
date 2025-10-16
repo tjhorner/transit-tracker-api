@@ -398,7 +398,7 @@ export class GtfsSyncService {
 
   private importAgency(client: PoolClient, agencyPath: string): Promise<void> {
     return this.importGtfsFile(client, "agency", agencyPath, (row) => ({
-      agency_id: row.agency_id,
+      agency_id: row.agency_id ?? "1",
       agency_name: row.agency_name,
       agency_url: row.agency_url,
       agency_timezone: row.agency_timezone,

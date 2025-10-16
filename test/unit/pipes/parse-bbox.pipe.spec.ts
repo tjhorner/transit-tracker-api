@@ -14,10 +14,6 @@ describe("ParseBboxPipe", () => {
     pipe = new ParseBboxPipe()
   })
 
-  it("should be defined", () => {
-    expect(pipe).toBeDefined()
-  })
-
   it("should transform a string with four numbers into a BBox", async () => {
     const value = "-122.4,37.6,-122.3,37.7"
     const result = await pipe.transform(value, metadata)
