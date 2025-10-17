@@ -1,0 +1,24 @@
+app = "transit-tracker-api-db"
+primary_region = "sjc"
+
+[build]
+  image = "postgres:18"
+
+[[services]]
+  internal_port = 5432
+  protocol = "tcp"
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 1
+
+  [[services.ports]]
+    port = 5432
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "256mb"
+
+[mounts]
+  source = "pg_data"
+  destination = "/var/lib/postgresql"

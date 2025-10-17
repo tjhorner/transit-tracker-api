@@ -18,10 +18,21 @@ import { FetchConfig, GtfsConfig } from "../config"
 import { GtfsDbService } from "../gtfs-db.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
-import { VacuumTablesPostProcessor } from "./postprocessors/vacuum-tables"
 import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
 import { getImportMetadata } from "./queries/get-import-metadata.queries"
 import { upsertImportMetadata } from "./queries/upsert-import-metadata.queries"
+
+const GTFS_TABLES = [
+  "frequencies",
+  "stop_times",
+  "trips",
+  "stops",
+  "routes",
+  "calendar_dates",
+  "calendar",
+  "agency",
+  "feed_info",
+]
 
 @Injectable()
 export class GtfsSyncService {
@@ -41,6 +52,22 @@ export class GtfsSyncService {
   async hasEverSynced() {
     const [{ count }] = await getImportMetadataCount.run(undefined, this.db)
     return count > 0
+  }
+
+  private partitionOf(table: string) {
+    return `${table}__${this.feedCode}`
+  }
+
+  private async createPartitions() {
+    const conn = await this.db.obtainConnection()
+
+    for (const table of GTFS_TABLES) {
+      await conn.query(
+        `CREATE UNLOGGED TABLE IF NOT EXISTS ${this.partitionOf(table)} PARTITION OF ${table} FOR VALUES IN ('${this.feedCode}')`,
+      )
+    }
+
+    conn.release()
   }
 
   private async isResourceNewer(config: FetchConfig) {
@@ -135,6 +162,8 @@ export class GtfsSyncService {
       response.headers["last-modified"] ?? Date.now(),
     )
 
+    await this.createPartitions()
+
     this.logger.log("Importing GTFS feed")
     await this.importFromDirectory(zipDirectory)
 
@@ -158,23 +187,9 @@ export class GtfsSyncService {
     await this.db.tx(async (client) => {
       await client.query("SET LOCAL ROLE gtfs_import")
 
-      const tables = [
-        "frequencies",
-        "stop_times",
-        "trips",
-        "stops",
-        "routes",
-        "calendar_dates",
-        "calendar",
-        "agency",
-        "feed_info",
-      ]
-
-      for (const table of tables) {
+      for (const table of GTFS_TABLES) {
         this.logger.log(`Deleting existing data from ${table}`)
-        await client.query(`DELETE FROM ${table} WHERE feed_code = $1`, [
-          this.feedCode,
-        ])
+        await client.query(`TRUNCATE ONLY ${this.partitionOf(table)}`)
       }
 
       await this.importFeedInfo(client, path.join(directory, "feed_info.txt"))
@@ -204,7 +219,6 @@ export class GtfsSyncService {
 
     const postProcessors: SyncPostProcessor[] = [
       new InterpolateEmptyStopTimesPostProcessor(),
-      new VacuumTablesPostProcessor(),
     ]
 
     for (const processor of postProcessors) {
@@ -261,7 +275,7 @@ export class GtfsSyncService {
     const columns = Object.keys(mapRow({}))
     const ingestStream = client.query(
       copyFrom(
-        `COPY ${tableName}(${columns.join(",")}) FROM STDIN (FORMAT csv, HEADER true)`,
+        `COPY ${this.partitionOf(tableName)}(${columns.join(",")}) FROM STDIN (FORMAT csv, HEADER true)`,
       ),
     )
 
@@ -348,7 +362,7 @@ export class GtfsSyncService {
         const columns = Object.keys(row)
         const values = columns.map((column) => row[column])
         await client.query(
-          `INSERT INTO ${tableName} (${columns.join(",")}) VALUES (${values
+          `INSERT INTO ${this.partitionOf(tableName)} (${columns.join(",")}) VALUES (${values
             .map((_, i) => `$${i + 1}`)
             .join(",")})`,
           values,

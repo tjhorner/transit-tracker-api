@@ -17,13 +17,11 @@ SET row_security = off;
 CREATE FUNCTION public.default_agency_id() RETURNS text
     LANGUAGE sql
     AS $$
-	SELECT agency_id FROM agency LIMIT 1;
+  SELECT agency_id FROM agency LIMIT 1;
 $$;
 
 
 SET default_tablespace = '';
-
-SET default_table_access_method = heap;
 
 --
 -- Name: agency; Type: TABLE; Schema: public; Owner: -
@@ -39,7 +37,8 @@ CREATE TABLE public.agency (
     agency_phone text,
     agency_fare_url text,
     agency_email text
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -58,7 +57,8 @@ CREATE TABLE public.calendar (
     sunday integer NOT NULL,
     start_date date NOT NULL,
     end_date date NOT NULL
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -70,7 +70,8 @@ CREATE TABLE public.calendar_dates (
     service_id text NOT NULL,
     date date NOT NULL,
     exception_type integer NOT NULL
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -85,7 +86,8 @@ CREATE TABLE public.feed_info (
     feed_start_date date,
     feed_end_date date,
     feed_version text
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -99,8 +101,11 @@ CREATE TABLE public.frequencies (
     end_time text NOT NULL,
     headway_secs integer NOT NULL,
     exact_times integer
-);
+)
+PARTITION BY LIST (feed_code);
 
+
+SET default_table_access_method = heap;
 
 --
 -- Name: import_metadata; Type: TABLE; Schema: public; Owner: -
@@ -133,7 +138,8 @@ CREATE TABLE public.routes (
     continuous_pickup integer,
     continuous_drop_off integer,
     network_id text
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -161,7 +167,8 @@ CREATE TABLE public.stop_times (
     drop_off_type smallint,
     shape_dist_traveled real,
     timepoint boolean
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -182,7 +189,8 @@ CREATE TABLE public.stops (
     parent_station text,
     stop_timezone text,
     wheelchair_boarding integer
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -203,7 +211,8 @@ CREATE TABLE public.trips (
     fare_id text,
     wheelchair_accessible integer,
     bikes_allowed integer
-);
+)
+PARTITION BY LIST (feed_code);
 
 
 --
@@ -290,49 +299,49 @@ ALTER TABLE ONLY public.trips
 -- Name: idx_agency_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_agency_feed_code ON public.agency USING btree (feed_code);
+CREATE INDEX idx_agency_feed_code ON ONLY public.agency USING btree (feed_code);
 
 
 --
 -- Name: idx_calendar_dates_date_exception; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_calendar_dates_date_exception ON public.calendar_dates USING btree (feed_code, date, exception_type);
+CREATE INDEX idx_calendar_dates_date_exception ON ONLY public.calendar_dates USING btree (feed_code, date, exception_type);
 
 
 --
 -- Name: idx_calendar_dates_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_calendar_dates_feed_code ON public.calendar_dates USING btree (feed_code);
+CREATE INDEX idx_calendar_dates_feed_code ON ONLY public.calendar_dates USING btree (feed_code);
 
 
 --
 -- Name: idx_calendar_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_calendar_feed_code ON public.calendar USING btree (feed_code);
+CREATE INDEX idx_calendar_feed_code ON ONLY public.calendar USING btree (feed_code);
 
 
 --
 -- Name: idx_calendar_service_date_range; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_calendar_service_date_range ON public.calendar USING btree (feed_code, start_date, end_date, service_id);
+CREATE INDEX idx_calendar_service_date_range ON ONLY public.calendar USING btree (feed_code, start_date, end_date, service_id);
 
 
 --
 -- Name: idx_feed_info_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_feed_info_feed_code ON public.feed_info USING btree (feed_code);
+CREATE INDEX idx_feed_info_feed_code ON ONLY public.feed_info USING btree (feed_code);
 
 
 --
 -- Name: idx_frequencies_trip_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_frequencies_trip_id ON public.frequencies USING btree (feed_code, trip_id);
+CREATE INDEX idx_frequencies_trip_id ON ONLY public.frequencies USING btree (feed_code, trip_id);
 
 
 --
@@ -346,96 +355,56 @@ CREATE INDEX idx_import_metadata_feed_code ON public.import_metadata USING btree
 -- Name: idx_routes_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_routes_feed_code ON public.routes USING btree (feed_code);
+CREATE INDEX idx_routes_feed_code ON ONLY public.routes USING btree (feed_code);
 
 
 --
 -- Name: idx_stop_times_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_stop_times_feed_code ON public.stop_times USING btree (feed_code);
+CREATE INDEX idx_stop_times_feed_code ON ONLY public.stop_times USING btree (feed_code);
 
 
 --
 -- Name: idx_stop_times_stop_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_stop_times_stop_id ON public.stop_times USING btree (feed_code, stop_id);
+CREATE INDEX idx_stop_times_stop_id ON ONLY public.stop_times USING btree (feed_code, stop_id);
 
 
 --
 -- Name: idx_stops_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_stops_feed_code ON public.stops USING btree (feed_code);
+CREATE INDEX idx_stops_feed_code ON ONLY public.stops USING btree (feed_code);
 
 
 --
 -- Name: idx_trips_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_trips_feed_code ON public.trips USING btree (feed_code);
+CREATE INDEX idx_trips_feed_code ON ONLY public.trips USING btree (feed_code);
 
 
 --
 -- Name: idx_trips_route_service; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_trips_route_service ON public.trips USING btree (feed_code, route_id, service_id);
+CREATE INDEX idx_trips_route_service ON ONLY public.trips USING btree (feed_code, route_id, service_id);
 
 
 --
 -- Name: stop_times_null_arrival_time_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX stop_times_null_arrival_time_idx ON public.stop_times USING btree (feed_code, arrival_time) WHERE (arrival_time IS NULL);
+CREATE INDEX stop_times_null_arrival_time_idx ON ONLY public.stop_times USING btree (feed_code, arrival_time) WHERE (arrival_time IS NULL);
 
 
 --
 -- Name: stop_times_null_departure_time_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX stop_times_null_departure_time_idx ON public.stop_times USING btree (feed_code, departure_time) WHERE (departure_time IS NULL);
-
-
---
--- Name: frequencies frequencies_feed_code_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.frequencies
-    ADD CONSTRAINT frequencies_feed_code_trip_id_fkey FOREIGN KEY (feed_code, trip_id) REFERENCES public.trips(feed_code, trip_id);
-
-
---
--- Name: routes routes_feed_code_agency_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.routes
-    ADD CONSTRAINT routes_feed_code_agency_id_fkey FOREIGN KEY (feed_code, agency_id) REFERENCES public.agency(feed_code, agency_id);
-
-
---
--- Name: stop_times stop_times_feed_code_stop_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.stop_times
-    ADD CONSTRAINT stop_times_feed_code_stop_id_fkey FOREIGN KEY (feed_code, stop_id) REFERENCES public.stops(feed_code, stop_id);
-
-
---
--- Name: stop_times stop_times_feed_code_trip_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.stop_times
-    ADD CONSTRAINT stop_times_feed_code_trip_id_fkey FOREIGN KEY (feed_code, trip_id) REFERENCES public.trips(feed_code, trip_id);
-
-
---
--- Name: trips trips_feed_code_route_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY public.trips
-    ADD CONSTRAINT trips_feed_code_route_id_fkey FOREIGN KEY (feed_code, route_id) REFERENCES public.routes(feed_code, route_id);
+CREATE INDEX stop_times_null_departure_time_idx ON ONLY public.stop_times USING btree (feed_code, departure_time) WHERE (departure_time IS NULL);
 
 
 --
@@ -461,6 +430,12 @@ ALTER TABLE public.calendar_dates ENABLE ROW LEVEL SECURITY;
 --
 
 ALTER TABLE public.feed_info ENABLE ROW LEVEL SECURITY;
+
+--
+-- Name: frequencies; Type: ROW SECURITY; Schema: public; Owner: -
+--
+
+ALTER TABLE public.frequencies ENABLE ROW LEVEL SECURITY;
 
 --
 -- Name: import_metadata; Type: ROW SECURITY; Schema: public; Owner: -
@@ -494,6 +469,13 @@ CREATE POLICY rls_calendar_dates ON public.calendar_dates USING ((feed_code = cu
 --
 
 CREATE POLICY rls_feed_info ON public.feed_info USING ((feed_code = current_setting('app.current_feed'::text)));
+
+
+--
+-- Name: frequencies rls_frequencies; Type: POLICY; Schema: public; Owner: -
+--
+
+CREATE POLICY rls_frequencies ON public.frequencies USING ((feed_code = current_setting('app.current_feed'::text)));
 
 
 --
@@ -565,15 +547,4 @@ ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20250328231057'),
-    ('20250328231235'),
-    ('20250328231306'),
-    ('20250413022241'),
-    ('20250413075916'),
-    ('20250413214618'),
-    ('20250415032110'),
-    ('20250523143453'),
-    ('20250527154346'),
-    ('20250527155135'),
-    ('20250904192825'),
-    ('20250904213046');
+    ('20251016032731');
