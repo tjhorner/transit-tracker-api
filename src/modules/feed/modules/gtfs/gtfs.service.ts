@@ -40,6 +40,7 @@ type ITripUpdate = GtfsRt.ITripUpdate
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
+  private feedCode: string
   private config: GtfsConfig
 
   constructor(
@@ -49,6 +50,7 @@ export class GtfsService implements FeedProvider {
     private readonly syncService: GtfsSyncService,
     private readonly realtimeService: GtfsRealtimeService,
   ) {
+    this.feedCode = feedCode
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
     this.config = GtfsConfigSchema.parse(config)
   }
@@ -86,7 +88,12 @@ export class GtfsService implements FeedProvider {
       await this.cache.cached(
         "lastSync",
         async () => {
-          const [metadata] = await getImportMetadata.run(undefined, this.db)
+          const [metadata] = await getImportMetadata.run(
+            {
+              feedCode: this.feedCode,
+            },
+            this.db,
+          )
           return metadata.imported_at
         },
         ms("5m"),

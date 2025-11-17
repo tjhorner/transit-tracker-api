@@ -23,7 +23,7 @@ const listStopsIR: any = {
   usedParamSet: {},
   params: [],
   statement:
-    "SELECT\n  stop_id,\n  stop_name,\n  stop_code,\n  stop_lat,\n  stop_lon\nFROM\n  stops\nWHERE\n  stop_lat IS NOT NULL\n  AND stop_lon IS NOT NULL",
+    'SELECT\n  stop_id,\n  stop_name,\n  stop_code,\n  stop_lat,\n  stop_lon\nFROM\n  "stops"\nWHERE\n  stop_lat IS NOT NULL\n  AND stop_lon IS NOT NULL',
 }
 
 /**
@@ -36,7 +36,7 @@ const listStopsIR: any = {
  *   stop_lat,
  *   stop_lon
  * FROM
- *   stops
+ *   "stops"
  * WHERE
  *   stop_lat IS NOT NULL
  *   AND stop_lon IS NOT NULL

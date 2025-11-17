@@ -3,7 +3,8 @@ import { Command, CommandRunner, Option } from "nest-commander"
 import { FeedSyncService } from "src/modules/feed/feed-sync.service"
 
 interface SyncCommandOptions {
-  force: boolean
+  force?: boolean
+  feedCodes?: string[]
 }
 
 @Command({
@@ -17,7 +18,10 @@ export class SyncCommand extends CommandRunner {
   }
 
   async run(_: any, opts?: SyncCommandOptions): Promise<void> {
-    await this.feedSyncService.syncAllFeeds(opts?.force)
+    await this.feedSyncService.syncAllFeeds({
+      force: opts?.force,
+      feedCodes: opts?.feedCodes,
+    })
   }
 
   @Option({
@@ -26,5 +30,15 @@ export class SyncCommand extends CommandRunner {
   })
   parseForce(): boolean {
     return true
+  }
+
+  @Option({
+    name: "feedCodes",
+    flags: "--feed [feedCodes...]",
+    description: "Only sync the specified feeds",
+  })
+  parseFeeds(feedCode: string, acc: string[] = []): string[] {
+    acc.push(feedCode)
+    return acc
   }
 }

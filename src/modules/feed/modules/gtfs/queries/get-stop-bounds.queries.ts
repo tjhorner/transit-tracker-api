@@ -22,7 +22,7 @@ const getStopBoundsIR: any = {
   usedParamSet: {},
   params: [],
   statement:
-    "SELECT\n  MIN(stop_lat) AS min_lat,\n  MIN(stop_lon) AS min_lon,\n  MAX(stop_lat) AS max_lat,\n  MAX(stop_lon) AS max_lon\nFROM\n  stops",
+    'SELECT\n  MIN(stop_lat) AS min_lat,\n  MIN(stop_lon) AS min_lon,\n  MAX(stop_lat) AS max_lat,\n  MAX(stop_lon) AS max_lon\nFROM\n  "stops"',
 }
 
 /**
@@ -34,7 +34,7 @@ const getStopBoundsIR: any = {
  *   MAX(stop_lat) AS max_lat,
  *   MAX(stop_lon) AS max_lon
  * FROM
- *   stops
+ *   "stops"
  * ```
  */
 export const getStopBounds = new PreparedQuery<

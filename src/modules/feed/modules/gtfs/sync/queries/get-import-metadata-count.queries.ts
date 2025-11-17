@@ -2,7 +2,9 @@
 import { PreparedQuery } from "@pgtyped/runtime"
 
 /** 'GetImportMetadataCount' parameters type */
-export type IGetImportMetadataCountParams = void
+export interface IGetImportMetadataCountParams {
+  feedCode: string
+}
 
 /** 'GetImportMetadataCount' return type */
 export interface IGetImportMetadataCountResult {
@@ -16,10 +18,17 @@ export interface IGetImportMetadataCountQuery {
 }
 
 const getImportMetadataCountIR: any = {
-  usedParamSet: {},
-  params: [],
+  usedParamSet: { feedCode: true },
+  params: [
+    {
+      name: "feedCode",
+      required: true,
+      transform: { type: "scalar" },
+      locs: [{ a: 86, b: 95 }],
+    },
+  ],
   statement:
-    'SELECT\n  COUNT(feed_code)::int AS "count!"\nFROM\n  import_metadata',
+    'SELECT\n  COUNT(feed_code)::int AS "count!"\nFROM\n  import_metadata\nWHERE\n  feed_code = :feedCode!',
 }
 
 /**
@@ -29,6 +38,8 @@ const getImportMetadataCountIR: any = {
  *   COUNT(feed_code)::int AS "count!"
  * FROM
  *   import_metadata
+ * WHERE
+ *   feed_code = :feedCode!
  * ```
  */
 export const getImportMetadataCount = new PreparedQuery<

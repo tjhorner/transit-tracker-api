@@ -12,6 +12,18 @@ import { Pool, PoolClient } from "pg"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { PG_POOL } from "./gtfs.module"
 
+export const GTFS_TABLES = [
+  "frequencies",
+  "stop_times",
+  "trips",
+  "stops",
+  "routes",
+  "calendar_dates",
+  "calendar",
+  "agency",
+  "feed_info",
+] as const
+
 @Injectable({ scope: Scope.REQUEST })
 export class GtfsDbService
   implements IDatabaseConnection, OnApplicationShutdown
@@ -60,6 +72,11 @@ export class GtfsDbService
     rows: any[]
     rowCount: number
   }> {
+    for (const table of GTFS_TABLES) {
+      // ugly hack to force partitioned table usage
+      query = query.replaceAll(`"${table}"`, `"${table}__${this.feedCode}"`)
+    }
+
     return this.tx(
       async (client) => client.query(query, bindings) as Promise<any>,
     )

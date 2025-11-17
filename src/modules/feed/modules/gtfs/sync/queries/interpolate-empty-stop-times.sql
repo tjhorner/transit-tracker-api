@@ -1,7 +1,7 @@
 /* @name EmptyArrivalTimesExist */
 SELECT EXISTS (
   SELECT 1
-  FROM stop_times st
+  FROM "stop_times" st
   WHERE st.arrival_time IS NULL
     AND st.feed_code = :feedCode!
 );
@@ -16,7 +16,7 @@ WITH interp AS (
     -- Get previous known arrival time as interval
     (
       SELECT s_prev.arrival_time
-      FROM stop_times s_prev
+      FROM "stop_times" s_prev
       WHERE s_prev.feed_code = st.feed_code
         AND s_prev.trip_id = st.trip_id
         AND s_prev.stop_sequence < st.stop_sequence
@@ -27,7 +27,7 @@ WITH interp AS (
     -- Get next known arrival time as interval
     (
       SELECT s_next.arrival_time
-      FROM stop_times s_next
+      FROM "stop_times" s_next
       WHERE s_next.feed_code = st.feed_code
         AND s_next.trip_id = st.trip_id
         AND s_next.stop_sequence > st.stop_sequence
@@ -38,7 +38,7 @@ WITH interp AS (
     -- Get previous known shape_dist_traveled value
     (
       SELECT s_prev.shape_dist_traveled
-      FROM stop_times s_prev
+      FROM "stop_times" s_prev
       WHERE s_prev.feed_code = st.feed_code
         AND s_prev.trip_id = st.trip_id
         AND s_prev.stop_sequence < st.stop_sequence
@@ -49,7 +49,7 @@ WITH interp AS (
     -- Get next known shape_dist_traveled value
     (
       SELECT s_next.shape_dist_traveled
-      FROM stop_times s_next
+      FROM "stop_times" s_next
       WHERE s_next.feed_code = st.feed_code
         AND s_next.trip_id = st.trip_id
         AND s_next.stop_sequence > st.stop_sequence
@@ -60,7 +60,7 @@ WITH interp AS (
     -- Get previous stop_sequence with known arrival
     (
       SELECT s_prev.stop_sequence
-      FROM stop_times s_prev
+      FROM "stop_times" s_prev
       WHERE s_prev.feed_code = st.feed_code
         AND s_prev.trip_id = st.trip_id
         AND s_prev.stop_sequence < st.stop_sequence
@@ -71,7 +71,7 @@ WITH interp AS (
     -- Get next stop_sequence with known arrival
     (
       SELECT s_next.stop_sequence
-      FROM stop_times s_next
+      FROM "stop_times" s_next
       WHERE s_next.feed_code = st.feed_code
         AND s_next.trip_id = st.trip_id
         AND s_next.stop_sequence > st.stop_sequence
@@ -79,7 +79,7 @@ WITH interp AS (
       ORDER BY s_next.stop_sequence ASC
       LIMIT 1
     ) AS next_seq
-  FROM stop_times st
+  FROM "stop_times" st
   WHERE st.arrival_time IS NULL 
     AND st.feed_code = :feedCode!
 ),
@@ -110,7 +110,7 @@ computed AS (
     FROM interp i
   ) sub
 )
-UPDATE stop_times st
+UPDATE "stop_times" st
 SET arrival_time = comp.interpolated_arrival_time
 FROM computed comp
 WHERE st.feed_code = comp.feed_code
@@ -118,7 +118,7 @@ WHERE st.feed_code = comp.feed_code
   AND st.stop_sequence = comp.stop_sequence;
 
 /* @name UpdateEmptyDepartureTimes */
-UPDATE stop_times
+UPDATE "stop_times"
 SET departure_time = arrival_time
 WHERE departure_time IS NULL
   AND arrival_time IS NOT NULL

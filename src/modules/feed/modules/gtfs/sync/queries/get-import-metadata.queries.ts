@@ -2,7 +2,9 @@
 import { PreparedQuery } from "@pgtyped/runtime"
 
 /** 'GetImportMetadata' parameters type */
-export type IGetImportMetadataParams = void
+export interface IGetImportMetadataParams {
+  feedCode: string
+}
 
 /** 'GetImportMetadata' return type */
 export interface IGetImportMetadataResult {
@@ -18,10 +20,17 @@ export interface IGetImportMetadataQuery {
 }
 
 const getImportMetadataIR: any = {
-  usedParamSet: {},
-  params: [],
+  usedParamSet: { feedCode: true },
+  params: [
+    {
+      name: "feedCode",
+      required: true,
+      transform: { type: "scalar" },
+      locs: [{ a: 89, b: 98 }],
+    },
+  ],
   statement:
-    "SELECT\n  last_modified,\n  etag,\n  imported_at\nFROM\n  import_metadata",
+    "SELECT\n  last_modified,\n  etag,\n  imported_at\nFROM\n  import_metadata\nWHERE\n  feed_code = :feedCode!",
 }
 
 /**
@@ -33,6 +42,8 @@ const getImportMetadataIR: any = {
  *   imported_at
  * FROM
  *   import_metadata
+ * WHERE
+ *   feed_code = :feedCode!
  * ```
  */
 export const getImportMetadata = new PreparedQuery<

@@ -4,4 +4,6 @@ SELECT
   etag,
   imported_at
 FROM
-  import_metadata;
+  import_metadata
+WHERE
+  feed_code = :feedCode!;

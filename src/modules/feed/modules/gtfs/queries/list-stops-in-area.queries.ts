@@ -31,29 +31,29 @@ const listStopsInAreaIR: any = {
       name: "minLat",
       required: false,
       transform: { type: "scalar" },
-      locs: [{ a: 315, b: 321 }],
+      locs: [{ a: 323, b: 329 }],
     },
     {
       name: "maxLat",
       required: false,
       transform: { type: "scalar" },
-      locs: [{ a: 327, b: 333 }],
+      locs: [{ a: 335, b: 341 }],
     },
     {
       name: "minLon",
       required: false,
       transform: { type: "scalar" },
-      locs: [{ a: 358, b: 364 }],
+      locs: [{ a: 366, b: 372 }],
     },
     {
       name: "maxLon",
       required: false,
       transform: { type: "scalar" },
-      locs: [{ a: 370, b: 376 }],
+      locs: [{ a: 378, b: 384 }],
     },
   ],
   statement:
-    "SELECT \n  stop_id, \n  stop_name, \n  stop_code, \n  stop_lat, \n  stop_lon\nFROM \n  stops\nWHERE\n  EXISTS (\n    -- filter by stops that are actually serviced by any trip\n    SELECT 1 FROM stop_times st\n    WHERE st.stop_id = stops.stop_id\n  )\n  AND stop_lat IS NOT NULL\n  AND stop_lon IS NOT NULL\n  AND stop_lat BETWEEN :minLat AND :maxLat\n  AND stop_lon BETWEEN :minLon AND :maxLon",
+    'SELECT \n  stop_id, \n  stop_name, \n  stop_code, \n  stop_lat, \n  stop_lon\nFROM \n  "stops" stops\nWHERE\n  EXISTS (\n    -- filter by stops that are actually serviced by any trip\n    SELECT 1 FROM stop_times st\n    WHERE st.stop_id = stops.stop_id\n  )\n  AND stop_lat IS NOT NULL\n  AND stop_lon IS NOT NULL\n  AND stop_lat BETWEEN :minLat AND :maxLat\n  AND stop_lon BETWEEN :minLon AND :maxLon',
 }
 
 /**
@@ -66,7 +66,7 @@ const listStopsInAreaIR: any = {
  *   stop_lat,
  *   stop_lon
  * FROM
- *   stops
+ *   "stops" stops
  * WHERE
  *   EXISTS (
  *     -- filter by stops that are actually serviced by any trip

@@ -5,4 +5,4 @@ SELECT
   MAX(stop_lat) AS max_lat,
   MAX(stop_lon) AS max_lon
 FROM
-  stops;
+  "stops";

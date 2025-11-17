@@ -1,8 +1,8 @@
 /* @name GetScheduleForRouteAtStop */
 WITH agency_timezone AS (
     SELECT agency_timezone AS tz
-    FROM routes r
-    JOIN agency a ON r.agency_id = a.agency_id
+    FROM "routes" r
+    JOIN "agency" a ON r.agency_id = a.agency_id
     WHERE r.route_id = :routeId!
     LIMIT 1
 ),
@@ -12,7 +12,7 @@ current_day AS (
 active_services AS (
     -- Services active according to the calendar table
     SELECT service_id
-    FROM calendar, current_day
+    FROM "calendar", current_day
     WHERE today BETWEEN start_date AND end_date
       AND CASE
           WHEN EXTRACT(DOW FROM today) = 0 THEN sunday
@@ -27,14 +27,14 @@ active_services AS (
 override_services AS (
     -- Services added on specific dates
     SELECT service_id
-    FROM calendar_dates, current_day
+    FROM "calendar_dates", current_day
     WHERE date = today
       AND exception_type = 1
 ),
 removed_services AS (
     -- Services removed on specific dates
     SELECT service_id
-    FROM calendar_dates, current_day
+    FROM "calendar_dates", current_day
     WHERE date = today
       AND exception_type = 2
 ),
@@ -52,13 +52,13 @@ final_active_services AS (
 route_trips AS (
     -- Fetch trips for the specific route and active services
     SELECT t.trip_id, t.trip_headsign, r.route_short_name, r.route_long_name, r.route_id
-    FROM trips t
-    JOIN routes r ON t.route_id = r.route_id
+    FROM "trips" t
+    JOIN "routes" r ON t.route_id = r.route_id
     WHERE t.route_id = :routeId!
       AND t.service_id IN (SELECT service_id FROM final_active_services)
       -- TODO: support frequency-based trips
       AND NOT EXISTS (
-        SELECT 1 FROM frequencies f
+        SELECT 1 FROM "frequencies" f
         WHERE f.trip_id = t.trip_id
       )
 ),
@@ -67,11 +67,11 @@ last_stops AS (
         st.trip_id,
         st.stop_id AS last_stop_id,
         s.stop_name AS last_stop_name
-    FROM stop_times st
-    JOIN stops s ON st.stop_id = s.stop_id
+    FROM "stop_times" st
+    JOIN "stops" s ON st.stop_id = s.stop_id
     WHERE st.stop_sequence = (
         SELECT MAX(st2.stop_sequence)
-        FROM stop_times st2
+        FROM "stop_times" st2
         WHERE st2.trip_id = st.trip_id
     )
 )
@@ -99,10 +99,10 @@ SELECT
     TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time) as "arrival_time!",
     TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time) as "departure_time!",
     to_char(current_day.today + st.arrival_time, 'YYYYMMDD') as start_date
-FROM stop_times st
+FROM "stop_times" st
 JOIN route_trips rt ON st.trip_id = rt.trip_id
-JOIN routes r ON rt.route_id = r.route_id
-JOIN stops s ON st.stop_id = s.stop_id
+JOIN "routes" r ON rt.route_id = r.route_id
+JOIN "stops" s ON st.stop_id = s.stop_id
 JOIN current_day ON true
 JOIN agency_timezone ON true
 LEFT JOIN last_stops ls ON st.trip_id = ls.trip_id

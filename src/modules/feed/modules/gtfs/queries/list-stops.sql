@@ -6,7 +6,7 @@ SELECT
   stop_lat,
   stop_lon
 FROM
-  stops
+  "stops"
 WHERE
   stop_lat IS NOT NULL
   AND stop_lon IS NOT NULL;

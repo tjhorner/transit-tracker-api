@@ -6,7 +6,7 @@ SELECT
   stop_lat,
   stop_lon
 FROM
-  stops
+  "stops"
 WHERE
   stop_id = :stopId!
 LIMIT 1;

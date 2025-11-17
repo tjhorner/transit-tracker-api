@@ -1,12 +1,15 @@
-import { Redlock } from "@anchan828/nest-redlock"
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common"
 import { EventEmitter2 } from "@nestjs/event-emitter"
 import { SchedulerRegistry } from "@nestjs/schedule"
 import * as Sentry from "@sentry/node"
 import { CronJob, validateCronExpression } from "cron"
-import ms from "ms"
 import { exec } from "node:child_process"
 import { FeedService } from "./feed.service"
+
+export interface SyncFeedOptions {
+  force?: boolean
+  feedCodes?: string[]
+}
 
 @Injectable()
 export class FeedSyncService implements OnModuleInit {
@@ -54,8 +57,7 @@ export class FeedSyncService implements OnModuleInit {
     job.start()
   }
 
-  @Redlock("feed-sync", ms("1m"), { retryCount: 0 })
-  async syncAllFeeds(force: boolean = false) {
+  async syncAllFeeds(options: SyncFeedOptions = {}) {
     this.eventEmitter.emit("feed.sync.start")
 
     this.logger.log("Running sync of all feeds")
@@ -91,10 +93,17 @@ export class FeedSyncService implements OnModuleInit {
         continue
       }
 
+      if (options.feedCodes && !options.feedCodes.includes(feedCode)) {
+        this.logger.log(
+          `Skipping feed "${feedCode}" as it is not included in the specified feed codes`,
+        )
+        continue
+      }
+
       this.logger.log(`Syncing feed "${feedCode}"`)
 
       try {
-        await provider.sync({ force })
+        await provider.sync({ force: options.force })
       } catch (e: any) {
         Sentry.captureException(e, {
           level: "warning",

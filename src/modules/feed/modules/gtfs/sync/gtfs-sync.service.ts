@@ -15,24 +15,12 @@ import type {
   SyncOptions,
 } from "../../../interfaces/feed-provider.interface"
 import { FetchConfig, GtfsConfig } from "../config"
-import { GtfsDbService } from "../gtfs-db.service"
+import { GTFS_TABLES, GtfsDbService } from "../gtfs-db.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
 import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
 import { getImportMetadata } from "./queries/get-import-metadata.queries"
 import { upsertImportMetadata } from "./queries/upsert-import-metadata.queries"
-
-const GTFS_TABLES = [
-  "frequencies",
-  "stop_times",
-  "trips",
-  "stops",
-  "routes",
-  "calendar_dates",
-  "calendar",
-  "agency",
-  "feed_info",
-]
 
 @Injectable()
 export class GtfsSyncService {
@@ -50,7 +38,12 @@ export class GtfsSyncService {
   }
 
   async hasEverSynced() {
-    const [{ count }] = await getImportMetadataCount.run(undefined, this.db)
+    const [{ count }] = await getImportMetadataCount.run(
+      {
+        feedCode: this.feedCode,
+      },
+      this.db,
+    )
     return count > 0
   }
 
@@ -63,7 +56,7 @@ export class GtfsSyncService {
 
     for (const table of GTFS_TABLES) {
       await conn.query(
-        `CREATE UNLOGGED TABLE IF NOT EXISTS ${this.partitionOf(table)} PARTITION OF ${table} FOR VALUES IN ('${this.feedCode}')`,
+        `CREATE TABLE IF NOT EXISTS ${this.partitionOf(table)} PARTITION OF ${table} FOR VALUES IN ('${this.feedCode}')`,
       )
     }
 
@@ -72,7 +65,7 @@ export class GtfsSyncService {
 
   private async isResourceNewer(config: FetchConfig) {
     const [currentImportMetadata] = await getImportMetadata.run(
-      undefined,
+      { feedCode: this.feedCode },
       this.db,
     )
     if (!currentImportMetadata) {
@@ -114,73 +107,107 @@ export class GtfsSyncService {
       `Starting import of feed "${this.feedCode}" from URL ${url}`,
     )
 
-    if (!opts?.force && !(await this.isResourceNewer(this.config.static))) {
-      this.logger.log("Feed is not newer; import not required")
-      return
+    try {
+      await this.obtainSyncLock()
+    } catch (e: any) {
+      if (opts?.force) {
+        this.logger.warn(
+          `Could not obtain sync lock, but proceeding because force option was specified: ${e.message}`,
+        )
+      } else {
+        throw e
+      }
     }
 
-    const directory = path.join(tmpdir(), "gtfs-import")
+    try {
+      if (!opts?.force && !(await this.isResourceNewer(this.config.static))) {
+        this.logger.log("Feed is not newer; import not required")
+        return
+      }
 
-    if (fs.existsSync(directory)) {
-      await rimraf(directory)
-    }
+      const directory = path.join(tmpdir(), "gtfs-import")
 
-    fs.mkdirSync(directory)
+      if (fs.existsSync(directory)) {
+        await rimraf(directory)
+      }
 
-    const zipDirectory = path.join(directory, "gtfs")
+      fs.mkdirSync(directory)
 
-    this.logger.log(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
+      const zipDirectory = path.join(directory, "gtfs")
 
-    const response = await axios({
-      url,
-      method: "get",
-      responseType: "stream",
-      responseEncoding: "binary",
-      headers: this.config.static.headers,
-    }).then((response) => {
-      const extractor = unzipper.Extract({ path: zipDirectory })
-      return new Promise<typeof response>((resolve, reject) => {
-        response.data.pipe(extractor)
+      this.logger.log(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
 
-        let error: any = null
-        extractor.on("error", (err) => {
-          error = err
-          extractor.end()
-          reject(err)
-        })
+      const response = await axios({
+        url,
+        method: "get",
+        responseType: "stream",
+        responseEncoding: "binary",
+        headers: this.config.static.headers,
+      }).then((response) => {
+        const extractor = unzipper.Extract({ path: zipDirectory })
+        return new Promise<typeof response>((resolve, reject) => {
+          response.data.pipe(extractor)
 
-        extractor.on("close", () => {
-          if (!error) {
-            resolve(response)
-          }
+          let error: any = null
+          extractor.on("error", (err) => {
+            error = err
+            extractor.end()
+            reject(err)
+          })
+
+          extractor.on("close", () => {
+            if (!error) {
+              resolve(response)
+            }
+          })
         })
       })
-    })
 
-    const newEtag = response.headers["etag"]
-    const newLastModified = new Date(
-      response.headers["last-modified"] ?? Date.now(),
-    )
+      const newEtag = response.headers["etag"]
+      const newLastModified = new Date(
+        response.headers["last-modified"] ?? Date.now(),
+      )
 
-    await this.createPartitions()
+      await this.createPartitions()
 
-    this.logger.log("Importing GTFS feed")
-    await this.importFromDirectory(zipDirectory)
+      this.logger.log("Importing GTFS feed")
+      await this.importFromDirectory(zipDirectory)
 
-    this.logger.log("Updating import metadata")
-    await upsertImportMetadata.run(
-      {
-        etag: newEtag,
-        lastModified: newLastModified,
-        feedCode: this.feedCode,
-      },
-      this.db,
-    )
+      this.logger.log("Updating import metadata")
+      await upsertImportMetadata.run(
+        {
+          etag: newEtag,
+          lastModified: newLastModified,
+          feedCode: this.feedCode,
+        },
+        this.db,
+      )
 
-    await this.runPostProcessors()
+      await this.runPostProcessors()
 
-    this.logger.log("Cleaning up")
-    await rimraf(directory)
+      this.logger.log("Cleaning up")
+      await rimraf(directory)
+    } finally {
+      await this.releaseSyncLock()
+    }
+  }
+
+  private async obtainSyncLock() {
+    try {
+      await this.db.query("INSERT INTO sync_lock (feed_code) VALUES ($1)", [
+        this.feedCode,
+      ])
+    } catch (e: any) {
+      throw new Error(
+        `Could not obtain sync lock for feed ${this.feedCode}: ${e.message}`,
+      )
+    }
+  }
+
+  private async releaseSyncLock() {
+    await this.db.query("DELETE FROM sync_lock WHERE feed_code = $1", [
+      this.feedCode,
+    ])
   }
 
   private async importFromDirectory(directory: string) {

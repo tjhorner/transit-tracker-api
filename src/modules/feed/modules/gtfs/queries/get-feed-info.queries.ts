@@ -24,7 +24,7 @@ const getFeedInfoIR: any = {
   usedParamSet: {},
   params: [],
   statement:
-    "SELECT\n  feed_publisher_name,\n  feed_publisher_url,\n  feed_lang,\n  feed_start_date,\n  feed_end_date,\n  feed_version\nFROM feed_info\nLIMIT 1",
+    'SELECT\n  feed_publisher_name,\n  feed_publisher_url,\n  feed_lang,\n  feed_start_date,\n  feed_end_date,\n  feed_version\nFROM "feed_info"\nLIMIT 1',
 }
 
 /**
@@ -37,7 +37,7 @@ const getFeedInfoIR: any = {
  *   feed_start_date,
  *   feed_end_date,
  *   feed_version
- * FROM feed_info
+ * FROM "feed_info"
  * LIMIT 1
  * ```
  */

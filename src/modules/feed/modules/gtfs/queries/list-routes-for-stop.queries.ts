@@ -36,11 +36,11 @@ const listRoutesForStopIR: any = {
       name: "stopId",
       required: true,
       transform: { type: "scalar" },
-      locs: [{ a: 417, b: 424 }],
+      locs: [{ a: 447, b: 454 }],
     },
   ],
   statement:
-    "SELECT\n  routes.route_id,\n  routes.route_short_name,\n  routes.route_long_name,\n  routes.route_color,\n  JSON_AGG(DISTINCT CASE \n    WHEN coalesce(TRIM(stop_times.stop_headsign), '') = '' THEN trips.trip_headsign\n    ELSE stop_times.stop_headsign\n  END) AS headsigns\nFROM stop_times\nINNER JOIN trips ON stop_times.trip_id = trips.trip_id\nINNER JOIN routes ON trips.route_id = routes.route_id\nWHERE stop_times.stop_id = :stopId!\nGROUP BY\n  routes.route_id,\n  routes.route_short_name,\n  routes.route_long_name,\n  routes.route_color\nORDER BY routes.route_short_name",
+    'SELECT\n  routes.route_id,\n  routes.route_short_name,\n  routes.route_long_name,\n  routes.route_color,\n  JSON_AGG(DISTINCT CASE \n    WHEN coalesce(TRIM(stop_times.stop_headsign), \'\') = \'\' THEN trips.trip_headsign\n    ELSE stop_times.stop_headsign\n  END) AS headsigns\nFROM "stop_times" stop_times\nINNER JOIN "trips" trips ON stop_times.trip_id = trips.trip_id\nINNER JOIN "routes" routes ON trips.route_id = routes.route_id\nWHERE stop_times.stop_id = :stopId!\nGROUP BY\n  routes.route_id,\n  routes.route_short_name,\n  routes.route_long_name,\n  routes.route_color\nORDER BY routes.route_short_name',
 }
 
 /**
@@ -55,9 +55,9 @@ const listRoutesForStopIR: any = {
  *     WHEN coalesce(TRIM(stop_times.stop_headsign), '') = '' THEN trips.trip_headsign
  *     ELSE stop_times.stop_headsign
  *   END) AS headsigns
- * FROM stop_times
- * INNER JOIN trips ON stop_times.trip_id = trips.trip_id
- * INNER JOIN routes ON trips.route_id = routes.route_id
+ * FROM "stop_times" stop_times
+ * INNER JOIN "trips" trips ON stop_times.trip_id = trips.trip_id
+ * INNER JOIN "routes" routes ON trips.route_id = routes.route_id
  * WHERE stop_times.stop_id = :stopId!
  * GROUP BY
  *   routes.route_id,

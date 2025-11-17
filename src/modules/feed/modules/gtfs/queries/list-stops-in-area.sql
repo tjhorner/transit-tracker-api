@@ -6,7 +6,7 @@ SELECT
   stop_lat, 
   stop_lon
 FROM 
-  stops
+  "stops" stops
 WHERE
   EXISTS (
     -- filter by stops that are actually serviced by any trip

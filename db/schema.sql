@@ -194,6 +194,16 @@ PARTITION BY LIST (feed_code);
 
 
 --
+-- Name: sync_lock; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.sync_lock (
+    feed_code text NOT NULL,
+    locked_at timestamp with time zone DEFAULT now() NOT NULL
+);
+
+
+--
 -- Name: trips; Type: TABLE; Schema: public; Owner: -
 --
 
@@ -285,6 +295,14 @@ ALTER TABLE ONLY public.stop_times
 
 ALTER TABLE ONLY public.stops
     ADD CONSTRAINT stops_pkey PRIMARY KEY (feed_code, stop_id);
+
+
+--
+-- Name: sync_lock sync_lock_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.sync_lock
+    ADD CONSTRAINT sync_lock_pkey PRIMARY KEY (feed_code);
 
 
 --
@@ -408,42 +426,6 @@ CREATE INDEX stop_times_null_departure_time_idx ON ONLY public.stop_times USING 
 
 
 --
--- Name: agency; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.agency ENABLE ROW LEVEL SECURITY;
-
---
--- Name: calendar; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.calendar ENABLE ROW LEVEL SECURITY;
-
---
--- Name: calendar_dates; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.calendar_dates ENABLE ROW LEVEL SECURITY;
-
---
--- Name: feed_info; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.feed_info ENABLE ROW LEVEL SECURITY;
-
---
--- Name: frequencies; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.frequencies ENABLE ROW LEVEL SECURITY;
-
---
--- Name: import_metadata; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.import_metadata ENABLE ROW LEVEL SECURITY;
-
---
 -- Name: agency rls_agency; Type: POLICY; Schema: public; Owner: -
 --
 
@@ -514,30 +496,6 @@ CREATE POLICY rls_trips ON public.trips USING ((feed_code = current_setting('app
 
 
 --
--- Name: routes; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.routes ENABLE ROW LEVEL SECURITY;
-
---
--- Name: stop_times; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.stop_times ENABLE ROW LEVEL SECURITY;
-
---
--- Name: stops; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.stops ENABLE ROW LEVEL SECURITY;
-
---
--- Name: trips; Type: ROW SECURITY; Schema: public; Owner: -
---
-
-ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
-
---
 -- PostgreSQL database dump complete
 --
 
@@ -547,4 +505,6 @@ ALTER TABLE public.trips ENABLE ROW LEVEL SECURITY;
 --
 
 INSERT INTO public.schema_migrations (version) VALUES
-    ('20251016032731');
+    ('20251016032731'),
+    ('20251017224354'),
+    ('20251027221833');

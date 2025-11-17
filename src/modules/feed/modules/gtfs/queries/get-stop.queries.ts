@@ -28,11 +28,11 @@ const getStopIR: any = {
       name: "stopId",
       required: true,
       transform: { type: "scalar" },
-      locs: [{ a: 98, b: 105 }],
+      locs: [{ a: 100, b: 107 }],
     },
   ],
   statement:
-    "SELECT\n  stop_id,\n  stop_name,\n  stop_code,\n  stop_lat,\n  stop_lon\nFROM\n  stops\nWHERE\n  stop_id = :stopId!\nLIMIT 1",
+    'SELECT\n  stop_id,\n  stop_name,\n  stop_code,\n  stop_lat,\n  stop_lon\nFROM\n  "stops"\nWHERE\n  stop_id = :stopId!\nLIMIT 1',
 }
 
 /**
@@ -45,7 +45,7 @@ const getStopIR: any = {
  *   stop_lat,
  *   stop_lon
  * FROM
- *   stops
+ *   "stops"
  * WHERE
  *   stop_id = :stopId!
  * LIMIT 1
