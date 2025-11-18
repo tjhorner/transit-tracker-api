@@ -83,6 +83,9 @@ export class OneBusAwayService implements FeedProvider {
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
       maxRetries: 5,
+      defaultQuery: {
+        version: "2",
+      },
       fetch: this.instrumentedFetch.bind(this),
     })
 
@@ -120,7 +123,14 @@ export class OneBusAwayService implements FeedProvider {
     return this.cache.cached(
       "metadata",
       async () => {
-        const obaConfig = await this.obaSdk.config.retrieve()
+        let obaConfig: OnebusawaySDK.Config.ConfigRetrieveResponse
+        try {
+          obaConfig = await this.obaSdk.config.retrieve()
+        } catch (e: any) {
+          return {
+            oneBusAwayServer: this.config.baseUrl,
+          }
+        }
 
         return {
           oneBusAwayServer: this.config.baseUrl,
