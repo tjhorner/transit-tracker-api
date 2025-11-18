@@ -1,5 +1,5 @@
 app = "transit-tracker-api"
-primary_region = "sea"
+primary_region = "sjc"
 swap_size_mb = 512
 
 [build.args]

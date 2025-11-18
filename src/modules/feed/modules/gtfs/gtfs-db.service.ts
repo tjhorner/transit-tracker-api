@@ -2,7 +2,6 @@ import {
   forwardRef,
   Inject,
   Injectable,
-  Logger,
   OnApplicationShutdown,
   Scope,
 } from "@nestjs/common"
@@ -28,7 +27,6 @@ export const GTFS_TABLES = [
 export class GtfsDbService
   implements IDatabaseConnection, OnApplicationShutdown
 {
-  private readonly logger = new Logger(GtfsDbService.name)
   private readonly feedCode: string
 
   constructor(
@@ -36,11 +34,6 @@ export class GtfsDbService
     @Inject(REQUEST) { feedCode }: FeedContext,
   ) {
     this.feedCode = feedCode
-    this.pool.on("error", (err) => {
-      this.logger.warn(
-        `Unexpected error on idle client: ${err.message}\n${err.stack}`,
-      )
-    })
   }
 
   async onApplicationShutdown() {

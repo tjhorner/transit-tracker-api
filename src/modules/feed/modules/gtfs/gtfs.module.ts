@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common"
+import { Logger, Module } from "@nestjs/common"
 import { Pool } from "pg"
 import { FeedCacheModule } from "../feed-cache/feed-cache.module"
 import { GtfsDbService } from "./gtfs-db.service"
@@ -17,11 +17,22 @@ export const PG_POOL = Symbol.for("PG_POOL")
     GtfsSyncService,
     {
       provide: PG_POOL,
-      useFactory: () =>
-        new Pool({
+      useFactory: () => {
+        const logger = new Logger("PgPoolFactory")
+
+        const pool = new Pool({
           max: 2,
           connectionString: process.env.DATABASE_URL,
-        }),
+        })
+
+        pool.on("error", (err) => {
+          logger.warn(
+            `Unexpected error on idle client: ${err.message}\n${err.stack}`,
+          )
+        })
+
+        return pool
+      },
     },
   ],
   exports: [GtfsService],
