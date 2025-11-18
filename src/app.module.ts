@@ -6,6 +6,7 @@ import { ScheduleModule } from "@nestjs/schedule"
 import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { OpenTelemetryModule } from "nestjs-otel"
+import { SmokeTestCommand } from "./commands/smoke-test.command"
 import { SyncCommand } from "./commands/sync.command"
 import { HealthController } from "./health/health.controller"
 import { CacheModule } from "./modules/cache/cache.module"
@@ -17,7 +18,6 @@ import { ScheduleGateway } from "./schedule/schedule.gateway"
 import { ScheduleService } from "./schedule/schedule.service"
 import { StopsController } from "./stops/stops.controller"
 import { SystemAlertListener } from "./system-alert.listener"
-import { SmokeTestCommand } from "./commands/smoke-test.command"
 
 @Module({
   imports: [

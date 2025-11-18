@@ -1,7 +1,7 @@
 import { Logger } from "@nestjs/common"
 import { Command, CommandRunner } from "nest-commander"
 import { FeedService } from "src/modules/feed/feed.service"
-import { RouteAtStop, Stop, StopRoute } from "src/modules/feed/interfaces/feed-provider.interface"
+import { StopRoute } from "src/modules/feed/interfaces/feed-provider.interface"
 
 @Command({
   name: "smoke-test",
@@ -15,7 +15,10 @@ export class SmokeTestCommand extends CommandRunner {
     super()
   }
 
-  async run(passedParams: string[], options?: Record<string, any>): Promise<void> {
+  async run(
+    passedParams: string[],
+    options?: Record<string, any>,
+  ): Promise<void> {
     const [feedCode] = passedParams
     this.logger.log(`Running smoke test for feed: ${feedCode}`)
 
