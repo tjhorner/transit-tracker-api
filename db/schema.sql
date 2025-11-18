@@ -314,6 +314,27 @@ ALTER TABLE ONLY public.trips
 
 
 --
+-- Name: agency_agency_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX agency_agency_id_idx ON ONLY public.agency USING btree (agency_id);
+
+
+--
+-- Name: calendar_dates_service_id_date_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX calendar_dates_service_id_date_idx ON ONLY public.calendar_dates USING btree (service_id, date);
+
+
+--
+-- Name: calendar_service_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX calendar_service_id_idx ON ONLY public.calendar USING btree (service_id);
+
+
+--
 -- Name: idx_agency_feed_code; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -324,7 +345,7 @@ CREATE INDEX idx_agency_feed_code ON ONLY public.agency USING btree (feed_code);
 -- Name: idx_calendar_dates_date_exception; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_calendar_dates_date_exception ON ONLY public.calendar_dates USING btree (feed_code, date, exception_type);
+CREATE INDEX idx_calendar_dates_date_exception ON ONLY public.calendar_dates USING btree (date, exception_type);
 
 
 --
@@ -345,7 +366,7 @@ CREATE INDEX idx_calendar_feed_code ON ONLY public.calendar USING btree (feed_co
 -- Name: idx_calendar_service_date_range; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_calendar_service_date_range ON ONLY public.calendar USING btree (feed_code, start_date, end_date, service_id);
+CREATE INDEX idx_calendar_service_date_range ON ONLY public.calendar USING btree (start_date, end_date, service_id);
 
 
 --
@@ -359,7 +380,7 @@ CREATE INDEX idx_feed_info_feed_code ON ONLY public.feed_info USING btree (feed_
 -- Name: idx_frequencies_trip_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_frequencies_trip_id ON ONLY public.frequencies USING btree (feed_code, trip_id);
+CREATE INDEX idx_frequencies_trip_id ON ONLY public.frequencies USING btree (trip_id);
 
 
 --
@@ -387,7 +408,7 @@ CREATE INDEX idx_stop_times_feed_code ON ONLY public.stop_times USING btree (fee
 -- Name: idx_stop_times_stop_id; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_stop_times_stop_id ON ONLY public.stop_times USING btree (feed_code, stop_id);
+CREATE INDEX idx_stop_times_stop_id ON ONLY public.stop_times USING btree (stop_id);
 
 
 --
@@ -408,21 +429,49 @@ CREATE INDEX idx_trips_feed_code ON ONLY public.trips USING btree (feed_code);
 -- Name: idx_trips_route_service; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX idx_trips_route_service ON ONLY public.trips USING btree (feed_code, route_id, service_id);
+CREATE INDEX idx_trips_route_service ON ONLY public.trips USING btree (route_id, service_id);
+
+
+--
+-- Name: routes_route_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX routes_route_id_idx ON ONLY public.routes USING btree (route_id);
 
 
 --
 -- Name: stop_times_null_arrival_time_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX stop_times_null_arrival_time_idx ON ONLY public.stop_times USING btree (feed_code, arrival_time) WHERE (arrival_time IS NULL);
+CREATE INDEX stop_times_null_arrival_time_idx ON ONLY public.stop_times USING btree (arrival_time) WHERE (arrival_time IS NULL);
 
 
 --
 -- Name: stop_times_null_departure_time_idx; Type: INDEX; Schema: public; Owner: -
 --
 
-CREATE INDEX stop_times_null_departure_time_idx ON ONLY public.stop_times USING btree (feed_code, departure_time) WHERE (departure_time IS NULL);
+CREATE INDEX stop_times_null_departure_time_idx ON ONLY public.stop_times USING btree (departure_time) WHERE (departure_time IS NULL);
+
+
+--
+-- Name: stop_times_trip_id_stop_sequence_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX stop_times_trip_id_stop_sequence_idx ON ONLY public.stop_times USING btree (trip_id, stop_sequence);
+
+
+--
+-- Name: stops_stop_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX stops_stop_id_idx ON ONLY public.stops USING btree (stop_id);
+
+
+--
+-- Name: trips_trip_id_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX trips_trip_id_idx ON ONLY public.trips USING btree (trip_id);
 
 
 --
@@ -507,4 +556,5 @@ CREATE POLICY rls_trips ON public.trips USING ((feed_code = current_setting('app
 INSERT INTO public.schema_migrations (version) VALUES
     ('20251016032731'),
     ('20251017224354'),
-    ('20251027221833');
+    ('20251027221833'),
+    ('20251118045713');

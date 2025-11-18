@@ -17,6 +17,7 @@ import { ScheduleGateway } from "./schedule/schedule.gateway"
 import { ScheduleService } from "./schedule/schedule.service"
 import { StopsController } from "./stops/stops.controller"
 import { SystemAlertListener } from "./system-alert.listener"
+import { SmokeTestCommand } from "./commands/smoke-test.command"
 
 @Module({
   imports: [
@@ -52,6 +53,7 @@ import { SystemAlertListener } from "./system-alert.listener"
   controllers: [ScheduleController, StopsController, HealthController],
   providers: [
     SyncCommand,
+    SmokeTestCommand,
     ScheduleMetricsService,
     SystemAlertListener,
     ScheduleService,
