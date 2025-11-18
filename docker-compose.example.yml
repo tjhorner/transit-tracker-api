@@ -9,6 +9,10 @@ services:
       # TRUST_PROXY: "true"
       REDIS_URL: "redis://redis:6379"
       DATABASE_URL: "postgres://postgres:postgres@postgres:5432/gtfs?sslmode=disable"
+      # The below variable controls how frequently GTFS feeds are imported.
+      # This example sets it to once daily at midnight, which is enough
+      # for most use cases. Adjust as needed.
+      FEED_SYNC_SCHEDULE: "0 0 * * *"
       # You can provide your feeds configuration as an environment variable
       # or as a bind mount. See the `volumes:` section below for an example.
       FEEDS_CONFIG: |
