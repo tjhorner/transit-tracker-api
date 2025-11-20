@@ -91,14 +91,18 @@ export class GtfsSyncService {
     const lastModified = response.headers["last-modified"]
     const etag = response.headers["etag"]
 
-    if (!lastModified) {
-      return currentImportMetadata.etag !== etag
+    if (lastModified) {
+      return (
+        new Date(lastModified) >
+        (currentImportMetadata.last_modified ?? new Date(0))
+      )
     }
 
-    return (
-      new Date(lastModified) >
-      (currentImportMetadata.last_modified ?? new Date(0))
-    )
+    if (etag) {
+      return etag !== currentImportMetadata.etag
+    }
+
+    return true
   }
 
   async import(opts?: SyncOptions) {
@@ -311,6 +315,7 @@ export class GtfsSyncService {
       .pipe(
         csv.parse({
           headers: true,
+          ltrim: true,
           ignoreEmpty: true,
         }),
       )
@@ -404,6 +409,7 @@ export class GtfsSyncService {
       fs.createReadStream(filePath).pipe(
         csv.parse({
           headers: true,
+          ltrim: true,
           ignoreEmpty: true,
         }),
       ),
@@ -437,9 +443,20 @@ export class GtfsSyncService {
     }))
   }
 
+  private valueOrDefault<T>(value: T, defaultValue: string): T | string {
+    if (
+      value === null ||
+      value === undefined ||
+      (typeof value === "string" && value.trim() === "")
+    ) {
+      return defaultValue
+    }
+    return value
+  }
+
   private importAgency(client: PoolClient, agencyPath: string): Promise<void> {
     return this.importGtfsFile(client, "agency", agencyPath, (row) => ({
-      agency_id: row.agency_id ?? "1",
+      agency_id: this.valueOrDefault(row.agency_id, "1"),
       agency_name: row.agency_name,
       agency_url: row.agency_url,
       agency_timezone: row.agency_timezone,
@@ -497,7 +514,7 @@ export class GtfsSyncService {
 
     return this.importGtfsFile(client, "routes", routesPath, (row) => ({
       route_id: row.route_id,
-      agency_id: row.agency_id ?? defaultAgencyId,
+      agency_id: this.valueOrDefault(row.agency_id, defaultAgencyId),
       route_short_name: row.route_short_name,
       route_long_name: row.route_long_name,
       route_desc: row.route_desc,

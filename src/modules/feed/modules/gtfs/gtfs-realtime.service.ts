@@ -48,7 +48,11 @@ export class GtfsRealtimeService {
           const resp = await axios.get(config.url, {
             responseType: "arraybuffer",
             responseEncoding: "binary",
-            headers: config.headers,
+            headers: {
+              "User-Agent":
+                "Transit Tracker API (https://transit-tracker.eastsideurbanism.org/)",
+              ...(config.headers ?? {}),
+            },
           })
 
           if (resp.headers["cache-control"]) {

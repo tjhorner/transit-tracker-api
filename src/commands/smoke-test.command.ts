@@ -1,7 +1,10 @@
 import { Logger } from "@nestjs/common"
 import { Command, CommandRunner } from "nest-commander"
 import { FeedService } from "src/modules/feed/feed.service"
-import { StopRoute } from "src/modules/feed/interfaces/feed-provider.interface"
+import {
+  StopRoute,
+  TripStop,
+} from "src/modules/feed/interfaces/feed-provider.interface"
 
 @Command({
   name: "smoke-test",
@@ -39,29 +42,34 @@ export class SmokeTestCommand extends CommandRunner {
         this.logger.log(`Sample stop: ${JSON.stringify(sampleStop)}`)
       }
 
-      let randomStop = stops[Math.floor(Math.random() * stops.length)]
-      let routesAtStop: StopRoute[] = []
-      while (routesAtStop.length === 0) {
-        randomStop = stops[Math.floor(Math.random() * stops.length)]
-        routesAtStop = await provider.getRoutesForStop(randomStop.stopId)
+      let schedule: TripStop[] = []
+      while (schedule.length === 0) {
+        let randomStop = stops[Math.floor(Math.random() * stops.length)]
+        let routesAtStop: StopRoute[] = []
+        while (routesAtStop.length === 0) {
+          randomStop = stops[Math.floor(Math.random() * stops.length)]
+          routesAtStop = await provider.getRoutesForStop(randomStop.stopId)
 
-        if (routesAtStop.length === 0) {
-          this.logger.warn(
-            `No routes found for stop ${randomStop.stopId}, picking another stop...`,
-          )
+          if (routesAtStop.length === 0) {
+            this.logger.warn(
+              `No routes found for stop ${randomStop.stopId}, picking another stop...`,
+            )
+          }
         }
+
+        schedule = await provider.getUpcomingTripsForRoutesAtStops([
+          {
+            routeId: routesAtStop[0]?.routeId,
+            stopId: randomStop.stopId,
+          },
+        ])
+
+        this.logger.log(
+          `Retrieved ${schedule.length} upcoming trips for stop ${randomStop.stopId} on feed: ${feedCode}`,
+        )
+
+        this.logger.log(schedule.slice(0, 3))
       }
-
-      const schedule = await provider.getUpcomingTripsForRoutesAtStops([
-        {
-          routeId: routesAtStop[0]?.routeId,
-          stopId: randomStop.stopId,
-        },
-      ])
-
-      this.logger.log(
-        `Retrieved ${schedule.length} upcoming trips for stop ${randomStop.stopId} on feed: ${feedCode}`,
-      )
 
       this.logger.log(`Smoke test completed successfully for feed: ${feedCode}`)
     } catch (error: any) {
