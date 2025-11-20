@@ -7,6 +7,7 @@ export type DateOrString = Date | string
 export interface IUpsertImportMetadataParams {
   etag?: string | null | void
   feedCode?: string | null | void
+  hash?: string | null | void
   lastModified?: DateOrString | null | void
 }
 
@@ -20,15 +21,15 @@ export interface IUpsertImportMetadataQuery {
 }
 
 const upsertImportMetadataIR: any = {
-  usedParamSet: { etag: true, lastModified: true, feedCode: true },
+  usedParamSet: { etag: true, lastModified: true, hash: true, feedCode: true },
   params: [
     {
       name: "etag",
       required: false,
       transform: { type: "scalar" },
       locs: [
-        { a: 84, b: 88 },
-        { a: 172, b: 176 },
+        { a: 90, b: 94 },
+        { a: 185, b: 189 },
       ],
     },
     {
@@ -36,30 +37,40 @@ const upsertImportMetadataIR: any = {
       required: false,
       transform: { type: "scalar" },
       locs: [
-        { a: 91, b: 103 },
-        { a: 197, b: 209 },
+        { a: 97, b: 109 },
+        { a: 210, b: 222 },
+      ],
+    },
+    {
+      name: "hash",
+      required: false,
+      transform: { type: "scalar" },
+      locs: [
+        { a: 112, b: 116 },
+        { a: 234, b: 238 },
       ],
     },
     {
       name: "feedCode",
       required: false,
       transform: { type: "scalar" },
-      locs: [{ a: 106, b: 114 }],
+      locs: [{ a: 119, b: 127 }],
     },
   ],
   statement:
-    'INSERT INTO "import_metadata" (etag, last_modified, feed_code, imported_at)\nVALUES (:etag, :lastModified, :feedCode, now())\nON CONFLICT (feed_code) \nDO UPDATE SET\n  etag = :etag,\n  last_modified = :lastModified,\n  imported_at = now()',
+    'INSERT INTO "import_metadata" (etag, last_modified, hash, feed_code, imported_at)\nVALUES (:etag, :lastModified, :hash, :feedCode, now())\nON CONFLICT (feed_code) \nDO UPDATE SET\n  etag = :etag,\n  last_modified = :lastModified,\n  hash = :hash,\n  imported_at = now()',
 }
 
 /**
  * Query generated from SQL:
  * ```
- * INSERT INTO "import_metadata" (etag, last_modified, feed_code, imported_at)
- * VALUES (:etag, :lastModified, :feedCode, now())
+ * INSERT INTO "import_metadata" (etag, last_modified, hash, feed_code, imported_at)
+ * VALUES (:etag, :lastModified, :hash, :feedCode, now())
  * ON CONFLICT (feed_code)
  * DO UPDATE SET
  *   etag = :etag,
  *   last_modified = :lastModified,
+ *   hash = :hash,
  *   imported_at = now()
  * ```
  */

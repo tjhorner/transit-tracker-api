@@ -115,6 +115,7 @@ CREATE TABLE public.import_metadata (
     last_modified timestamp without time zone,
     feed_code text NOT NULL,
     etag text,
+    hash text,
     imported_at timestamp with time zone DEFAULT now() NOT NULL
 );
 

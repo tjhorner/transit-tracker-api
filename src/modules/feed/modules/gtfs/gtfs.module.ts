@@ -5,12 +5,14 @@ import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsService } from "./gtfs.service"
 import { GtfsSyncService } from "./sync/gtfs-sync.service"
+import { WebResourceService } from "./sync/web-resource.service"
 
 export const PG_POOL = Symbol.for("PG_POOL")
 
 @Module({
   imports: [FeedCacheModule],
   providers: [
+    WebResourceService,
     GtfsService,
     GtfsDbService,
     GtfsRealtimeService,

@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
-import axios, { AxiosResponse } from "axios"
+import axios from "axios"
 import * as csv from "fast-csv"
 import * as fs from "fs"
 import { tmpdir } from "node:os"
@@ -14,13 +14,14 @@ import type {
   FeedContext,
   SyncOptions,
 } from "../../../interfaces/feed-provider.interface"
-import { FetchConfig, GtfsConfig } from "../config"
+import { GtfsConfig } from "../config"
 import { GTFS_TABLES, GtfsDbService } from "../gtfs-db.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
 import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
 import { getImportMetadata } from "./queries/get-import-metadata.queries"
 import { upsertImportMetadata } from "./queries/upsert-import-metadata.queries"
+import { WebResourceMetadata, WebResourceService } from "./web-resource.service"
 
 @Injectable()
 export class GtfsSyncService {
@@ -30,6 +31,7 @@ export class GtfsSyncService {
 
   constructor(
     @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    private readonly webResourceService: WebResourceService,
     private readonly db: GtfsDbService,
   ) {
     this.logger = new Logger(`${GtfsSyncService.name}[${feedCode}]`)
@@ -63,7 +65,11 @@ export class GtfsSyncService {
     conn.release()
   }
 
-  private async isResourceNewer(config: FetchConfig) {
+  private async isResourceNewer({
+    lastModified,
+    etag,
+    hash,
+  }: WebResourceMetadata) {
     const [currentImportMetadata] = await getImportMetadata.run(
       { feedCode: this.feedCode },
       this.db,
@@ -72,30 +78,12 @@ export class GtfsSyncService {
       return true
     }
 
-    let response: AxiosResponse
-    try {
-      response = await axios.head(config.url, {
-        headers: config.headers,
-      })
-    } catch (e: any) {
-      if (e.status < 500) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        response = await axios.get(config.url, {
-          headers: config.headers,
-        })
-      } else {
-        throw e
-      }
+    if (hash && currentImportMetadata.hash) {
+      return hash !== currentImportMetadata.hash
     }
 
-    const lastModified = response.headers["last-modified"]
-    const etag = response.headers["etag"]
-
     if (lastModified) {
-      return (
-        new Date(lastModified) >
-        (currentImportMetadata.last_modified ?? new Date(0))
-      )
+      return lastModified > (currentImportMetadata.last_modified ?? new Date(0))
     }
 
     if (etag) {
@@ -124,9 +112,18 @@ export class GtfsSyncService {
     }
 
     try {
-      if (!opts?.force && !(await this.isResourceNewer(this.config.static))) {
-        this.logger.log("Feed is not newer; import not required")
-        return
+      const resourceMetadata =
+        await this.webResourceService.getResourceMetadata(
+          url,
+          this.config.static.headers,
+        )
+
+      if (!opts?.force) {
+        const isNewer = await this.isResourceNewer(resourceMetadata)
+        if (!isNewer) {
+          this.logger.log("Feed is not newer; import not required")
+          return
+        }
       }
 
       const directory = path.join(tmpdir(), "gtfs-import")
@@ -141,7 +138,7 @@ export class GtfsSyncService {
 
       this.logger.log(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
 
-      const response = await axios({
+      await axios({
         url,
         method: "get",
         responseType: "stream",
@@ -167,11 +164,6 @@ export class GtfsSyncService {
         })
       })
 
-      const newEtag = response.headers["etag"]
-      const newLastModified = new Date(
-        response.headers["last-modified"] ?? Date.now(),
-      )
-
       await this.createPartitions()
 
       this.logger.log("Importing GTFS feed")
@@ -180,8 +172,9 @@ export class GtfsSyncService {
       this.logger.log("Updating import metadata")
       await upsertImportMetadata.run(
         {
-          etag: newEtag,
-          lastModified: newLastModified,
+          etag: resourceMetadata.etag,
+          lastModified: resourceMetadata.lastModified,
+          hash: resourceMetadata.hash,
           feedCode: this.feedCode,
         },
         this.db,

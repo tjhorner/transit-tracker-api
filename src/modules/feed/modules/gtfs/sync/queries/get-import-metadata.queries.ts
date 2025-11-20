@@ -9,6 +9,7 @@ export interface IGetImportMetadataParams {
 /** 'GetImportMetadata' return type */
 export interface IGetImportMetadataResult {
   etag: string | null
+  hash: string | null
   imported_at: Date
   last_modified: Date | null
 }
@@ -26,11 +27,11 @@ const getImportMetadataIR: any = {
       name: "feedCode",
       required: true,
       transform: { type: "scalar" },
-      locs: [{ a: 89, b: 98 }],
+      locs: [{ a: 97, b: 106 }],
     },
   ],
   statement:
-    "SELECT\n  last_modified,\n  etag,\n  imported_at\nFROM\n  import_metadata\nWHERE\n  feed_code = :feedCode!",
+    "SELECT\n  last_modified,\n  etag,\n  hash,\n  imported_at\nFROM\n  import_metadata\nWHERE\n  feed_code = :feedCode!",
 }
 
 /**
@@ -39,6 +40,7 @@ const getImportMetadataIR: any = {
  * SELECT
  *   last_modified,
  *   etag,
+ *   hash,
  *   imported_at
  * FROM
  *   import_metadata
