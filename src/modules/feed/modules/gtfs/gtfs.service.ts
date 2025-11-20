@@ -107,17 +107,14 @@ export class GtfsService implements FeedProvider {
       async () => {
         const [metadata] = await getFeedInfo.run(undefined, this.db)
 
-        if (!metadata) {
-          return {}
-        }
-
         return {
-          feedPublisherName: metadata.feed_publisher_name,
-          feedPublisherUrl: metadata.feed_publisher_url,
-          feedLang: metadata.feed_lang,
-          feedStartDate: metadata.feed_start_date,
-          feedEndDate: metadata.feed_end_date,
-          feedVersion: metadata.feed_version,
+          feedPublisherName: metadata?.feed_publisher_name,
+          feedPublisherUrl: metadata?.feed_publisher_url,
+          feedLang: metadata?.feed_lang,
+          feedStartDate: metadata?.feed_start_date,
+          feedEndDate: metadata?.feed_end_date,
+          feedVersion: metadata?.feed_version,
+          supportsGtfsRealtime: !!this.config.rtTripUpdates,
         }
       },
       ms("5m"),

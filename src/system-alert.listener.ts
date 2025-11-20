@@ -23,4 +23,11 @@ export class SystemAlertListener {
     const message = `A warning occurred during feed sync for feed "${event.feedCode}":\n\n${event.message}\n\nStack trace:\n${event.stack}`
     await this.notificationsService.sendNotification(title, message)
   }
+
+  @OnEvent("feed.sync.completed", { async: true })
+  async handleFeedSyncCompleted() {
+    const title = "Feed Sync Completed"
+    const message = "Feed synchronization has completed successfully."
+    await this.notificationsService.sendNotification(title, message)
+  }
 }
