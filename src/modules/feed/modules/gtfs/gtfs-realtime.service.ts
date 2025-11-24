@@ -46,6 +46,7 @@ export class GtfsRealtimeService {
       const responses = await Promise.allSettled(
         fetchConfigs.map(async (config) => {
           const resp = await axios.get(config.url, {
+            timeout: 5000,
             responseType: "arraybuffer",
             responseEncoding: "binary",
             headers: {

@@ -118,6 +118,10 @@ export class GtfsSyncService {
           this.config.static.headers,
         )
 
+      this.logger.log(
+        `GTFS zip metadata: lastModified=${resourceMetadata.lastModified?.toISOString() ?? "null"} etag=${resourceMetadata.etag ?? "null"} hash=${resourceMetadata.hash ?? "null"}`,
+      )
+
       if (!opts?.force) {
         const isNewer = await this.isResourceNewer(resourceMetadata)
         if (!isNewer) {
