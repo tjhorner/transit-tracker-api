@@ -277,9 +277,11 @@ export class GtfsService implements FeedProvider {
     const scheduleDates = [-1, 0, 1]
     const now = Date.now()
 
+    const uniqueRouteIds = Array.from(new Set(routes.map((r) => r.routeId)))
+
     let tripUpdates: ITripUpdate[] = []
     try {
-      tripUpdates = await this.realtimeService.getTripUpdates()
+      tripUpdates = await this.realtimeService.getTripUpdates(uniqueRouteIds)
     } catch (e: any) {
       this.logger.warn(
         `Failed to fetch trip updates; using schedule: ${e.message}\n${e.stack}`,

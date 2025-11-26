@@ -5,10 +5,19 @@ export const FetchConfigSchema = z.strictObject({
   headers: z.record(z.string()).optional(),
 })
 
+export const RouteIdFilteredFetchConfigSchema = FetchConfigSchema.extend({
+  routeIds: z.array(z.string()).optional(),
+})
+
 export const GtfsConfigSchema = z.strictObject({
+  quirks: z
+    .object({
+      fuzzyMatchTripUpdates: z.boolean().optional(),
+    })
+    .optional(),
   static: FetchConfigSchema,
   rtTripUpdates: z
-    .union([FetchConfigSchema, z.array(FetchConfigSchema)])
+    .union([FetchConfigSchema, z.array(RouteIdFilteredFetchConfigSchema)])
     .optional(),
 })
 

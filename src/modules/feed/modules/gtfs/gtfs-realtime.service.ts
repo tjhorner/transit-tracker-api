@@ -25,26 +25,41 @@ export class GtfsRealtimeService {
     this.config = config
   }
 
-  async getTripUpdates() {
+  async getTripUpdates(routeIds?: string[]): Promise<ITripUpdate[]> {
     if (!this.config.rtTripUpdates) {
       return []
     }
 
-    return this.cache.cached("tripUpdates", async () => {
-      let fetchConfigs: FetchConfig[] = []
-      if (Array.isArray(this.config.rtTripUpdates)) {
-        fetchConfigs = this.config.rtTripUpdates
-      } else if (typeof this.config.rtTripUpdates === "object") {
-        fetchConfigs = [this.config.rtTripUpdates]
-      }
+    let fetchConfigs: FetchConfig[] = []
+    if (Array.isArray(this.config.rtTripUpdates)) {
+      fetchConfigs = this.config.rtTripUpdates.filter((config) => {
+        if (!config.routeIds || config.routeIds.length === 0) {
+          return true
+        }
 
-      const minCacheAge = process.env.GTFS_RT_MIN_CACHE_AGE
-        ? ms(process.env.GTFS_RT_MIN_CACHE_AGE as StringValue) / 1000
-        : -1
+        if (!routeIds || routeIds.length === 0) {
+          return true
+        }
 
-      let maxAge = isNaN(minCacheAge) ? -1 : minCacheAge
-      const responses = await Promise.allSettled(
-        fetchConfigs.map(async (config) => {
+        return config.routeIds.some((routeId) => routeIds.includes(routeId))
+      })
+    } else if (typeof this.config.rtTripUpdates === "object") {
+      fetchConfigs = [this.config.rtTripUpdates]
+    }
+
+    if (fetchConfigs.length === 0) {
+      return []
+    }
+
+    const minCacheAge = process.env.GTFS_RT_MIN_CACHE_AGE
+      ? ms(process.env.GTFS_RT_MIN_CACHE_AGE as StringValue) / 1000
+      : -1
+
+    const responses = await Promise.allSettled(
+      fetchConfigs.map((config) =>
+        this.cache.cached(`tripUpdates-${config.url}`, async () => {
+          let maxAge = isNaN(minCacheAge) ? -1 : minCacheAge
+
           const resp = await axios.get(config.url, {
             timeout: 5000,
             responseType: "arraybuffer",
@@ -70,36 +85,37 @@ export class GtfsRealtimeService {
             { longs: Number },
           ) as GtfsRt.IFeedMessage
 
-          return feedMessage.entity ?? []
+          const tripUpdates = feedMessage.entity?.filter(
+            (entity) => entity.tripUpdate,
+          )
+
+          return {
+            value: tripUpdates ?? [],
+            ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
+          }
         }),
-      )
+      ),
+    )
 
-      for (const response of responses) {
-        if (response.status === "rejected") {
-          this.logger.warn(`Failed to fetch trip updates: ${response.reason}`)
-        }
+    for (const response of responses) {
+      if (response.status === "rejected") {
+        this.logger.warn(`Failed to fetch trip updates: ${response.reason}`)
       }
+    }
 
-      const successfulResponses = responses.filter(
-        (r) => r.status === "fulfilled",
-      )
-      if (successfulResponses.length === 0) {
-        return {
-          value: [],
-          ttl: 0,
-        }
-      }
+    const successfulResponses = responses.filter(
+      (r) => r.status === "fulfilled",
+    )
+    if (successfulResponses.length === 0) {
+      return []
+    }
 
-      const tripUpdates = successfulResponses
-        .flatMap((r) => r.value)
-        .map((entity) => entity.tripUpdate)
-        .filter((tripUpdate) => !!tripUpdate)
+    const tripUpdates = successfulResponses
+      .flatMap((r) => r.value)
+      .map((entity) => entity.tripUpdate)
+      .filter((tripUpdate) => !!tripUpdate)
 
-      return {
-        value: tripUpdates,
-        ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
-      }
-    })
+    return tripUpdates
   }
 
   resolveTripTimes(
@@ -169,6 +185,21 @@ export class GtfsRealtimeService {
     }
   }
 
+  private isTripIdSimilar(
+    trip: IGetScheduleForRouteAtStopResult,
+    tripUpdate: ITripUpdate,
+  ): boolean {
+    if (trip.trip_id === tripUpdate.trip.tripId) {
+      return true
+    }
+
+    if (this.config.quirks?.fuzzyMatchTripUpdates && tripUpdate.trip.tripId) {
+      return trip.trip_id.includes(tripUpdate.trip.tripId)
+    }
+
+    return false
+  }
+
   matchTripToTripUpdate(
     trip: IGetScheduleForRouteAtStopResult,
     tripUpdates: ITripUpdate[],
@@ -179,12 +210,14 @@ export class GtfsRealtimeService {
     // Filter by trip updates with:
     //   - the same trip_id and start_date *or*
     //   - the same trip_id and no start_date
-    const tripUpdate = tripUpdates.find(
-      (update) =>
-        (update.trip.tripId === trip.trip_id &&
-          update.trip.startDate === trip.start_date) ||
-        (!update.trip.startDate && update.trip.tripId === trip.trip_id),
-    )
+    const tripUpdate = tripUpdates.find((update) => {
+      const tripIdMatches = this.isTripIdSimilar(trip, update)
+
+      return (
+        (tripIdMatches && update.trip.startDate === trip.start_date) ||
+        (tripIdMatches && !update.trip.startDate)
+      )
+    })
 
     const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
       (update) =>

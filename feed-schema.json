@@ -58,6 +58,17 @@
               "type": "object",
               "description": "Configuration parameters for a GTFS feed.",
               "properties": {
+                "quirks": {
+                  "type": "object",
+                  "description": "Optional list of GTFS quirks to apply when processing this feed. Quirks are workarounds for ad-hoc issues found in GTFS feeds.",
+                  "properties": {
+                    "fuzzyMatchTripUpdates": {
+                      "type": "boolean",
+                      "description": "If enabled, GTFS-RT trip updates will be matched using a substring of `trip_id` rather than an exact match.",
+                      "default": false
+                    }
+                  }
+                },
                 "static": {
                   "$ref": "#/$defs/HttpRequestOptions",
                   "description": "Where to fetch the static GTFS zip file from."
@@ -71,7 +82,24 @@
                     {
                       "type": "array",
                       "items": {
-                        "$ref": "#/$defs/HttpRequestOptions"
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/HttpRequestOptions",
+                            "additionalProperties": true
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "routeIds": {
+                                "type": "array",
+                                "description": "If specified, this GTFS-RT feed will only be requested for these route IDs. This is useful if multiple GTFS-RT feeds are specified and each only covers a subset of routes.",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        ]
                       }
                     }
                   ]
