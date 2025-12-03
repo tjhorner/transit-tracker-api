@@ -212,7 +212,6 @@ export class GtfsRealtimeService {
     //   - the same trip_id and no start_date
     const tripUpdate = tripUpdates.find((update) => {
       const tripIdMatches = this.isTripIdSimilar(trip, update)
-
       return (
         (tripIdMatches && update.trip.startDate === trip.start_date) ||
         (tripIdMatches && !update.trip.startDate)

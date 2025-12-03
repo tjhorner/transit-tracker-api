@@ -21,7 +21,7 @@ Most transit agencies will support GTFS. [Transitland](https://www.transit.land/
 > [!NOTE]  
 > Not all parts of the GTFS specification are supported. For example, [`frequencies.txt`](https://gtfs.org/documentation/schedule/reference/#frequenciestxt) is not supported, so if your transit agency uses it you will see incorrect or missing trips. PRs are welcome to add support for more GTFS features.
 
-You can create a `feeds.yaml` in the working directory, or provide it as a `FEEDS_CONFIG` environment variable. A [JSON Schema](./feed-schema.json) is available. Here is an example configuration:
+You can create a `feeds.yaml` in the working directory, or provide it as a `FEEDS_CONFIG` environment variable. A [JSON Schema](./feed-schema.json) is available and describes each available configuration option in more detail. Here is an example:
 
 ```yaml
 feeds:
