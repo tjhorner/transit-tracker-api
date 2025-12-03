@@ -29,6 +29,8 @@ import { listStopsInArea } from "./queries/list-stops-in-area.queries"
 import { listStops } from "./queries/list-stops.queries"
 import { GtfsSyncService } from "./sync/gtfs-sync.service"
 import { getImportMetadata } from "./sync/queries/get-import-metadata.queries"
+import { Counter } from "@opentelemetry/api"
+import { MetricService } from "nestjs-otel"
 
 const TripScheduleRelationship = GtfsRt.TripDescriptor.ScheduleRelationship
 
@@ -42,6 +44,7 @@ export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
   private feedCode: string
   private config: GtfsConfig
+  private realtimeFailuresCounter: Counter
 
   constructor(
     @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
@@ -49,10 +52,16 @@ export class GtfsService implements FeedProvider {
     private readonly db: GtfsDbService,
     private readonly syncService: GtfsSyncService,
     private readonly realtimeService: GtfsRealtimeService,
+    metricService: MetricService
   ) {
     this.feedCode = feedCode
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
     this.config = GtfsConfigSchema.parse(config)
+    
+    this.realtimeFailuresCounter = metricService.getCounter("gtfs_realtime_failures", {
+      description: "Number of GTFS-RT fetch failures",
+      unit: "failures",
+    })
   }
 
   async healthCheck(): Promise<void> {
@@ -286,6 +295,10 @@ export class GtfsService implements FeedProvider {
       this.logger.warn(
         `Failed to fetch trip updates; using schedule: ${e.message}\n${e.stack}`,
       )
+
+      this.realtimeFailuresCounter.add(1, {
+        feed_code: this.feedCode,
+      })
     }
 
     const tripStops: TripStop[] = []
