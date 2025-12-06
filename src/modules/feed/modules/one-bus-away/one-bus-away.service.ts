@@ -470,7 +470,8 @@ export class OneBusAwayService implements FeedProvider {
 
       const arrivalsAndDepartures =
         arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
-          (ad) => routeIds.includes(ad.routeId),
+          (ad) =>
+            routeIds.includes(ad.routeId) && ad.departureEnabled !== false,
         )
 
       for (const ad of arrivalsAndDepartures) {
