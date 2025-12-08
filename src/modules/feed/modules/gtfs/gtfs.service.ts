@@ -44,6 +44,7 @@ export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
   private feedCode: string
   private config: GtfsConfig
+  private realtimeRequestsCounter: Counter
   private realtimeFailuresCounter: Counter
 
   constructor(
@@ -57,6 +58,11 @@ export class GtfsService implements FeedProvider {
     this.feedCode = feedCode
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
     this.config = GtfsConfigSchema.parse(config)
+
+    this.realtimeRequestsCounter = metricService.getCounter("gtfs_realtime_requests", {
+      description: "Number of GTFS-RT fetch requests",
+      unit: "requests",
+    })
     
     this.realtimeFailuresCounter = metricService.getCounter("gtfs_realtime_failures", {
       description: "Number of GTFS-RT fetch failures",
@@ -290,6 +296,10 @@ export class GtfsService implements FeedProvider {
 
     let tripUpdates: ITripUpdate[] = []
     try {
+      this.realtimeRequestsCounter.add(1, {
+        feed_code: this.feedCode,
+      })
+
       tripUpdates = await this.realtimeService.getTripUpdates(uniqueRouteIds)
     } catch (e: any) {
       this.logger.warn(

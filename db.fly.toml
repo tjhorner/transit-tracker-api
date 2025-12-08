@@ -3,7 +3,7 @@ primary_region = "sjc"
 swap_size_mb = 512
 
 [build]
-  image = "postgres:18"
+  dockerfile = "db.Dockerfile"
 
 [[services]]
   internal_port = 5432
