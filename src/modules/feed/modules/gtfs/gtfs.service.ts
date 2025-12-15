@@ -1,10 +1,8 @@
 import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
-import { Counter } from "@opentelemetry/api"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
-import { MetricService } from "nestjs-otel"
 import type {
   FeedContext,
   FeedProvider,
@@ -44,8 +42,6 @@ export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
   private feedCode: string
   private config: GtfsConfig
-  private realtimeRequestsCounter: Counter
-  private realtimeFailuresCounter: Counter
 
   constructor(
     @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
@@ -53,27 +49,10 @@ export class GtfsService implements FeedProvider {
     private readonly db: GtfsDbService,
     private readonly syncService: GtfsSyncService,
     private readonly realtimeService: GtfsRealtimeService,
-    metricService: MetricService,
   ) {
     this.feedCode = feedCode
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
     this.config = GtfsConfigSchema.parse(config)
-
-    this.realtimeRequestsCounter = metricService.getCounter(
-      "gtfs_realtime_requests",
-      {
-        description: "Number of GTFS-RT fetch requests",
-        unit: "requests",
-      },
-    )
-
-    this.realtimeFailuresCounter = metricService.getCounter(
-      "gtfs_realtime_failures",
-      {
-        description: "Number of GTFS-RT fetch failures",
-        unit: "failures",
-      },
-    )
   }
 
   async healthCheck(): Promise<void> {
@@ -302,19 +281,11 @@ export class GtfsService implements FeedProvider {
 
     let tripUpdates: ITripUpdate[] = []
     try {
-      this.realtimeRequestsCounter.add(1, {
-        feed_code: this.feedCode,
-      })
-
       tripUpdates = await this.realtimeService.getTripUpdates(uniqueRouteIds)
     } catch (e: any) {
       this.logger.warn(
         `Failed to fetch trip updates; using schedule: ${e.message}\n${e.stack}`,
       )
-
-      this.realtimeFailuresCounter.add(1, {
-        feed_code: this.feedCode,
-      })
     }
 
     const tripStops: TripStop[] = []

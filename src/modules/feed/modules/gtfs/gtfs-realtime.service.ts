@@ -1,9 +1,11 @@
 import { Inject, Injectable, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
+import { Counter } from "@opentelemetry/api"
 import axios from "axios"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms, { StringValue } from "ms"
+import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { FetchConfig, GtfsConfig } from "./config"
@@ -14,15 +16,30 @@ type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate
 
 @Injectable()
 export class GtfsRealtimeService {
+  private readonly feedCode: string
   private readonly config: GtfsConfig
   private readonly logger: Logger
+  private readonly requestsCounter: Counter
+  private readonly failuresCounter: Counter
 
   constructor(
     @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly cache: FeedCacheService,
+    metricService: MetricService,
   ) {
+    this.feedCode = feedCode
     this.logger = new Logger(`${GtfsRealtimeService.name}[${feedCode}]`)
     this.config = config
+
+    this.requestsCounter = metricService.getCounter("gtfs_realtime_requests", {
+      description: "Number of GTFS-RT fetch requests",
+      unit: "requests",
+    })
+
+    this.failuresCounter = metricService.getCounter("gtfs_realtime_failures", {
+      description: "Number of GTFS-RT fetch failures",
+      unit: "failures",
+    })
   }
 
   async getTripUpdates(routeIds?: string[]): Promise<ITripUpdate[]> {
@@ -58,6 +75,10 @@ export class GtfsRealtimeService {
     const responses = await Promise.allSettled(
       fetchConfigs.map((config) =>
         this.cache.cached(`tripUpdates-${config.url}`, async () => {
+          this.requestsCounter.add(1, {
+            feed_code: this.feedCode,
+          })
+
           let maxAge = isNaN(minCacheAge) ? -1 : minCacheAge
 
           const resp = await axios.get(config.url, {
@@ -100,6 +121,9 @@ export class GtfsRealtimeService {
     for (const response of responses) {
       if (response.status === "rejected") {
         this.logger.warn(`Failed to fetch trip updates: ${response.reason}`)
+        this.failuresCounter.add(1, {
+          feed_code: this.feedCode,
+        })
       }
     }
 
