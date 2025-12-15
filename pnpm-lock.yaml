@@ -242,7 +242,7 @@ importers:
         version: 8.32.1(eslint@9.27.0)(typescript@5.8.3)
       '@vitest/coverage-v8':
         specifier: ^3.1.4
-        version: 3.1.4(vitest@3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0))
+        version: 3.1.4(vitest@3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0))
       archiver:
         specifier: ^7.0.1
         version: 7.0.1
@@ -296,10 +296,10 @@ importers:
         version: 1.5.3(@swc/core@1.11.29)(rollup@4.41.1)
       vitest:
         specifier: ^3.1.4
-        version: 3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)
+        version: 3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)
       vitest-mock-extended:
         specifier: ^3.1.0
-        version: 3.1.0(typescript@5.8.3)(vitest@3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0))
+        version: 3.1.0(typescript@5.8.3)(vitest@3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0))
 
 packages:
 
@@ -2280,6 +2280,9 @@ packages:
 
   '@types/d3-voronoi@1.1.12':
     resolution: {integrity: sha512-DauBl25PKZZ0WVJr42a6CNvI6efsdzofl9sajqZr2Gf5Gu733WkDdUGiPkUHXiUvYGzNNlFQde2wdZdfQPG+yw==}
+
+  '@types/debug@4.1.12':
+    resolution: {integrity: sha512-vIChWdVG3LG1SMxEvI/AK+FWJthlrqlTu7fbrlywTkkaONwk/UAGaULXRlf8vkzFBLVm0zkMdCquhL5aOjhXPQ==}
 
   '@types/docker-modem@3.0.6':
     resolution: {integrity: sha512-yKpAGEuKRSS8wwx0joknWxsmLha78wNMe9R2S3UNsVOkZded8UqOrV8KoeDXoXsjndxwyF3eIhyClGbO1SEhEg==}
@@ -8446,6 +8449,11 @@ snapshots:
 
   '@types/d3-voronoi@1.1.12': {}
 
+  '@types/debug@4.1.12':
+    dependencies:
+      '@types/ms': 2.1.0
+    optional: true
+
   '@types/docker-modem@3.0.6':
     dependencies:
       '@types/node': 22.15.21
@@ -8721,7 +8729,7 @@ snapshots:
       '@typescript-eslint/types': 8.32.1
       eslint-visitor-keys: 4.2.0
 
-  '@vitest/coverage-v8@3.1.4(vitest@3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0))':
+  '@vitest/coverage-v8@3.1.4(vitest@3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0))':
     dependencies:
       '@ampproject/remapping': 2.3.0
       '@bcoe/v8-coverage': 1.0.2
@@ -8735,7 +8743,7 @@ snapshots:
       std-env: 3.9.0
       test-exclude: 7.0.1
       tinyrainbow: 2.0.0
-      vitest: 3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)
+      vitest: 3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)
     transitivePeerDependencies:
       - supports-color
 
@@ -11873,13 +11881,13 @@ snapshots:
       terser: 5.39.2
       yaml: 2.8.0
 
-  vitest-mock-extended@3.1.0(typescript@5.8.3)(vitest@3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)):
+  vitest-mock-extended@3.1.0(typescript@5.8.3)(vitest@3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)):
     dependencies:
       ts-essentials: 10.0.4(typescript@5.8.3)
       typescript: 5.8.3
-      vitest: 3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)
+      vitest: 3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0)
 
-  vitest@3.1.4(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0):
+  vitest@3.1.4(@types/debug@4.1.12)(@types/node@22.15.21)(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(terser@5.39.2)(yaml@2.8.0):
     dependencies:
       '@vitest/expect': 3.1.4
       '@vitest/mocker': 3.1.4(msw@2.8.7(@types/node@22.15.21)(typescript@5.8.3))(vite@6.3.5(@types/node@22.15.21)(terser@5.39.2)(yaml@2.8.0))
@@ -11903,6 +11911,7 @@ snapshots:
       vite-node: 3.1.4(@types/node@22.15.21)(terser@5.39.2)(yaml@2.8.0)
       why-is-node-running: 2.3.0
     optionalDependencies:
+      '@types/debug': 4.1.12
       '@types/node': 22.15.21
     transitivePeerDependencies:
       - jiti

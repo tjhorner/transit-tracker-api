@@ -4,7 +4,7 @@ This service is distributed as a Docker image accessible as `ghcr.io/tjhorner/tr
 
 ## Example: Docker Compose
 
-An example Docker Compose file is included at [`docker-compose.example.yml`](./docker-compose.example.yml) for your reference. It includes the API service, a Postgres database to store GTFS data, and a Redis cache. The API is configured to use King County Metro's GTFS and GTFS-rt feeds, but you can [change this](./README.md#feed-configuration).
+An example Docker Compose file is included at [`docker-compose.example.yml`](./docker-compose.example.yml) for your reference. It includes the API service, a Postgres database to store GTFS data, and a Redis cache. The API is configured to use King County Metro's GTFS and GTFS-rt feeds, but you can [change this](../../README.md#feed-configuration).
 
 If you're not using a GTFS feed, you can remove the `postgres` service and the `DATBASE_URL` environment variable.
 

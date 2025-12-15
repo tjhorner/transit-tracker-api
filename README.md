@@ -4,9 +4,9 @@ This is an API that is intended to be used to power a live arrivals or departure
 
 ## Installation
 
-The service is distributed as a Docker image that runs on port 3000 by default. You can learn how to deploy it with the [Docker deployment guide](./deploy-docker.md).
+The service is distributed as a Docker image that runs on port 3000 by default. You can learn how to deploy it with the [Docker deployment guide](./docs/deployment/deploy-docker.md).
 
-To easily deploy a hosted instance of the API, check out the [Fly.io deployment guide](./deploy-fly.md).
+To easily deploy a hosted instance of the API, check out the [Fly.io deployment guide](./docs/deployment/deploy-fly.md).
 
 ### Feed Configuration
 
@@ -21,7 +21,7 @@ Most transit agencies will support GTFS. [Transitland](https://www.transit.land/
 > [!NOTE]  
 > Not all parts of the GTFS specification are supported. For example, [`frequencies.txt`](https://gtfs.org/documentation/schedule/reference/#frequenciestxt) is not supported, so if your transit agency uses it you will see incorrect or missing trips. PRs are welcome to add support for more GTFS features.
 
-You can create a `feeds.yaml` in the working directory, or provide it as a `FEEDS_CONFIG` environment variable. A [JSON Schema](./feed-schema.json) is available and describes each available configuration option in more detail. Here is an example:
+You can create a `feeds.yaml` in the working directory, or provide it as a `FEEDS_CONFIG` environment variable. A [JSON Schema](./schemas/feeds.schema.json) is available and describes each available configuration option in more detail. Here is an example:
 
 ```yaml
 feeds:
@@ -49,6 +49,8 @@ feeds:
         headers:
           Authorization: your_swiftly_api_key
 ```
+
+Due to its increased complexity, additional documentation on configuring GTFS feeds is [available here](./docs/configuration/gtfs.md).
 
 ### GTFS Database Setup
 

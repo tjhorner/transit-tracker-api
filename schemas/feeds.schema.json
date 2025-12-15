@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema",
-  "$id": "https://raw.githubusercontent.com/tjhorner/transit-tracker-api/refs/heads/main/feed-schema.json",
+  "$id": "https://raw.githubusercontent.com/tjhorner/transit-tracker-api/refs/heads/main/schemas/feeds.schema.json",
   "type": "object",
   "title": "Transit Tracker API Feed Configuration",
   "properties": {
