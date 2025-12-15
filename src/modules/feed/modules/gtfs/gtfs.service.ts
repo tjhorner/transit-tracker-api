@@ -1,8 +1,10 @@
 import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
+import { Counter } from "@opentelemetry/api"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
+import { MetricService } from "nestjs-otel"
 import type {
   FeedContext,
   FeedProvider,
@@ -29,8 +31,6 @@ import { listStopsInArea } from "./queries/list-stops-in-area.queries"
 import { listStops } from "./queries/list-stops.queries"
 import { GtfsSyncService } from "./sync/gtfs-sync.service"
 import { getImportMetadata } from "./sync/queries/get-import-metadata.queries"
-import { Counter } from "@opentelemetry/api"
-import { MetricService } from "nestjs-otel"
 
 const TripScheduleRelationship = GtfsRt.TripDescriptor.ScheduleRelationship
 
@@ -53,21 +53,27 @@ export class GtfsService implements FeedProvider {
     private readonly db: GtfsDbService,
     private readonly syncService: GtfsSyncService,
     private readonly realtimeService: GtfsRealtimeService,
-    metricService: MetricService
+    metricService: MetricService,
   ) {
     this.feedCode = feedCode
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
     this.config = GtfsConfigSchema.parse(config)
 
-    this.realtimeRequestsCounter = metricService.getCounter("gtfs_realtime_requests", {
-      description: "Number of GTFS-RT fetch requests",
-      unit: "requests",
-    })
-    
-    this.realtimeFailuresCounter = metricService.getCounter("gtfs_realtime_failures", {
-      description: "Number of GTFS-RT fetch failures",
-      unit: "failures",
-    })
+    this.realtimeRequestsCounter = metricService.getCounter(
+      "gtfs_realtime_requests",
+      {
+        description: "Number of GTFS-RT fetch requests",
+        unit: "requests",
+      },
+    )
+
+    this.realtimeFailuresCounter = metricService.getCounter(
+      "gtfs_realtime_failures",
+      {
+        description: "Number of GTFS-RT fetch failures",
+        unit: "failures",
+      },
+    )
   }
 
   async healthCheck(): Promise<void> {

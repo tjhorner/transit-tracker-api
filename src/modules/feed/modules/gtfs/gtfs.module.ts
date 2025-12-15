@@ -6,12 +6,14 @@ import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsService } from "./gtfs.service"
 import { GtfsSyncService } from "./sync/gtfs-sync.service"
 import { WebResourceService } from "./sync/web-resource.service"
+import { ZipFileService } from "./sync/zip-file.service"
 
 export const PG_POOL = Symbol.for("PG_POOL")
 
 @Module({
   imports: [FeedCacheModule],
   providers: [
+    ZipFileService,
     WebResourceService,
     GtfsService,
     GtfsDbService,

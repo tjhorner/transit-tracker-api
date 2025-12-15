@@ -1,6 +1,5 @@
 import { Inject, Injectable, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
-import axios from "axios"
 import * as csv from "fast-csv"
 import * as fs from "fs"
 import { tmpdir } from "node:os"
@@ -9,7 +8,6 @@ import * as path from "path"
 import { PoolClient } from "pg"
 import { from as copyFrom } from "pg-copy-streams"
 import { rimraf } from "rimraf"
-import * as unzipper from "unzipper"
 import type {
   FeedContext,
   SyncOptions,
@@ -22,6 +20,7 @@ import { getImportMetadataCount } from "./queries/get-import-metadata-count.quer
 import { getImportMetadata } from "./queries/get-import-metadata.queries"
 import { upsertImportMetadata } from "./queries/upsert-import-metadata.queries"
 import { WebResourceMetadata, WebResourceService } from "./web-resource.service"
+import { ZipFileService } from "./zip-file.service"
 
 @Injectable()
 export class GtfsSyncService {
@@ -32,6 +31,7 @@ export class GtfsSyncService {
   constructor(
     @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly webResourceService: WebResourceService,
+    private readonly zipFileService: ZipFileService,
     private readonly db: GtfsDbService,
   ) {
     this.logger = new Logger(`${GtfsSyncService.name}[${feedCode}]`)
@@ -142,31 +142,10 @@ export class GtfsSyncService {
 
       this.logger.log(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
 
-      await axios({
-        url,
-        method: "get",
-        responseType: "stream",
-        responseEncoding: "binary",
-        headers: this.config.static.headers,
-      }).then((response) => {
-        const extractor = unzipper.Extract({ path: zipDirectory })
-        return new Promise<typeof response>((resolve, reject) => {
-          response.data.pipe(extractor)
-
-          let error: any = null
-          extractor.on("error", (err) => {
-            error = err
-            extractor.end()
-            reject(err)
-          })
-
-          extractor.on("close", () => {
-            if (!error) {
-              resolve(response)
-            }
-          })
-        })
-      })
+      await this.zipFileService.downloadAndExtract(
+        this.config.static,
+        zipDirectory,
+      )
 
       await this.createPartitions()
 
