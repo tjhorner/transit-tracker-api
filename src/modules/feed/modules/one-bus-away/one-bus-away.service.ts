@@ -364,12 +364,22 @@ export class OneBusAwayService implements FeedProvider {
     stopId: string,
   ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null> {
     return this.cache.cached(`arrivalsAndDepartures-${stopId}`, async () => {
-      let resp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
+      let resp!: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
       try {
-        resp = (await this.obaSdk.arrivalAndDeparture.list(stopId, {
-          minutesBefore: 0,
-          minutesAfter: 120,
-        })) as OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
+        // OneBusAway will sometimes intermittently return `null` for
+        // arrivalAndDeparture, so we try a few times before giving up
+        for (let nullRetries = 0; nullRetries < 3; nullRetries++) {
+          resp = (await this.obaSdk.arrivalAndDeparture.list(stopId, {
+            minutesBefore: 0,
+            minutesAfter: 120,
+          })) as OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
+
+          if (resp !== null) {
+            break
+          }
+
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
       } catch (e: any) {
         if (e?.error?.code === 404) {
           this.logger.warn(
@@ -383,8 +393,10 @@ export class OneBusAwayService implements FeedProvider {
 
       let ttl = ms("30s")
       if (resp === null) {
-        // doesn't support this stop, I guess? undocumented behavior
-        ttl = ms("1h")
+        ttl = ms("10s")
+        this.logger.warn(
+          `getArrivalsAndDeparturesForStop: Received null response for stop ${stopId}`,
+        )
       } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
         // no arrivals for the next two hours so we can cache for longer
         ttl = ms("2h")

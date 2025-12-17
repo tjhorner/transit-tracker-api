@@ -66,7 +66,7 @@ export class FeedCacheService {
     const getValue = async () => {
       const cacheKey = `${this.feedCode}-${key}`
       const cached = await this.cacheManager.get<T>(cacheKey)
-      if (cached) {
+      if (cached !== undefined) {
         span?.setAttribute("cache.hit", true)
         this.cacheHitsMetric?.add(1, {
           feed_code: this.feedCode,
