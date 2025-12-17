@@ -1,0 +1,2091 @@
+{
+  "entry": {
+    "polylines": [],
+    "routeId": "1_102752",
+    "stopGroupings": [
+      {
+        "ordered": true,
+        "stopGroups": [
+          {
+            "id": "1",
+            "name": {
+              "name": "Downtown Redmond Station Overlake Village Station",
+              "names": [
+                "Downtown Redmond Station Overlake Village Station"
+              ],
+              "type": "destination"
+            },
+            "polylines": [],
+            "stopIds": [
+              "1_67014",
+              "1_65305",
+              "1_72880",
+              "1_68582",
+              "1_72984",
+              "1_68590",
+              "1_68613",
+              "1_68610",
+              "1_68620",
+              "1_68630",
+              "1_68640",
+              "1_68650",
+              "1_68670",
+              "1_68680",
+              "1_68690",
+              "1_68700",
+              "1_68710",
+              "1_68720",
+              "1_67470",
+              "1_84940",
+              "1_84970",
+              "1_74482",
+              "1_71371",
+              "1_71326",
+              "1_71323",
+              "1_66875",
+              "1_68394",
+              "1_73340",
+              "1_73342",
+              "1_73366",
+              "1_73350",
+              "1_73352",
+              "1_73368",
+              "1_73380",
+              "1_72420",
+              "1_72435",
+              "1_72442",
+              "1_72444",
+              "1_72446",
+              "1_73430",
+              "1_72452",
+              "1_71960",
+              "1_73638",
+              "1_72478"
+            ],
+            "subGroups": []
+          },
+          {
+            "id": "0",
+            "name": {
+              "name": "Eastgate P&R Lake Hills",
+              "names": [
+                "Eastgate P&R Lake Hills"
+              ],
+              "type": "destination"
+            },
+            "polylines": [],
+            "stopIds": [
+              "1_72476",
+              "1_73637",
+              "1_71961",
+              "1_71970",
+              "1_71971",
+              "1_71981",
+              "1_71985",
+              "1_71990",
+              "1_72005",
+              "1_73130",
+              "1_73152",
+              "1_73351",
+              "1_73240",
+              "1_73243",
+              "1_73246",
+              "1_73248",
+              "1_73250",
+              "1_68409",
+              "1_66874",
+              "1_71331",
+              "1_84810",
+              "1_84820",
+              "1_84830",
+              "1_68180",
+              "1_68440",
+              "1_68460",
+              "1_68470",
+              "1_68480",
+              "1_68490",
+              "1_68502",
+              "1_68510",
+              "1_68530",
+              "1_68540",
+              "1_68550",
+              "1_68560",
+              "1_68612",
+              "1_68570",
+              "1_72983",
+              "1_68584",
+              "1_73080",
+              "1_65325",
+              "1_67015"
+            ],
+            "subGroups": []
+          }
+        ],
+        "type": "direction"
+      }
+    ],
+    "stopIds": [
+      "1_65305",
+      "1_65325",
+      "1_66874",
+      "1_66875",
+      "1_67014",
+      "1_67015",
+      "1_67470",
+      "1_68180",
+      "1_68394",
+      "1_68409",
+      "1_68440",
+      "1_68460",
+      "1_68470",
+      "1_68480",
+      "1_68490",
+      "1_68502",
+      "1_68510",
+      "1_68530",
+      "1_68540",
+      "1_68550",
+      "1_68560",
+      "1_68570",
+      "1_68582",
+      "1_68584",
+      "1_68590",
+      "1_68610",
+      "1_68612",
+      "1_68613",
+      "1_68620",
+      "1_68630",
+      "1_68640",
+      "1_68650",
+      "1_68670",
+      "1_68680",
+      "1_68690",
+      "1_68700",
+      "1_68710",
+      "1_68720",
+      "1_71323",
+      "1_71326",
+      "1_71331",
+      "1_71371",
+      "1_71960",
+      "1_71961",
+      "1_71970",
+      "1_71971",
+      "1_71981",
+      "1_71985",
+      "1_71990",
+      "1_72005",
+      "1_72420",
+      "1_72435",
+      "1_72442",
+      "1_72444",
+      "1_72446",
+      "1_72452",
+      "1_72476",
+      "1_72478",
+      "1_72880",
+      "1_72983",
+      "1_72984",
+      "1_73080",
+      "1_73130",
+      "1_73152",
+      "1_73240",
+      "1_73243",
+      "1_73246",
+      "1_73248",
+      "1_73250",
+      "1_73340",
+      "1_73342",
+      "1_73350",
+      "1_73351",
+      "1_73352",
+      "1_73366",
+      "1_73368",
+      "1_73380",
+      "1_73430",
+      "1_73637",
+      "1_73638",
+      "1_74482",
+      "1_84810",
+      "1_84820",
+      "1_84830",
+      "1_84940",
+      "1_84970"
+    ]
+  },
+  "references": {
+    "agencies": [
+      {
+        "disclaimer": "",
+        "email": "",
+        "fareUrl": "https://kingcounty.gov/en/dept/metro/fares-and-payment/prices",
+        "id": "1",
+        "lang": "EN",
+        "name": "Metro Transit",
+        "phone": "206-553-3000",
+        "privateService": false,
+        "timezone": "America/Los_Angeles",
+        "url": "https://kingcounty.gov/en/dept/metro"
+      },
+      {
+        "disclaimer": "",
+        "email": "main@soundtransit.org",
+        "fareUrl": "https://www.soundtransit.org/ride-with-us/how-to-pay/fares",
+        "id": "40",
+        "lang": "en",
+        "name": "Sound Transit",
+        "phone": "1-888-889-6368",
+        "privateService": false,
+        "timezone": "America/Los_Angeles",
+        "url": "https://www.soundtransit.org"
+      }
+    ],
+    "routes": [
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Eastgate P&R - Downtown Redmond Station",
+        "id": "1_102752",
+        "longName": "",
+        "nullSafeShortName": "223",
+        "shortName": "223",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/223.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "South Bellevue - Eastgate P&R - Bellevue TC",
+        "id": "1_102552",
+        "longName": "",
+        "nullSafeShortName": "226",
+        "shortName": "226",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/226.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Kirkland Transit Center - Eastgate P&R",
+        "id": "1_100136",
+        "longName": "",
+        "nullSafeShortName": "245",
+        "shortName": "245",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/245.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Issaquah - University District",
+        "id": "1_100162",
+        "longName": "",
+        "nullSafeShortName": "271",
+        "shortName": "271",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/271.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Redmond Technology - Education Hill - Cottage Lake",
+        "id": "1_102753",
+        "longName": "",
+        "nullSafeShortName": "222",
+        "shortName": "222",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/222.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Eastgate P&R - Downtown Seattle",
+        "id": "1_100104",
+        "longName": "",
+        "nullSafeShortName": "212",
+        "shortName": "212",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/212.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Bellevue TC-South Bellevue-Eastgate-Renton TC",
+        "id": "1_100133",
+        "longName": "",
+        "nullSafeShortName": "240",
+        "shortName": "240",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/240.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Eastgate - Lakeside School",
+        "id": "1_100347",
+        "longName": "",
+        "nullSafeShortName": "989",
+        "shortName": "989",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/989.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "9C182F",
+        "description": "Redmond TC - Overlake TC - Bellevue TC",
+        "id": "1_102548",
+        "longName": "B-Line Rapid Ride",
+        "nullSafeShortName": "B Line",
+        "shortName": "B Line",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/b-line.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "",
+        "description": "Duvall - Redmond Transit Center",
+        "id": "1_102653",
+        "longName": "",
+        "nullSafeShortName": "224",
+        "shortName": "224",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/224.html"
+      },
+      {
+        "agencyId": "40",
+        "color": "2B376E",
+        "description": "Redmond - University District",
+        "id": "40_100511",
+        "longName": "Redmond - University District",
+        "nullSafeShortName": "542",
+        "shortName": "542",
+        "textColor": "",
+        "type": 3,
+        "url": "https://www.soundtransit.org/542"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Avondale -  Redmond TC - Kirkland TC - Bellevue TC",
+        "id": "1_102704",
+        "longName": "",
+        "nullSafeShortName": "250",
+        "shortName": "250",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/250.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "",
+        "description": "Kingsgate P&R - Redmond Town Center",
+        "id": "1_100496",
+        "longName": "",
+        "nullSafeShortName": "930",
+        "shortName": "930",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/930.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Kenmore - Totem Lake TC - Overlake",
+        "id": "1_102701",
+        "longName": "",
+        "nullSafeShortName": "225",
+        "shortName": "225",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/225.html"
+      }
+    ],
+    "situations": [],
+    "stopTimes": [],
+    "stops": [
+      {
+        "code": "65305",
+        "direction": "E",
+        "id": "1_65305",
+        "lat": 47.579643,
+        "locationType": 0,
+        "lon": -122.145233,
+        "name": "SE Eastgate Way & 146th Pl SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "65325",
+        "direction": "W",
+        "id": "1_65325",
+        "lat": 47.579815,
+        "locationType": 0,
+        "lon": -122.146027,
+        "name": "SE Eastgate Way & 146th Pl SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "66874",
+        "direction": "SW",
+        "id": "1_66874",
+        "lat": 47.637997,
+        "locationType": 0,
+        "lon": -122.136368,
+        "name": "152nd Ave NE & NE 36th St",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "66875",
+        "direction": "NE",
+        "id": "1_66875",
+        "lat": 47.637997,
+        "locationType": 0,
+        "lon": -122.136108,
+        "name": "152nd Ave NE & NE 31st St",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "67014",
+        "direction": "W",
+        "id": "1_67014",
+        "lat": 47.580509,
+        "locationType": 0,
+        "lon": -122.152657,
+        "name": "Eastgate Park & Ride - Bay 1",
+        "parent": "",
+        "routeIds": [
+          "1_100104",
+          "1_102752",
+          "1_102552",
+          "1_100133",
+          "1_100136",
+          "1_100162",
+          "1_100347"
+        ],
+        "staticRouteIds": [
+          "1_100104",
+          "1_102752",
+          "1_102552",
+          "1_100133",
+          "1_100136",
+          "1_100162",
+          "1_100347"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "67015",
+        "direction": "W",
+        "id": "1_67015",
+        "lat": 47.580505,
+        "locationType": 0,
+        "lon": -122.152008,
+        "name": "Eastgate Park & Ride Acs & 140th Ave SE - Bay 2",
+        "parent": "",
+        "routeIds": [
+          "1_100104",
+          "1_102752",
+          "1_102552",
+          "1_100133",
+          "1_100136",
+          "1_100162",
+          "1_100347"
+        ],
+        "staticRouteIds": [
+          "1_100104",
+          "1_102752",
+          "1_102552",
+          "1_100133",
+          "1_100136",
+          "1_100162",
+          "1_100347"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "67470",
+        "direction": "W",
+        "id": "1_67470",
+        "lat": 47.617069,
+        "locationType": 0,
+        "lon": -122.132889,
+        "name": "NE 8th St & 156th Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68180",
+        "direction": "E",
+        "id": "1_68180",
+        "lat": 47.61697,
+        "locationType": 0,
+        "lon": -122.142014,
+        "name": "NE 8th St & 148th Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68394",
+        "direction": "W",
+        "id": "1_68394",
+        "lat": 47.640976,
+        "locationType": 0,
+        "lon": -122.138542,
+        "name": "NE 36th St & 150th Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68409",
+        "direction": "E",
+        "id": "1_68409",
+        "lat": 47.641037,
+        "locationType": 0,
+        "lon": -122.139702,
+        "name": "NE 36th St & 150th Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68440",
+        "direction": "S",
+        "id": "1_68440",
+        "lat": 47.616589,
+        "locationType": 0,
+        "lon": -122.132515,
+        "name": "156th Ave NE & NE 8th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68460",
+        "direction": "S",
+        "id": "1_68460",
+        "lat": 47.613407,
+        "locationType": 0,
+        "lon": -122.132446,
+        "name": "156th Ave NE & NE 4th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68470",
+        "direction": "S",
+        "id": "1_68470",
+        "lat": 47.611431,
+        "locationType": 0,
+        "lon": -122.132393,
+        "name": "156th Ave NE & NE 1st St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68480",
+        "direction": "S",
+        "id": "1_68480",
+        "lat": 47.609497,
+        "locationType": 0,
+        "lon": -122.132339,
+        "name": "156th Ave SE & Main St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68490",
+        "direction": "S",
+        "id": "1_68490",
+        "lat": 47.60741,
+        "locationType": 0,
+        "lon": -122.132286,
+        "name": "156th Ave SE & SE 4th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68502",
+        "direction": "SE",
+        "id": "1_68502",
+        "lat": 47.60347,
+        "locationType": 0,
+        "lon": -122.130936,
+        "name": "156th Ave SE & Lake Hills Blvd",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68510",
+        "direction": "W",
+        "id": "1_68510",
+        "lat": 47.602902,
+        "locationType": 0,
+        "lon": -122.136032,
+        "name": "Lake Hills Blvd & 154th Ave SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68530",
+        "direction": "SW",
+        "id": "1_68530",
+        "lat": 47.600281,
+        "locationType": 0,
+        "lon": -122.140549,
+        "name": "Lake Hills Blvd & SE 12th Pl",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68540",
+        "direction": "S",
+        "id": "1_68540",
+        "lat": 47.598171,
+        "locationType": 0,
+        "lon": -122.142807,
+        "name": "148th Ave SE & Lake Hills Blvd",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68550",
+        "direction": "S",
+        "id": "1_68550",
+        "lat": 47.595932,
+        "locationType": 0,
+        "lon": -122.142845,
+        "name": "148th Ave SE & SE 16th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68560",
+        "direction": "S",
+        "id": "1_68560",
+        "lat": 47.591755,
+        "locationType": 0,
+        "lon": -122.142899,
+        "name": "148th Ave SE & SE 22nd St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68570",
+        "direction": "S",
+        "id": "1_68570",
+        "lat": 47.588543,
+        "locationType": 0,
+        "lon": -122.142899,
+        "name": "148th Ave SE & SE 24th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68582",
+        "direction": "W",
+        "id": "1_68582",
+        "lat": 47.585449,
+        "locationType": 0,
+        "lon": -122.14373,
+        "name": "Landerholm Cir SE & 148th Ave SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68584",
+        "direction": "S",
+        "id": "1_68584",
+        "lat": 47.585636,
+        "locationType": 0,
+        "lon": -122.142845,
+        "name": "148th Ave SE & SE 28th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68590",
+        "direction": "N",
+        "id": "1_68590",
+        "lat": 47.585995,
+        "locationType": 0,
+        "lon": -122.142639,
+        "name": "148th Ave SE & SE 28th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68610",
+        "direction": "N",
+        "id": "1_68610",
+        "lat": 47.589333,
+        "locationType": 0,
+        "lon": -122.142517,
+        "name": "148th Ave SE & SE 24th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68612",
+        "direction": "W",
+        "id": "1_68612",
+        "lat": 47.589096,
+        "locationType": 0,
+        "lon": -122.143555,
+        "name": "SE 24th St & 148th Ave SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68613",
+        "direction": "E",
+        "id": "1_68613",
+        "lat": 47.588963,
+        "locationType": 0,
+        "lon": -122.144073,
+        "name": "SE 24th St & 145th Pl SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68620",
+        "direction": "N",
+        "id": "1_68620",
+        "lat": 47.591808,
+        "locationType": 0,
+        "lon": -122.142532,
+        "name": "148th Ave SE & SE 22nd St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68630",
+        "direction": "N",
+        "id": "1_68630",
+        "lat": 47.59697,
+        "locationType": 0,
+        "lon": -122.142479,
+        "name": "148th Ave SE & SE 16th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68640",
+        "direction": "NE",
+        "id": "1_68640",
+        "lat": 47.598782,
+        "locationType": 0,
+        "lon": -122.142029,
+        "name": "Lake Hills Blvd & 148th Ave SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68650",
+        "direction": "NE",
+        "id": "1_68650",
+        "lat": 47.600445,
+        "locationType": 0,
+        "lon": -122.140152,
+        "name": "Lake Hills Blvd & SE 12th Pl",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68670",
+        "direction": "E",
+        "id": "1_68670",
+        "lat": 47.602871,
+        "locationType": 0,
+        "lon": -122.135582,
+        "name": "Lake Hills Blvd & 154th Ave SE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68680",
+        "direction": "NW",
+        "id": "1_68680",
+        "lat": 47.603859,
+        "locationType": 0,
+        "lon": -122.130951,
+        "name": "156th Ave SE & Lake Hills Blvd",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68690",
+        "direction": "N",
+        "id": "1_68690",
+        "lat": 47.60722,
+        "locationType": 0,
+        "lon": -122.13208,
+        "name": "156th Ave SE & SE 4th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68700",
+        "direction": "N",
+        "id": "1_68700",
+        "lat": 47.610065,
+        "locationType": 0,
+        "lon": -122.132149,
+        "name": "156th Ave NE & Main St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68710",
+        "direction": "N",
+        "id": "1_68710",
+        "lat": 47.611218,
+        "locationType": 0,
+        "lon": -122.132179,
+        "name": "156th Ave NE & NE 1st St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "68720",
+        "direction": "N",
+        "id": "1_68720",
+        "lat": 47.613628,
+        "locationType": 0,
+        "lon": -122.132248,
+        "name": "156th Ave NE & NE 4th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "NOT_ACCESSIBLE"
+      },
+      {
+        "code": "71323",
+        "direction": "N",
+        "id": "1_71323",
+        "lat": 47.635563,
+        "locationType": 0,
+        "lon": -122.137589,
+        "name": "152nd Ave NE & NE Shen St",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71326",
+        "direction": "N",
+        "id": "1_71326",
+        "lat": 47.633709,
+        "locationType": 0,
+        "lon": -122.137604,
+        "name": "152nd Ave NE & Overlake Park&Ride",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71331",
+        "direction": "S",
+        "id": "1_71331",
+        "lat": 47.632961,
+        "locationType": 0,
+        "lon": -122.137802,
+        "name": "Overlake Park & Ride",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71371",
+        "direction": "E",
+        "id": "1_71371",
+        "lat": 47.631451,
+        "locationType": 0,
+        "lon": -122.140274,
+        "name": "NE 24th St & 151st Pl NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71960",
+        "direction": "S",
+        "id": "1_71960",
+        "lat": 47.676891,
+        "locationType": 0,
+        "lon": -122.124428,
+        "name": "Redmond Transit Center - Bay 5",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102653",
+          "40_100511"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102653",
+          "40_100511"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71961",
+        "direction": "W",
+        "id": "1_71961",
+        "lat": 47.676731,
+        "locationType": 0,
+        "lon": -122.12513,
+        "name": "Redmond Transit Center - Bay 4",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102704",
+          "1_100496",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102704",
+          "1_100496",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71970",
+        "direction": "W",
+        "id": "1_71970",
+        "lat": 47.674839,
+        "locationType": 0,
+        "lon": -122.127953,
+        "name": "NE Redmond Way & 160th Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71971",
+        "direction": "W",
+        "id": "1_71971",
+        "lat": 47.674011,
+        "locationType": 0,
+        "lon": -122.13089,
+        "name": "NE Redmond Way & Bear Creek Pkwy",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71981",
+        "direction": "S",
+        "id": "1_71981",
+        "lat": 47.671761,
+        "locationType": 0,
+        "lon": -122.133621,
+        "name": "NE Old Redmond Rd & West Lake Sammamish Way NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71985",
+        "direction": "S",
+        "id": "1_71985",
+        "lat": 47.667835,
+        "locationType": 0,
+        "lon": -122.133598,
+        "name": "NE Old Redmond Rd & NE 70th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "71990",
+        "direction": "NW",
+        "id": "1_71990",
+        "lat": 47.667137,
+        "locationType": 0,
+        "lon": -122.136002,
+        "name": "NE Old Redmond Rd & NE 68th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72005",
+        "direction": "W",
+        "id": "1_72005",
+        "lat": 47.667881,
+        "locationType": 0,
+        "lon": -122.138908,
+        "name": "NE Old Redmond Rd & 151st Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72420",
+        "direction": "E",
+        "id": "1_72420",
+        "lat": 47.667793,
+        "locationType": 0,
+        "lon": -122.141876,
+        "name": "NE Old Redmond Rd & 148th Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72435",
+        "direction": "E",
+        "id": "1_72435",
+        "lat": 47.667747,
+        "locationType": 0,
+        "lon": -122.138908,
+        "name": "NE Old Redmond Rd & 151st Ave NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72442",
+        "direction": "SE",
+        "id": "1_72442",
+        "lat": 47.666439,
+        "locationType": 0,
+        "lon": -122.135521,
+        "name": "NE Old Redmond Rd & NE 68th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72444",
+        "direction": "N",
+        "id": "1_72444",
+        "lat": 47.668327,
+        "locationType": 0,
+        "lon": -122.133308,
+        "name": "NE Old Redmond Rd & NE 70th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72446",
+        "direction": "N",
+        "id": "1_72446",
+        "lat": 47.671257,
+        "locationType": 0,
+        "lon": -122.13324,
+        "name": "NE Old Redmond Rd & West Lake Sammamish Way NE",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72452",
+        "direction": "E",
+        "id": "1_72452",
+        "lat": 47.674252,
+        "locationType": 0,
+        "lon": -122.129646,
+        "name": "NE Redmond Way & Bear Creek Pkwy",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72476",
+        "direction": "W",
+        "id": "1_72476",
+        "lat": 47.672241,
+        "locationType": 0,
+        "lon": -122.121292,
+        "name": "NE 76th St & 164th Ave NE - Bay 1",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72478",
+        "direction": "E",
+        "id": "1_72478",
+        "lat": 47.672092,
+        "locationType": 0,
+        "lon": -122.119255,
+        "name": "Downtown Redmond Station - Bay 3",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72880",
+        "direction": "NW",
+        "id": "1_72880",
+        "lat": 47.581276,
+        "locationType": 0,
+        "lon": -122.141586,
+        "name": "150th Ave SE & SE Eastgate Way",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72983",
+        "direction": "S",
+        "id": "1_72983",
+        "lat": 47.585758,
+        "locationType": 0,
+        "lon": -122.148361,
+        "name": "Kelsey Creek Rd & Tye River Rd",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "72984",
+        "direction": "N",
+        "id": "1_72984",
+        "lat": 47.585644,
+        "locationType": 0,
+        "lon": -122.148186,
+        "name": "Kelsey Creek Rd & Tye River Rd",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73080",
+        "direction": "SE",
+        "id": "1_73080",
+        "lat": 47.581112,
+        "locationType": 0,
+        "lon": -122.14193,
+        "name": "150th Ave SE & SE Eastgate Way",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102552",
+          "1_100136",
+          "1_100162"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73130",
+        "direction": "S",
+        "id": "1_73130",
+        "lat": 47.667126,
+        "locationType": 0,
+        "lon": -122.143295,
+        "name": "148th Ave NE & NE Old Redmond Rd",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73152",
+        "direction": "S",
+        "id": "1_73152",
+        "lat": 47.66193,
+        "locationType": 0,
+        "lon": -122.143417,
+        "name": "148th Ave NE & NE 61st St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73240",
+        "direction": "S",
+        "id": "1_73240",
+        "lat": 47.654659,
+        "locationType": 0,
+        "lon": -122.143463,
+        "name": "148th Ave NE & NE 51st St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73243",
+        "direction": "S",
+        "id": "1_73243",
+        "lat": 47.651901,
+        "locationType": 0,
+        "lon": -122.143433,
+        "name": "148th Ave NE & NE 46th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73246",
+        "direction": "S",
+        "id": "1_73246",
+        "lat": 47.648048,
+        "locationType": 0,
+        "lon": -122.143242,
+        "name": "148th Ave NE & NE 43rd Pl",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73248",
+        "direction": "S",
+        "id": "1_73248",
+        "lat": 47.645367,
+        "locationType": 0,
+        "lon": -122.143143,
+        "name": "148th Ave NE & NE 40th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73250",
+        "direction": "S",
+        "id": "1_73250",
+        "lat": 47.644085,
+        "locationType": 0,
+        "lon": -122.143158,
+        "name": "148th Ave NE & NE 37th Pl",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73340",
+        "direction": "N",
+        "id": "1_73340",
+        "lat": 47.643753,
+        "locationType": 0,
+        "lon": -122.142776,
+        "name": "148th Ave NE & NE 37th Pl",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73342",
+        "direction": "N",
+        "id": "1_73342",
+        "lat": 47.646919,
+        "locationType": 0,
+        "lon": -122.142815,
+        "name": "148th Ave NE & NE 40th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73350",
+        "direction": "N",
+        "id": "1_73350",
+        "lat": 47.655735,
+        "locationType": 0,
+        "lon": -122.143089,
+        "name": "148th Ave NE & NE 51st St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73351",
+        "direction": "S",
+        "id": "1_73351",
+        "lat": 47.658283,
+        "locationType": 0,
+        "lon": -122.143448,
+        "name": "148th Ave NE & NE 55th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73352",
+        "direction": "N",
+        "id": "1_73352",
+        "lat": 47.658211,
+        "locationType": 0,
+        "lon": -122.143089,
+        "name": "148th Ave NE & NE 55th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73366",
+        "direction": "N",
+        "id": "1_73366",
+        "lat": 47.652576,
+        "locationType": 0,
+        "lon": -122.143089,
+        "name": "148th Ave NE & NE 46th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_102548"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73368",
+        "direction": "N",
+        "id": "1_73368",
+        "lat": 47.662441,
+        "locationType": 0,
+        "lon": -122.143036,
+        "name": "148th Ave NE & NE 61st Way",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73380",
+        "direction": "N",
+        "id": "1_73380",
+        "lat": 47.665489,
+        "locationType": 0,
+        "lon": -122.142967,
+        "name": "148th Ave NE & NE 66th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102701",
+          "1_100136"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73430",
+        "direction": "E",
+        "id": "1_73430",
+        "lat": 47.67347,
+        "locationType": 0,
+        "lon": -122.132645,
+        "name": "NE Redmond Way & West Lake Sammamish Pkwy NE",
+        "parent": "",
+        "routeIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "staticRouteIds": [
+          "1_102753",
+          "1_102752",
+          "1_102704"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73637",
+        "direction": "N",
+        "id": "1_73637",
+        "lat": 47.67461,
+        "locationType": 0,
+        "lon": -122.121521,
+        "name": "164th Ave NE & NE 80th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102653",
+          "1_102704"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102653",
+          "1_102704"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "73638",
+        "direction": "S",
+        "id": "1_73638",
+        "lat": 47.676395,
+        "locationType": 0,
+        "lon": -122.121712,
+        "name": "164th Ave NE & NE 83rd St",
+        "parent": "",
+        "routeIds": [
+          "1_102752",
+          "1_102653",
+          "1_102704",
+          "1_100496"
+        ],
+        "staticRouteIds": [
+          "1_102752",
+          "1_102653",
+          "1_102704",
+          "1_100496"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "74482",
+        "direction": "N",
+        "id": "1_74482",
+        "lat": 47.628346,
+        "locationType": 0,
+        "lon": -122.142982,
+        "name": "148th Ave NE & NE 20th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "84810",
+        "direction": "S",
+        "id": "1_84810",
+        "lat": 47.630783,
+        "locationType": 0,
+        "lon": -122.143143,
+        "name": "148th Ave NE & NE 24th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "84820",
+        "direction": "S",
+        "id": "1_84820",
+        "lat": 47.628098,
+        "locationType": 0,
+        "lon": -122.143188,
+        "name": "148th Ave NE & NE 20th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "84830",
+        "direction": "S",
+        "id": "1_84830",
+        "lat": 47.624535,
+        "locationType": 0,
+        "lon": -122.143326,
+        "name": "148th Ave NE & NE 16th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "84940",
+        "direction": "N",
+        "id": "1_84940",
+        "lat": 47.617748,
+        "locationType": 0,
+        "lon": -122.142967,
+        "name": "148th Ave NE & NE 8th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      },
+      {
+        "code": "84970",
+        "direction": "N",
+        "id": "1_84970",
+        "lat": 47.623272,
+        "locationType": 0,
+        "lon": -122.142982,
+        "name": "148th Ave NE & NE 15th St",
+        "parent": "",
+        "routeIds": [
+          "1_102752"
+        ],
+        "staticRouteIds": [
+          "1_102752"
+        ],
+        "wheelchairBoarding": "ACCESSIBLE"
+      }
+    ],
+    "trips": []
+  }
+}

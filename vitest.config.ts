@@ -20,13 +20,6 @@ export default defineConfig({
       {
         extends: true,
         test: {
-          name: "integration",
-          include: ["test/integration/**/*.spec.ts"],
-        }
-      },
-      {
-        extends: true,
-        test: {
           name: "e2e",
           include: ["test/e2e/**/*.spec.ts"],
         }

@@ -1,0 +1,81 @@
+{
+  "entry": {
+    "code": "71971",
+    "direction": "W",
+    "id": "1_71971",
+    "lat": 47.674011,
+    "locationType": 0,
+    "lon": -122.13089,
+    "name": "NE Redmond Way & Bear Creek Pkwy",
+    "parent": "",
+    "routeIds": [
+      "1_102753",
+      "1_102752",
+      "1_102704"
+    ],
+    "staticRouteIds": [
+      "1_102753",
+      "1_102752",
+      "1_102704"
+    ],
+    "wheelchairBoarding": "ACCESSIBLE"
+  },
+  "references": {
+    "agencies": [
+      {
+        "disclaimer": "",
+        "email": "",
+        "fareUrl": "https://kingcounty.gov/en/dept/metro/fares-and-payment/prices",
+        "id": "1",
+        "lang": "EN",
+        "name": "Metro Transit",
+        "phone": "206-553-3000",
+        "privateService": false,
+        "timezone": "America/Los_Angeles",
+        "url": "https://kingcounty.gov/en/dept/metro"
+      }
+    ],
+    "routes": [
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Redmond Technology - Education Hill - Cottage Lake",
+        "id": "1_102753",
+        "longName": "",
+        "nullSafeShortName": "222",
+        "shortName": "222",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/222.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Eastgate P&R - Downtown Redmond Station",
+        "id": "1_102752",
+        "longName": "",
+        "nullSafeShortName": "223",
+        "shortName": "223",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/223.html"
+      },
+      {
+        "agencyId": "1",
+        "color": "FDB71A",
+        "description": "Avondale -  Redmond TC - Kirkland TC - Bellevue TC",
+        "id": "1_102704",
+        "longName": "",
+        "nullSafeShortName": "250",
+        "shortName": "250",
+        "textColor": "",
+        "type": 3,
+        "url": "https://kingcounty.gov/en/dept/metro/routes-and-service/schedules-and-maps/250.html"
+      }
+    ],
+    "situations": [],
+    "stopTimes": [],
+    "stops": [],
+    "trips": []
+  }
+}
