@@ -57,7 +57,7 @@ export class OneBusAwayService implements FeedProvider {
   constructor(
     @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
     private readonly cache: FeedCacheService,
-    private readonly obaSdk: OnebusawaySDK,
+    private readonly obaSdk: OnebusawaySDK
   ) {
     this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
     this.config = config
@@ -158,7 +158,7 @@ export class OneBusAwayService implements FeedProvider {
         try {
           stop = await this.obaSdk.stop.retrieve(stopId)
         } catch (e: any) {
-          if (e.code === 404) {
+          if (e.status === 404) {
             throw new NotFoundException(`Stop ${stopId} not found`)
           }
 
@@ -253,7 +253,7 @@ export class OneBusAwayService implements FeedProvider {
         try {
           stop = await this.obaSdk.stop.retrieve(stopId)
         } catch (e: any) {
-          if (e.code === 404) {
+          if (e.status === 404) {
             throw new NotFoundException(`Stop ${stopId} not found`)
           }
 
@@ -293,7 +293,7 @@ export class OneBusAwayService implements FeedProvider {
           await new Promise((resolve) => setTimeout(resolve, 1000))
         }
       } catch (e: any) {
-        if (e?.error?.code === 404) {
+        if (e.status === 404) {
           this.logger.warn(
             `getArrivalsAndDeparturesForStop: Requested stop ${stopId} not found`,
           )

@@ -1,4 +1,5 @@
-import OnebusawaySDK from "onebusaway-sdk"
+import { InternalServerErrorException, NotFoundException } from "@nestjs/common"
+import OnebusawaySDK, { APIError } from "onebusaway-sdk"
 import { AgenciesWithCoverageListResponse } from "onebusaway-sdk/resources/agencies-with-coverage.mjs"
 import { ArrivalAndDepartureListResponse } from "onebusaway-sdk/resources/arrival-and-departure.mjs"
 import {
@@ -89,73 +90,150 @@ describe("OneBusAwayService", () => {
     expect(bbox).toEqual(expectedBBox)
   })
 
-  it("gets the routes and headsigns for a stop", async () => {
-    // Arrange
-    const stopId = "1_71971"
+  describe("getRoutesForStop", () => {
+    it("gets the routes and headsigns for a stop", async () => {
+      // Arrange
+      const stopId = "1_71971"
 
-    mockObaSdk.stop.retrieve.mockResolvedValueOnce(
-      mockObaResponse(fixture_stop_1_71971),
-    )
+      mockObaSdk.stop.retrieve.mockResolvedValueOnce(
+        mockObaResponse(fixture_stop_1_71971),
+      )
 
-    mockObaSdk.stopsForRoute.list.mockImplementation((routeId): any => {
-      let resp: any
-      if (routeId === "1_102704") {
-        resp = mockObaResponse(fixture_stops_for_route_1_102704)
-      } else if (routeId === "1_102752") {
-        resp = mockObaResponse(fixture_stops_for_route_1_102752)
-      } else if (routeId === "1_102753") {
-        resp = mockObaResponse(fixture_stops_for_route_1_102753)
-      } else {
-        return Promise.reject(new Error("Route not found"))
-      }
+      mockObaSdk.stopsForRoute.list.mockImplementation((routeId): any => {
+        let resp: any
+        if (routeId === "1_102704") {
+          resp = mockObaResponse(fixture_stops_for_route_1_102704)
+        } else if (routeId === "1_102752") {
+          resp = mockObaResponse(fixture_stops_for_route_1_102752)
+        } else if (routeId === "1_102753") {
+          resp = mockObaResponse(fixture_stops_for_route_1_102753)
+        } else {
+          return Promise.reject(new Error("Route not found"))
+        }
 
-      return Promise.resolve(resp)
+        return Promise.resolve(resp)
+      })
+
+      // Act
+      const routes = await oneBusAwayService.getRoutesForStop(stopId)
+
+      // Assert
+      expect(routes).toEqual([
+        {
+          routeId: "1_102753",
+          name: "222",
+          color: "FDB71A",
+          headsigns: ["Redmond Technology Station Downtown Redmond Station"],
+        },
+        {
+          routeId: "1_102752",
+          name: "223",
+          color: "FDB71A",
+          headsigns: ["Eastgate P&R Lake Hills"],
+        },
+        {
+          routeId: "1_102704",
+          name: "250",
+          color: "FDB71A",
+          headsigns: ["Bellevue Transit Center Bear Creek P&R"],
+        },
+      ])
     })
 
-    // Act
-    const routes = await oneBusAwayService.getRoutesForStop(stopId)
+    it("handles 404 errors by throwing a NotFoundException", async () => {
+      // Arrange
+      const stopId = "1_99999"
+      mockObaSdk.stop.retrieve.mockRejectedValueOnce(
+        new APIError(404, undefined, "Not Found", undefined),
+      )
 
-    // Assert
-    expect(routes).toEqual([
-      {
-        routeId: "1_102753",
-        name: "222",
-        color: "FDB71A",
-        headsigns: ["Redmond Technology Station Downtown Redmond Station"],
-      },
-      {
-        routeId: "1_102752",
-        name: "223",
-        color: "FDB71A",
-        headsigns: ["Eastgate P&R Lake Hills"],
-      },
-      {
-        routeId: "1_102704",
-        name: "250",
-        color: "FDB71A",
-        headsigns: ["Bellevue Transit Center Bear Creek P&R"],
-      },
-    ])
+      // Act
+      const act = () => oneBusAwayService.getRoutesForStop(stopId)
+
+      // Assert
+      await expect(act).rejects.toThrowError(
+        new NotFoundException("Stop 1_99999 not found"),
+      )
+    })
+
+    it("handles null responses by throwing a NotFoundException", async () => {
+      // Arrange
+      const stopId = "1_99999"
+      mockObaSdk.stop.retrieve.mockResolvedValueOnce(null as any)
+
+      // Act
+      const act = () => oneBusAwayService.getRoutesForStop(stopId)
+
+      // Assert
+      await expect(act).rejects.toThrowError(
+        new NotFoundException("Stop 1_99999 not found"),
+      )
+    })
+
+    it("handles other errors by throwing InternalServerErrorException", async () => {
+      // Arrange
+      const stopId = "1_88888"
+      mockObaSdk.stop.retrieve.mockRejectedValueOnce(
+        new APIError(500, undefined, "Internal Server Error", undefined),
+      )
+
+      // Act
+      const act = () => oneBusAwayService.getRoutesForStop(stopId)
+
+      // Assert
+      await expect(act).rejects.toThrowError(/Internal Server Error/)
+    })
   })
 
-  it("gets a stop by its ID", async () => {
-    // Arrange
-    const stopId = "1_71971"
+  describe("getStop", () => {
+    it("gets a stop by its ID", async () => {
+      // Arrange
+      const stopId = "1_71971"
+      mockObaSdk.stop.retrieve.mockResolvedValueOnce(
+        mockObaResponse(fixture_stop_1_71971),
+      )
+  
+      // Act
+      const stop = await oneBusAwayService.getStop(stopId)
+  
+      // Assert
+      expect(stop).toEqual({
+        lat: 47.674011,
+        lon: -122.13089,
+        name: "NE Redmond Way & Bear Creek Pkwy",
+        stopCode: "71971",
+        stopId: "1_71971",
+      })
+    })
 
-    mockObaSdk.stop.retrieve.mockResolvedValueOnce(
-      mockObaResponse(fixture_stop_1_71971),
-    )
+    it("handles 404 errors by throwing a NotFoundException", async () => {
+      // Arrange
+      const stopId = "1_99999"
+      mockObaSdk.stop.retrieve.mockRejectedValueOnce(
+        new APIError(404, undefined, "Not Found", undefined),
+      )
 
-    // Act
-    const stop = await oneBusAwayService.getStop(stopId)
+      // Act
+      const act = () => oneBusAwayService.getStop(stopId)
 
-    // Assert
-    expect(stop).toEqual({
-      lat: 47.674011,
-      lon: -122.13089,
-      name: "NE Redmond Way & Bear Creek Pkwy",
-      stopCode: "71971",
-      stopId: "1_71971",
+      // Assert
+      await expect(act).rejects.toThrowError(
+        new NotFoundException("Stop 1_99999 not found"),
+      )
+    })
+
+    it("handles other errors by throwing InternalServerErrorException", async () => {
+      // Arrange
+      const stopId = "1_88888"
+      mockObaSdk.stop.retrieve.mockRejectedValueOnce(
+        new APIError(500, undefined, "Internal Server Error", undefined),
+      )
+
+      // Act
+      const act = () => oneBusAwayService.getStop(stopId)
+
+      // Assert
+      await expect(act).rejects.toThrowError(/Internal Server Error/)
     })
   })
 
