@@ -10,7 +10,7 @@ FROM
 WHERE
   EXISTS (
     -- filter by stops that are actually serviced by any trip
-    SELECT 1 FROM stop_times st
+    SELECT 1 FROM "stop_times" st
     WHERE st.stop_id = stops.stop_id
   )
   AND stop_lat IS NOT NULL

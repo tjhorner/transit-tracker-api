@@ -1,4 +1,4 @@
-import { InternalServerErrorException, NotFoundException } from "@nestjs/common"
+import { NotFoundException } from "@nestjs/common"
 import OnebusawaySDK, { APIError } from "onebusaway-sdk"
 import { AgenciesWithCoverageListResponse } from "onebusaway-sdk/resources/agencies-with-coverage.mjs"
 import { ArrivalAndDepartureListResponse } from "onebusaway-sdk/resources/arrival-and-departure.mjs"
@@ -192,10 +192,10 @@ describe("OneBusAwayService", () => {
       mockObaSdk.stop.retrieve.mockResolvedValueOnce(
         mockObaResponse(fixture_stop_1_71971),
       )
-  
+
       // Act
       const stop = await oneBusAwayService.getStop(stopId)
-  
+
       // Assert
       expect(stop).toEqual({
         lat: 47.674011,

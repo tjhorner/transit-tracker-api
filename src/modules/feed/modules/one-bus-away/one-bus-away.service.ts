@@ -57,7 +57,7 @@ export class OneBusAwayService implements FeedProvider {
   constructor(
     @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
     private readonly cache: FeedCacheService,
-    private readonly obaSdk: OnebusawaySDK
+    private readonly obaSdk: OnebusawaySDK,
   ) {
     this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
     this.config = config

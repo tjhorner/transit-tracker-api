@@ -11,3 +11,11 @@ feeds:
         url: http://127.0.0.1:3123/gtfs-rt/trip-updates
         headers:
           Authorization: fake-auth
+  testfeed2:
+    name: Test Feed 2
+    description: Test Feed 2 Description
+    gtfs:
+      static:
+        url: http://127.0.0.1:3123/feed-2.zip
+        headers:
+          Authorization: fake-auth

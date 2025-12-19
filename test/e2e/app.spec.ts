@@ -94,9 +94,9 @@ describe("E2E test", () => {
       .expect("Content-Type", /json/)
       .expect(200)
 
-    expect(response.body).toHaveLength(1)
+    expect(response.body).toHaveLength(2)
 
-    const feed = response.body[0]
+    const feed = response.body.find((f: any) => f.code === "testfeed")
 
     expect(feed.lastSyncedAt).toBeDefined()
 
@@ -126,8 +126,8 @@ describe("E2E test", () => {
       .expect("Content-Type", /json/)
       .expect(200)
 
-    expect(response.body).toHaveLength(2)
     expect(response.body).toMatchSnapshot()
+    expect(response.body).toHaveLength(2)
   })
 
   test("GET /stops/:id/routes", async () => {

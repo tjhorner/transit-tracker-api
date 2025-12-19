@@ -31,6 +31,18 @@ export async function setupFakeGtfsServer() {
     archive.finalize()
   })
 
+  gtfsServerApp.get("/feed-2.zip", (_, res) => {
+    res.setHeader("Content-Type", "application/zip")
+
+    const archive = archiver("zip")
+    archive.pipe(res)
+    archive.directory(
+      path.join(__dirname, "..", "fixtures", "gtfs-feed-2"),
+      "/",
+    )
+    archive.finalize()
+  })
+
   gtfsServerApp.get("/gtfs-rt/trip-updates", (_, res) => {
     if (simulateTripUpdatesFailure) {
       res.status(500).send("Simulated failure")
