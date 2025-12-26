@@ -52,9 +52,6 @@ describe("E2E test", () => {
       process.env.POST_IMPORT_HOOK = `touch ${postImportHookPath}`
     }
 
-    // process.env.PRE_IMPORT_HOOK = `touch ${preImportHookPath}`
-    // process.env.POST_IMPORT_HOOK = `touch ${postImportHookPath}`
-
     fakeGtfs = await setupFakeGtfsServer()
 
     process.env.DISABLE_RATE_LIMITS = "true"
