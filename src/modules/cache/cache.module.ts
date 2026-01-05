@@ -18,7 +18,7 @@ const {
       useFactory: () =>
         new Cacheable({
           primary: createKeyvMemory({
-            lruSize: 100,
+            lruSize: 1000,
             checkInterval: ms("15m"),
           }),
           secondary: process.env.REDIS_URL

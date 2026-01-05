@@ -11,7 +11,7 @@ swap_size_mb = 512
 
 [env]
   GTFS_RT_MIN_CACHE_AGE = "15s"
-  NODE_OPTIONS = "--max-old-space-size=512"
+  NODE_OPTIONS = "--max-old-space-size=1024"
   LOG_COMPACT = "true"
 
 [http_service]
@@ -24,7 +24,7 @@ swap_size_mb = 512
 
   [http_service.concurrency]
     type = "connections"
-    soft_limit = 35
+    soft_limit = 70
 
   [[http_service.checks]]
     grace_period = "5s"
@@ -38,6 +38,6 @@ swap_size_mb = 512
   path = "/metrics"
 
 [[vm]]
-  memory = "512mb"
+  memory = "1gb"
   cpu_kind = "shared"
-  cpus = 2
+  cpus = 4
