@@ -15,6 +15,7 @@ After installation, you will need to set up a feeds configuration. This will tel
 - [GTFS / GTFS-realtime](https://gtfs.org/documentation/overview/)
 - [OneBusAway](https://developer.onebusaway.org/)
 - [HAFAS](https://github.com/public-transport/hafas-client) (⚠️ experimental ⚠️)
+- [MVG (Munich Public Transit)](https://www.mvg.de/)
 
 Most transit agencies will support GTFS. [Transitland](https://www.transit.land/operators) keeps an index of all known GTFS/GTFS-rt feeds, so you can use that to find the feed URL for yours.
 
@@ -48,6 +49,12 @@ feeds:
         url: https://api.goswift.ly/real-time/nctd/gtfs-rt-trip-updates
         headers:
           Authorization: your_swiftly_api_key
+  munich:
+    name: Munich Public Transit
+    description: MVG - Munich, Germany
+    mvg:
+      # baseUrl is optional and defaults to https://www.mvg.de/api/bgw-pt/v3
+      baseUrl: https://www.mvg.de/api/bgw-pt/v3
 ```
 
 Due to its increased complexity, additional documentation on configuring GTFS feeds is [available here](./docs/configuration/gtfs.md).
