@@ -19,7 +19,7 @@ swap_size_mb = 512
   force_https = true
   auto_stop_machines = "stop"
   auto_start_machines = true
-  min_machines_running = 1
+  min_machines_running = 2
   processes = ["app"]
 
   [http_service.concurrency]
