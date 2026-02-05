@@ -84,7 +84,11 @@ export class ScheduleMetricsService {
     }
 
     for (const feedCode of feedCodes) {
-      const currentCount = this.subscribersByFeedCode.get(feedCode) ?? 0
+      const currentCount = this.subscribersByFeedCode.get(feedCode)
+      if (currentCount === undefined) {
+        continue
+      }
+
       this.subscribersByFeedCode.set(
         feedCode,
         Math.max(0, currentCount + value),
