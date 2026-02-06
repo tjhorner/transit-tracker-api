@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common"
+import { Injectable, OnApplicationBootstrap } from "@nestjs/common"
 import { MetricService } from "nestjs-otel"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleOptions } from "./schedule.service"
@@ -11,16 +11,15 @@ interface RouteStopMetric {
 }
 
 @Injectable()
-export class ScheduleMetricsService {
+export class ScheduleMetricsService implements OnApplicationBootstrap {
   private readonly subscribers: Set<ScheduleOptions> = new Set()
-  private readonly subscribersByFeedCode: Map<string, number> = new Map()
   private readonly routeStopMetrics: Map<string, RouteStopMetric> = new Map()
+  private subscribersByFeedCode: Map<string, number> = new Map()
 
-  constructor(feedService: FeedService, metricService: MetricService) {
-    this.subscribersByFeedCode = new Map<string, number>(
-      Object.keys(feedService.getAllFeeds()).map((feed) => [feed, 0]),
-    )
-
+  constructor(
+    private readonly feedService: FeedService,
+    metricService: MetricService,
+  ) {
     metricService
       .getObservableGauge("schedule_subscriptions", {
         description: "Number of active schedule subscriptions per feed",
@@ -50,6 +49,12 @@ export class ScheduleMetricsService {
           }
         }
       })
+  }
+
+  onApplicationBootstrap() {
+    this.subscribersByFeedCode = new Map<string, number>(
+      Object.keys(this.feedService.getAllFeeds()).map((feed) => [feed, 0]),
+    )
   }
 
   add(subscription: ScheduleOptions) {
