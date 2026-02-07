@@ -25,7 +25,7 @@ You can create a `feeds.yaml` in the working directory, or provide it as a `FEED
 
 ```yaml
 feeds:
-  st:
+  st: # <-- CHANGE THIS to something short and unique to each feed
     name: Puget Sound Region
     description: All transit agencies in the Puget Sound region
     # You can optionally override the service area polygon for a feed.
