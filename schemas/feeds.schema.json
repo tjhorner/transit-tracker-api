@@ -152,6 +152,22 @@
                 "userAgent"
               ],
               "additionalProperties": false
+            },
+            "mvg": {
+              "type": "object",
+              "description": "Configuration parameters for an MVG (Munich Public Transit) feed.",
+              "properties": {
+                "baseUrl": {
+                  "type": "string",
+                  "examples": [
+                    "https://www.mvg.de/api/bgw-pt/v3"
+                  ],
+                  "description": "Base URL to the MVG API. Defaults to https://www.mvg.de/api/bgw-pt/v3",
+                  "format": "uri",
+                  "default": "https://www.mvg.de/api/bgw-pt/v3"
+                }
+              },
+              "additionalProperties": false
             }
           },
           "required": [
@@ -166,7 +182,8 @@
               "not": {
                 "required": [
                   "onebusaway",
-                  "hafas"
+                  "hafas",
+                  "mvg"
                 ]
               }
             },
@@ -177,7 +194,8 @@
               "not": {
                 "required": [
                   "gtfs",
-                  "hafas"
+                  "hafas",
+                  "mvg"
                 ]
               }
             },
@@ -188,7 +206,20 @@
               "not": {
                 "required": [
                   "gtfs",
-                  "onebusaway"
+                  "onebusaway",
+                  "mvg"
+                ]
+              }
+            },
+            {
+              "required": [
+                "mvg"
+              ],
+              "not": {
+                "required": [
+                  "gtfs",
+                  "onebusaway",
+                  "hafas"
                 ]
               }
             }

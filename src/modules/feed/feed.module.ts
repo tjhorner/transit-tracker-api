@@ -8,6 +8,7 @@ import { FeedSyncService } from "./feed-sync.service"
 import { FeedService } from "./feed.service"
 import { FeedsController } from "./feeds.controller"
 import { HafasModule } from "./modules/hafas/hafas.module"
+import { MvgModule } from "./modules/mvg/mvg.module"
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { HafasModule } from "./modules/hafas/hafas.module"
     GtfsModule,
     OneBusAwayModule,
     HafasModule,
+    MvgModule,
   ],
   controllers: [FeedsController],
   providers: [FeedService, FeedSyncService],
