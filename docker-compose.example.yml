@@ -17,7 +17,7 @@ services:
       # or as a bind mount. See the `volumes:` section below for an example.
       FEEDS_CONFIG: |
         feeds:
-          kcm: # <-- CHANGE THIS to something short and unique to your feed
+          kcm: # <-- BEFORE SYNCING, change this to something short and unique to your feed
             name: King County Metro
             description: King County, Washington
             gtfs:
