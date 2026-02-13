@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common"
+import { Inject, Injectable, Logger, Scope } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { Counter } from "@opentelemetry/api"
 import axios from "axios"
@@ -14,7 +14,7 @@ import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-ro
 type ITripUpdate = GtfsRt.ITripUpdate
 type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class GtfsRealtimeService {
   private readonly feedCode: string
   private readonly config: GtfsConfig
