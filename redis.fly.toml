@@ -1,0 +1,11 @@
+app = "transit-tracker-api-redis"
+primary_region = "sjc"
+swap_size_mb = 64
+
+[build]
+  dockerfile = "redis.Dockerfile"
+
+[[vm]]
+  memory = "256mb"
+  cpu_kind = "shared"
+  cpus = 1
