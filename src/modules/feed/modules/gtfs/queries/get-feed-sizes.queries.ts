@@ -7,7 +7,7 @@ export type IGetFeedSizesParams = void
 /** 'GetFeedSizes' return type */
 export interface IGetFeedSizesResult {
   feed_code: string
-  size_mb: number
+  size_kb: number
   table_name: string
 }
 
@@ -21,7 +21,7 @@ const getFeedSizesIR: any = {
   usedParamSet: {},
   params: [],
   statement:
-    'select\n  split_part(inf.table_name, \'__\', 1) as "table_name!",\n  split_part(inf.table_name, \'__\', 2) as "feed_code!",\n  (pg_total_relation_size(quote_ident(table_name)) / (1000 * 1000))::int as "size_mb!"\nfrom\n  information_schema.tables inf\nwhere\n  table_name like \'%\\_\\_%\'\norder by\n  "size_mb!" desc',
+    'select\n  split_part(inf.table_name, \'__\', 1) as "table_name!",\n  split_part(inf.table_name, \'__\', 2) as "feed_code!",\n  (pg_total_relation_size(quote_ident(table_name)) / 1000)::int as "size_kb!"\nfrom\n  information_schema.tables inf\nwhere\n  table_name like \'%\\_\\_%\'\norder by\n  "size_kb!" desc',
 }
 
 /**
@@ -30,13 +30,13 @@ const getFeedSizesIR: any = {
  * select
  *   split_part(inf.table_name, '__', 1) as "table_name!",
  *   split_part(inf.table_name, '__', 2) as "feed_code!",
- *   (pg_total_relation_size(quote_ident(table_name)) / (1000 * 1000))::int as "size_mb!"
+ *   (pg_total_relation_size(quote_ident(table_name)) / 1000)::int as "size_kb!"
  * from
  *   information_schema.tables inf
  * where
  *   table_name like '%\_\_%'
  * order by
- *   "size_mb!" desc
+ *   "size_kb!" desc
  * ```
  */
 export const getFeedSizes = new PreparedQuery<

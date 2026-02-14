@@ -45,14 +45,14 @@ export class GtfsMetricsService {
     this.logger.log("GTFS metrics active")
 
     this.metricService
-      .getObservableGauge("gtfs_table_size_mb", {
+      .getObservableGauge("gtfs_table_size_kb", {
         description: "Size of each GTFS table per feed",
-        unit: "megabytes",
+        unit: "kilobytes",
       })
       .addCallback(async (observable) => {
         const sizes = await this.getFeedSizes()
         for (const row of sizes) {
-          observable.observe(row.size_mb, {
+          observable.observe(row.size_kb, {
             feed_code: row.feed_code,
             table: row.table_name,
           })
