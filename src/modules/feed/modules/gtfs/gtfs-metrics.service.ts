@@ -1,9 +1,12 @@
 import { forwardRef, Inject, Injectable, Logger, Scope } from "@nestjs/common"
+import { Cacheable } from "cacheable"
 import { MetricService } from "nestjs-otel"
 import { Pool } from "pg"
 import { PG_POOL } from "./gtfs.module"
-import { getFeedSizes, IGetFeedSizesResult } from "./queries/get-feed-sizes.queries"
-import { Cacheable } from "cacheable"
+import {
+  getFeedSizes,
+  IGetFeedSizesResult,
+} from "./queries/get-feed-sizes.queries"
 
 @Injectable({ scope: Scope.DEFAULT })
 export class GtfsMetricsService {
