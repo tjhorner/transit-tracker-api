@@ -81,6 +81,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199521800,
@@ -94,6 +95,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA_OVERNIGHT",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199541600,
@@ -107,6 +109,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199548800,
@@ -120,6 +123,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV1",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199559600,
@@ -133,6 +137,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV2",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199566800,
@@ -146,6 +151,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV3",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199577600,
@@ -159,6 +165,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV4",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199608200,
@@ -172,6 +179,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > 
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA_OVERNIGHT",
+    "vehicle": null,
   },
 ]
 `;
@@ -190,6 +198,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with service exception 
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1181115000,
@@ -203,6 +212,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with service exception 
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA_OVERNIGHT",
+    "vehicle": null,
   },
 ]
 `;
@@ -221,6 +231,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199521800,
@@ -234,6 +245,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA_OVERNIGHT",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199541600,
@@ -247,6 +259,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199548800,
@@ -260,6 +273,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV1",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199559600,
@@ -273,6 +287,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV2",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199566800,
@@ -286,6 +301,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV3",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199577600,
@@ -299,6 +315,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:BEATTY_AIRPORT",
     "stopName": "Nye County Airport (Demo)",
     "tripId": "testfeed:AAMV4",
+    "vehicle": null,
   },
   {
     "arrivalTime": 1199608200,
@@ -312,6 +329,7 @@ exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`
     "stopId": "testfeed:STAGECOACH",
     "stopName": "Stagecoach Hotel & Casino (Demo)",
     "tripId": "testfeed:STBA_OVERNIGHT",
+    "vehicle": null,
   },
 ]
 `;

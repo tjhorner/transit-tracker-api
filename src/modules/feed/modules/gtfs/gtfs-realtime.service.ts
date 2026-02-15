@@ -255,6 +255,7 @@ export class GtfsRealtimeService {
   ): {
     tripUpdate: DeepReadonly<ITripUpdate> | undefined
     stopTimeUpdate: DeepReadonly<IStopTimeUpdate> | undefined
+    vehicle: string | null
   } {
     // Look up candidates from the index by exact trip ID
     let tripUpdate: DeepReadonly<ITripUpdate> | undefined
@@ -311,6 +312,8 @@ export class GtfsRealtimeService {
       }
     }
 
-    return { tripUpdate, stopTimeUpdate }
+    const vehicle = tripUpdate?.vehicle?.label ?? null
+
+    return { tripUpdate, stopTimeUpdate, vehicle }
   }
 }

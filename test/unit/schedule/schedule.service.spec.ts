@@ -501,6 +501,7 @@ describe("ScheduleService", () => {
       directionId,
       arrivalTime: new Date(Date.now() + (i + 1) * 60000),
       departureTime: new Date(Date.now() + (i + 2) * 60000),
+      vehicle: null,
       isRealtime: false,
     }))
   }

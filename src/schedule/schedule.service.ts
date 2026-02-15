@@ -33,6 +33,7 @@ export interface ScheduleTrip {
   directionId: string | null
   arrivalTime: number
   departureTime: number
+  vehicle: string | null
   isRealtime: boolean
 }
 
