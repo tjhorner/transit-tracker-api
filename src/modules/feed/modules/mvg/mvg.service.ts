@@ -259,6 +259,7 @@ export class MvgService implements FeedProvider {
           headsign: departure.destination,
           arrivalTime: departureTime,
           departureTime: departureTime,
+          vehicle: null, // MVG does not appear to provide vehicle numbers
           isRealtime: departure.realtime,
         })
       }

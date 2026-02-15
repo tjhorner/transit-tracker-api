@@ -111,6 +111,7 @@ Once subscribed, you will receive updates to your desired schedule in the follow
         "headsign": "Eastgate P&R",
         "arrivalTime": 1737346216,
         "departureTime": 1737346216,
+        "vehicle": "7323",
         "isRealtime": true
       },
       {
@@ -122,6 +123,7 @@ Once subscribed, you will receive updates to your desired schedule in the follow
         "headsign": "Bellevue Transit Center",
         "arrivalTime": 1737346424,
         "departureTime": 1737346424,
+        "vehicle": "7376",
         "isRealtime": true
       },
       {
@@ -133,6 +135,7 @@ Once subscribed, you will receive updates to your desired schedule in the follow
         "headsign": "Bellevue Transit Center",
         "arrivalTime": 1737347652,
         "departureTime": 1737347652,
+        "vehicle": "7455",
         "isRealtime": true
       }
     ]

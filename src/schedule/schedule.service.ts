@@ -30,6 +30,7 @@ export interface ScheduleTrip {
   headsign: string
   arrivalTime: number
   departureTime: number
+  vehicle: string | null
   isRealtime: boolean
 }
 

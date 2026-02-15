@@ -302,7 +302,7 @@ export class GtfsService implements FeedProvider {
       ).flat()
 
       staticTrips.forEach((staticTrip) => {
-        const { tripUpdate, stopTimeUpdate } =
+        const { tripUpdate, stopTimeUpdate, vehicle } =
           this.realtimeService.matchTripToTripUpdate(staticTrip, tripUpdates)
 
         const { arrivalTime, departureTime, isRealtime } =
@@ -370,6 +370,7 @@ export class GtfsService implements FeedProvider {
           stopName: staticTrip.stop_name ?? "Unnamed Stop",
           arrivalTime,
           departureTime,
+          vehicle,
           isRealtime,
         })
       })
