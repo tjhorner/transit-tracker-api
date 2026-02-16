@@ -15,6 +15,7 @@ import { promisify } from "util"
 import { MockInstance, vi } from "vitest"
 import { setupFakeGtfsServer } from "./helpers/gtfs-server"
 import { setupTestDatabase } from "./helpers/postgres"
+import { SyncCommand } from "src/commands/sync.command"
 
 const testTmpDir = path.join(__dirname, "tmp", `test-${Date.now()}`)
 
@@ -59,7 +60,7 @@ describe("E2E test", () => {
     app.useWebSocketAdapter(new WsAdapter(app))
     await app.init()
 
-    await app.get(FeedSyncService).syncAllFeeds()
+    await app.get(SyncCommand).run([], { })
   }, ms("2m"))
 
   afterAll(async () => {
