@@ -1,3 +1,3 @@
-import { Logger } from "@nestjs/common"
+import { ConsoleLogger, Logger } from "@nestjs/common"
 
-Logger.overrideLogger(["error"])
+Logger.overrideLogger(new ConsoleLogger({ forceConsole: true }))
