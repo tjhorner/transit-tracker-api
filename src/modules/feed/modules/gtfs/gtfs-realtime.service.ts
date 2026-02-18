@@ -149,13 +149,13 @@ export class GtfsRealtimeService {
     const scheduledArrivalTime = new Date(trip.arrival_time)
     const scheduledDepartureTime = new Date(trip.departure_time)
 
-    let delay = 0
+    let inferredDelay = 0
     if (stopTimeUpdate) {
       const definedDelay =
         stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
 
       if (typeof definedDelay === "number") {
-        delay = definedDelay
+        inferredDelay = definedDelay
       } else {
         const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
         const hasOnlyOneUpdate =
@@ -169,7 +169,8 @@ export class GtfsRealtimeService {
               continue
             }
 
-            delay = time - new Date(trip[`${key}_time`]).getTime() / 1000
+            inferredDelay =
+              time - new Date(trip[`${key}_time`]).getTime() / 1000
           }
         }
       }
@@ -177,11 +178,17 @@ export class GtfsRealtimeService {
 
     const departureTime = stopTimeUpdate?.departure?.time
       ? new Date((stopTimeUpdate.departure?.time as number) * 1000)
-      : new Date(scheduledDepartureTime.getTime() + delay * 1000)
+      : new Date(
+          scheduledDepartureTime.getTime() +
+            (stopTimeUpdate?.departure?.delay ?? inferredDelay) * 1000,
+        )
 
     const arrivalTime = stopTimeUpdate?.arrival?.time
       ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
-      : new Date(scheduledArrivalTime.getTime() + delay * 1000)
+      : new Date(
+          scheduledArrivalTime.getTime() +
+            (stopTimeUpdate?.arrival?.delay ?? inferredDelay) * 1000,
+        )
 
     if (arrivalTime > departureTime) {
       departureTime.setTime(arrivalTime.getTime())

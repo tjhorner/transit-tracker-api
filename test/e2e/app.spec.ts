@@ -425,6 +425,38 @@ describe("E2E test", () => {
         },
       )
 
+      test("with different arrival and departure time updates", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "STBA",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopId: "STAGECOACH",
+                arrival: {
+                  time: 1199455230,
+                },
+                departure: {
+                  time: 1199455260,
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        const trip = trips.find((trip) => trip.tripId === "testfeed:STBA")
+
+        expect(trip).toBeDefined()
+        expect(trip!.arrivalTime).toBe(1199455230)
+        expect(trip!.departureTime).toBe(1199455260)
+        expect(trip!.isRealtime).toBe(true)
+      })
+
       test.each(["arrival", "departure"])(
         "with %s delay",
         async (arrivalOrDeparture: string) => {
@@ -456,6 +488,38 @@ describe("E2E test", () => {
           expect(trip!.isRealtime).toBe(true)
         },
       )
+
+      test("with different arrival and departure delays", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "STBA",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopId: "STAGECOACH",
+                arrival: {
+                  delay: 30,
+                },
+                departure: {
+                  delay: 60,
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        const trip = trips.find((trip) => trip.tripId === "testfeed:STBA")
+
+        expect(trip).toBeDefined()
+        expect(trip!.arrivalTime).toBe(1199455230) // + 30
+        expect(trip!.departureTime).toBe(1199455260) // + 60
+        expect(trip!.isRealtime).toBe(true)
+      })
 
       test("with cancelled trip", async () => {
         fakeGtfs.setTripUpdates([
