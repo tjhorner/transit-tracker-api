@@ -306,7 +306,11 @@ export class GtfsService implements FeedProvider {
           this.realtimeService.matchTripToTripUpdate(staticTrip, tripUpdates)
 
         const { arrivalTime, departureTime, isRealtime } =
-          this.realtimeService.resolveTripTimes(staticTrip, stopTimeUpdate, fallbackDelay)
+          this.realtimeService.resolveTripTimes(
+            staticTrip,
+            stopTimeUpdate,
+            fallbackDelay,
+          )
 
         if (departureTime.getTime() < now) {
           return

@@ -628,7 +628,6 @@ describe("E2E test", () => {
         const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
         const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
 
-
         expect(trip).toBeDefined()
         // Should use the 120s delay from previous stop
         const scheduledTimeArrivalTime = 1199455920
