@@ -9,7 +9,7 @@ export default defineConfig({
     coverage: {
       include: ["src/**/*.ts"],
     },
-    workspace: [
+    projects: [
       {
         extends: true,
         test: {
