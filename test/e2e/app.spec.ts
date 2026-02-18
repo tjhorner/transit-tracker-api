@@ -627,8 +627,8 @@ describe("E2E test", () => {
 
         const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
         const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
-
         expect(trip).toBeDefined()
+
         // Should use the 120s delay from previous stop
         const scheduledTimeArrivalTime = 1199455920
         const scheduledDepartureTime = 1199456040
@@ -665,8 +665,8 @@ describe("E2E test", () => {
 
         const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
         const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
-
         expect(trip).toBeDefined()
+
         // Should use the 90s delay from stop sequence 2
         const scheduledTimeArrivalTime = 1199455920
         const scheduledDepartureTime = 1199456040
@@ -697,8 +697,8 @@ describe("E2E test", () => {
 
         const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
         const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
-
         expect(trip).toBeDefined()
+
         // Should use scheduled time (1199455920) because update is for a later stop
         expect(trip!.arrivalTime).toBe(1199455920)
         expect(trip!.isRealtime).toBe(false)
@@ -726,8 +726,8 @@ describe("E2E test", () => {
 
         const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
         const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
-
         expect(trip).toBeDefined()
+
         // Should fall back to scheduled time due to excessive deviation (> 90m)
         expect(trip!.arrivalTime).toBe(1199455920)
         expect(trip!.isRealtime).toBe(false)

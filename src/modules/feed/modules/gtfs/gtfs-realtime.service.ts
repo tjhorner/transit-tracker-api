@@ -145,24 +145,23 @@ export class GtfsRealtimeService {
   resolveTripTimes(
     trip: IGetScheduleForRouteAtStopResult,
     stopTimeUpdate?: IStopTimeUpdate,
-    fallbackDelay?: number,
   ) {
     const scheduledArrivalTime = new Date(trip.arrival_time)
     const scheduledDepartureTime = new Date(trip.departure_time)
 
     let delay = 0
     if (stopTimeUpdate) {
-      const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
-      const hasOnlyOneUpdate =
-        !stopTimeUpdate.arrival || !stopTimeUpdate.departure
+      const definedDelay =
+        stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
 
-      if (hasAnyUpdate && hasOnlyOneUpdate) {
-        const definedDelay =
-          stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
+      if (typeof definedDelay === "number") {
+        delay = definedDelay
+      } else {
+        const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
+        const hasOnlyOneUpdate =
+          !stopTimeUpdate.arrival || !stopTimeUpdate.departure
 
-        if (definedDelay) {
-          delay = definedDelay
-        } else {
+        if (hasAnyUpdate && hasOnlyOneUpdate) {
           // Infer delay from difference between schedule and update
           for (const key of ["arrival", "departure"] as const) {
             const time = stopTimeUpdate[key]?.time
@@ -174,9 +173,6 @@ export class GtfsRealtimeService {
           }
         }
       }
-    } else if (fallbackDelay !== undefined) {
-      // Use delay from previous stop as fallback
-      delay = fallbackDelay
     }
 
     const departureTime = stopTimeUpdate?.departure?.time
@@ -209,7 +205,7 @@ export class GtfsRealtimeService {
     return {
       departureTime,
       arrivalTime,
-      isRealtime: !!stopTimeUpdate || fallbackDelay !== undefined,
+      isRealtime: !!stopTimeUpdate,
     }
   }
 
@@ -234,7 +230,6 @@ export class GtfsRealtimeService {
   ): {
     tripUpdate: ITripUpdate | undefined
     stopTimeUpdate: IStopTimeUpdate | undefined
-    fallbackDelay: number | undefined
   } {
     // Filter by trip updates with:
     //   - the same trip_id and start_date *or*
@@ -247,33 +242,37 @@ export class GtfsRealtimeService {
       )
     })
 
-    const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
+    let stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
       (update) =>
         update.stopSequence === trip.stop_sequence ||
         update.stopId === trip.stop_id,
     )
 
     // If no exact match, find the latest stop update before our stop as fallback
-    let fallbackDelay: number | undefined
     if (!stopTimeUpdate && tripUpdate?.stopTimeUpdate) {
       const previousStopUpdates = tripUpdate.stopTimeUpdate
         .filter(
           (update) =>
-            update.stopSequence !== null &&
-            update.stopSequence !== undefined &&
+            typeof update.stopSequence === "number" &&
             update.stopSequence < trip.stop_sequence,
         )
         .sort((a, b) => b.stopSequence! - a.stopSequence!)
 
       if (previousStopUpdates.length > 0) {
         const latestUpdate = previousStopUpdates[0]
-        fallbackDelay =
-          latestUpdate.arrival?.delay ??
-          latestUpdate.departure?.delay ??
-          undefined
+
+        // Synthesize stop time update with only delay
+        stopTimeUpdate = {
+          departure: {
+            delay: latestUpdate.departure?.delay,
+          },
+          arrival: {
+            delay: latestUpdate.arrival?.delay,
+          },
+        }
       }
     }
 
-    return { tripUpdate, stopTimeUpdate, fallbackDelay }
+    return { tripUpdate, stopTimeUpdate }
   }
 }
