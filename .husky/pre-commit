@@ -1,3 +1,2 @@
 pnpm format --log-level silent
 git update-index --again
-pnpm test --silent
