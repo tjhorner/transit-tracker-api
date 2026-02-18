@@ -615,7 +615,7 @@ describe("E2E test", () => {
             },
             stopTimeUpdate: [
               {
-                stopSequence: 1,
+                stopSequence: 0,
                 arrival: {
                   delay: delaySeconds,
                 },

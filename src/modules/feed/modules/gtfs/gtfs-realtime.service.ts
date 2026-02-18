@@ -259,9 +259,11 @@ export class GtfsRealtimeService {
       const previousStopUpdates = tripUpdate.stopTimeUpdate
         .filter(
           (update) =>
-            update.stopSequence && update.stopSequence < trip.stop_sequence,
+            update.stopSequence !== null &&
+            update.stopSequence !== undefined &&
+            update.stopSequence < trip.stop_sequence,
         )
-        .sort((a, b) => (b.stopSequence || 0) - (a.stopSequence || 0))
+        .sort((a, b) => b.stopSequence! - a.stopSequence!)
 
       if (previousStopUpdates.length > 0) {
         const latestUpdate = previousStopUpdates[0]
