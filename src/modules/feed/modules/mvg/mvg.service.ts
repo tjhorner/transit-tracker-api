@@ -45,7 +45,7 @@ interface MvgDeparture {
 }
 
 interface MvgStation {
-  id: string
+  globalId: string
   name: string
   place: string
   latitude: number
@@ -99,7 +99,7 @@ export class MvgService implements FeedProvider {
         )
 
         return {
-          stopId: station.id,
+          stopId: station.globalId,
           stopCode: null,
           name: station.name,
           lat: station.latitude,
@@ -162,16 +162,15 @@ export class MvgService implements FeedProvider {
     )
 
     return stations
-      .filter((station) => {
-        return (
+      .filter(
+        (station) =>
           station.longitude >= bbox[0] &&
           station.longitude <= bbox[2] &&
           station.latitude >= bbox[1] &&
-          station.latitude <= bbox[3]
-        )
-      })
+          station.latitude <= bbox[3],
+      )
       .map<Stop>((station) => ({
-        stopId: station.id,
+        stopId: station.globalId,
         stopCode: null,
         name: station.name,
         lat: station.latitude,
