@@ -7,7 +7,7 @@ export const FetchConfigSchema = z.strictObject({
 
 export const FetchConfigOrUrlSchema = z.union([
   FetchConfigSchema,
-  z.string().transform((url) => ({ url })),
+  z.string().transform((url) => ({ url, headers: {} })),
 ])
 
 export const RouteIdFilteredFetchConfigSchema = FetchConfigSchema.extend({

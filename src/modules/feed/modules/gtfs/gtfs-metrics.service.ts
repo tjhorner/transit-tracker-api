@@ -2,7 +2,7 @@ import { forwardRef, Inject, Injectable, Logger, Scope } from "@nestjs/common"
 import { Cacheable } from "cacheable"
 import { MetricService } from "nestjs-otel"
 import { Pool } from "pg"
-import { PG_POOL } from "./gtfs.module"
+import { PG_POOL } from "./const"
 import {
   getFeedSizes,
   IGetFeedSizesResult,
