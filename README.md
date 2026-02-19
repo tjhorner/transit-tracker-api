@@ -15,6 +15,7 @@ After installation, you will need to set up a feeds configuration. This will tel
 - [GTFS / GTFS-realtime](https://gtfs.org/documentation/overview/)
 - [OneBusAway](https://developer.onebusaway.org/)
 - [HAFAS](https://github.com/public-transport/hafas-client) (⚠️ experimental ⚠️)
+- [MVG (Munich Public Transit)](https://www.mvg.de/)
 
 Most transit agencies will support GTFS. [Transitland](https://www.transit.land/operators) keeps an index of all known GTFS/GTFS-rt feeds, so you can use that to find the feed URL for yours.
 
@@ -48,6 +49,13 @@ feeds:
         url: https://api.goswift.ly/real-time/nctd/gtfs-rt-trip-updates
         headers:
           Authorization: your_swiftly_api_key
+  munich:
+    name: Munich Public Transit
+    description: MVG - Munich, Germany
+    serviceArea: [[[11.32068,48.16715],[11.31867,48.15862],[11.34347,48.11251],[11.34876,48.10802],[11.51655,48.03436],[11.52718,48.03314],[11.72352,48.06547],[11.73377,48.07390],[11.73549,48.10726],[11.73535,48.10892],[11.72865,48.13829],[11.72847,48.13894],[11.68460,48.26667],[11.67641,48.27302],[11.67634,48.27304],[11.67074,48.27366],[11.44164,48.26647],[11.43160,48.26298],[11.32068,48.16715]]]
+    mvg:
+      # baseUrl is optional and defaults to https://www.mvg.de/api/bgw-pt/v3
+      baseUrl: https://www.mvg.de/api/bgw-pt/v3
 ```
 
 Due to its increased complexity, additional documentation on configuring GTFS feeds is [available here](./docs/configuration/gtfs.md).
