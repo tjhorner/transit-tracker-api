@@ -72,14 +72,13 @@ export class MvgService implements FeedProvider {
   }
 
   async healthCheck(): Promise<void> {
-    const response = await fetch(`${this.baseUrl}/stations/nearby?latitude=48.137154&longitude=11.576124`)
-    if (!response.ok) {
-      throw new InternalServerErrorException("MVG API health check failed")
-    }
+    await this.fetchJson(
+      `/stations/nearby?latitude=48.137154&longitude=11.576124`,
+    )
   }
 
   private async fetchJson<T>(url: string): Promise<T> {
-    const response = await fetch(url)
+    const response = await fetch(`${this.baseUrl}${url}`)
     if (!response.ok) {
       if (response.status === 404) {
         throw new NotFoundException(`Resource not found: ${url}`)
@@ -96,7 +95,7 @@ export class MvgService implements FeedProvider {
       `stop-${stopId}`,
       async () => {
         const station = await this.fetchJson<MvgStation>(
-          `${this.baseUrl}/stations/${encodeURIComponent(stopId)}`,
+          `/stations/${encodeURIComponent(stopId)}`,
         )
 
         return {
@@ -111,19 +110,23 @@ export class MvgService implements FeedProvider {
     )
   }
 
-  async listStops(): Promise<Stop[]> {
-    throw new Error("listStops is not supported by MVG API")
-  }
-
   async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
     return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {
         const departures = await this.fetchJson<MvgDeparture[]>(
-          `${this.baseUrl}/departures?globalId=${encodeURIComponent(stopId)}&limit=100`,
+          `/departures?globalId=${encodeURIComponent(stopId)}&limit=100`,
         )
 
-        const routeMap = new Map<string, { routeId: string; name: string; color: string | null; headsigns: Set<string> }>()
+        const routeMap = new Map<
+          string,
+          {
+            routeId: string
+            name: string
+            color: string | null
+            headsigns: Set<string>
+          }
+        >()
 
         for (const departure of departures) {
           const routeId = departure.lineId
@@ -155,7 +158,7 @@ export class MvgService implements FeedProvider {
     const centerLon = (bbox[0] + bbox[2]) / 2
 
     const stations = await this.fetchJson<MvgStation[]>(
-      `${this.baseUrl}/stations/nearby?latitude=${centerLat}&longitude=${centerLon}`,
+      `/stations/nearby?latitude=${centerLat}&longitude=${centerLon}`,
     )
 
     return stations
@@ -207,11 +210,11 @@ export class MvgService implements FeedProvider {
             "BAHN",
           ]
           const deps = await this.fetchJson<MvgDeparture[]>(
-            `${this.baseUrl}/departures?globalId=${encodeURIComponent(stopId)}&limit=100&transportTypes=${transportTypes.join(",")}`,
+            `/departures?globalId=${encodeURIComponent(stopId)}&limit=100&transportTypes=${transportTypes.join(",")}`,
           )
 
           const now = Date.now()
-          const validDeps = deps.filter(d => d.realtimeDepartureTime > now)
+          const validDeps = deps.filter((d) => d.realtimeDepartureTime > now)
 
           let ttl = ms("30s")
           if (validDeps.length === 0) {
@@ -240,9 +243,7 @@ export class MvgService implements FeedProvider {
         const tripId = `${departure.lineId}-${departure.tripCode}-${departure.plannedDepartureTime}`
 
         if (
-          tripStops.some(
-            (ts) => ts.tripId === tripId && ts.stopId === stopId,
-          )
+          tripStops.some((ts) => ts.tripId === tripId && ts.stopId === stopId)
         ) {
           continue
         }
