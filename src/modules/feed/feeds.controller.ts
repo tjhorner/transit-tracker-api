@@ -112,7 +112,7 @@ export class FeedsController {
             return turf.polygon(config.serviceArea)
           }
 
-          const stops = await provider.listStops()
+          const stops = (await provider.listStops?.()) ?? []
           return turf.convex(
             turf.featureCollection(
               stops.map((stop) => turf.point([stop.lon, stop.lat])),
