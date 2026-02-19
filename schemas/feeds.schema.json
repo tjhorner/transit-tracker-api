@@ -70,14 +70,14 @@
                   }
                 },
                 "static": {
-                  "$ref": "#/$defs/HttpRequestOptions",
+                  "$ref": "#/$defs/HttpRequestOptionsOrUrl",
                   "description": "Where to fetch the static GTFS zip file from."
                 },
                 "rtTripUpdates": {
                   "description": "Optional reference to a GTFS-RT Trip Updates feed. Will supply real-time data if available.\n\nMultiple may be specified, in which case their results will be merged.",
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/HttpRequestOptions"
+                      "$ref": "#/$defs/HttpRequestOptionsOrUrl"
                     },
                     {
                       "type": "array",
@@ -258,6 +258,17 @@
         "url"
       ],
       "additionalProperties": false
+    },
+    "HttpRequestOptionsOrUrl": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/HttpRequestOptions"
+        },
+        {
+          "type": "string",
+          "description": "Shorthand for specifying a URL. If a string is provided where an HttpRequestOptions object is expected, it will be interpreted as the URL with no additional headers."
+        }
+      ]
     }
   }
 }
