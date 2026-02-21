@@ -71,7 +71,7 @@ Create a file named `feeds.yaml` with the following contents:
 
 ```yaml
 feeds:
-  kcm:
+  kcm: # <-- BEFORE SYNCING, change this to something short and unique to your feed
     name: King County Metro
     description: King County, Washington
     gtfs:

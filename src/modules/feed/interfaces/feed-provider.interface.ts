@@ -52,7 +52,7 @@ export interface FeedProvider {
 
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>
 
-  listStops(): Promise<Stop[]>
+  listStops?(): Promise<Stop[]>
   getStop(stopId: string): Promise<Stop>
   getRoutesForStop(stopId: string): Promise<StopRoute[]>
   getStopsInArea(bbox: BBox): Promise<Stop[]>

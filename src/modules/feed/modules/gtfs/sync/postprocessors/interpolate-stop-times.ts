@@ -8,9 +8,7 @@ import {
   updateEmptyDepartureTimes,
 } from "../queries/interpolate-empty-stop-times.queries"
 
-export class InterpolateEmptyStopTimesPostProcessor
-  implements SyncPostProcessor
-{
+export class InterpolateEmptyStopTimesPostProcessor implements SyncPostProcessor {
   private readonly logger = new Logger(
     InterpolateEmptyStopTimesPostProcessor.name,
   )

@@ -121,10 +121,6 @@ export class AllFeedsService implements FeedProvider {
     return trips.flat()
   }
 
-  listStops(): Promise<Stop[]> {
-    throw new Error("Method not implemented.")
-  }
-
   async getStop(stopId: string): Promise<Stop> {
     const {
       feedCode,

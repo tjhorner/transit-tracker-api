@@ -32,6 +32,12 @@ export class SmokeTestCommand extends CommandRunner {
     }
 
     try {
+      if (!provider.listStops) {
+        throw new Error(
+          `Provider for feed ${feedCode} does not implement listStops, cannot run smoke test`,
+        )
+      }
+
       const stops = await provider.listStops()
       this.logger.log(`Retrieved ${stops.length} stops for feed: ${feedCode}`)
 

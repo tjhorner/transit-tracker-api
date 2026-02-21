@@ -9,7 +9,7 @@ import { REQUEST } from "@nestjs/core"
 import { IDatabaseConnection } from "@pgtyped/runtime"
 import { Pool, PoolClient } from "pg"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
-import { PG_POOL } from "./gtfs.module"
+import { PG_POOL } from "./const"
 
 export const GTFS_TABLES = [
   "frequencies",

@@ -70,14 +70,14 @@
                   }
                 },
                 "static": {
-                  "$ref": "#/$defs/HttpRequestOptions",
+                  "$ref": "#/$defs/HttpRequestOptionsOrUrl",
                   "description": "Where to fetch the static GTFS zip file from."
                 },
                 "rtTripUpdates": {
                   "description": "Optional reference to a GTFS-RT Trip Updates feed. Will supply real-time data if available.\n\nMultiple may be specified, in which case their results will be merged.",
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/HttpRequestOptions"
+                      "$ref": "#/$defs/HttpRequestOptionsOrUrl"
                     },
                     {
                       "type": "array",
@@ -152,6 +152,22 @@
                 "userAgent"
               ],
               "additionalProperties": false
+            },
+            "mvg": {
+              "type": "object",
+              "description": "Configuration parameters for an MVG (Munich Public Transit) feed.",
+              "properties": {
+                "baseUrl": {
+                  "type": "string",
+                  "examples": [
+                    "https://www.mvg.de/api/bgw-pt/v3"
+                  ],
+                  "description": "Base URL to the MVG API. Defaults to https://www.mvg.de/api/bgw-pt/v3",
+                  "format": "uri",
+                  "default": "https://www.mvg.de/api/bgw-pt/v3"
+                }
+              },
+              "additionalProperties": false
             }
           },
           "required": [
@@ -166,7 +182,8 @@
               "not": {
                 "required": [
                   "onebusaway",
-                  "hafas"
+                  "hafas",
+                  "mvg"
                 ]
               }
             },
@@ -177,7 +194,8 @@
               "not": {
                 "required": [
                   "gtfs",
-                  "hafas"
+                  "hafas",
+                  "mvg"
                 ]
               }
             },
@@ -188,7 +206,20 @@
               "not": {
                 "required": [
                   "gtfs",
-                  "onebusaway"
+                  "onebusaway",
+                  "mvg"
+                ]
+              }
+            },
+            {
+              "required": [
+                "mvg"
+              ],
+              "not": {
+                "required": [
+                  "gtfs",
+                  "onebusaway",
+                  "hafas"
                 ]
               }
             }
@@ -227,6 +258,17 @@
         "url"
       ],
       "additionalProperties": false
+    },
+    "HttpRequestOptionsOrUrl": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/HttpRequestOptions"
+        },
+        {
+          "type": "string",
+          "description": "Shorthand for specifying a URL. If a string is provided where an HttpRequestOptions object is expected, it will be interpreted as the URL with no additional headers."
+        }
+      ]
     }
   }
 }

@@ -14,8 +14,10 @@ import type {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
-import { GtfsConfig, GtfsConfigSchema } from "./config"
+import { type GtfsConfig } from "./config"
+import { GTFS_CONFIG } from "./const"
 import { GtfsDbService } from "./gtfs-db.service"
+import { GtfsMetricsService } from "./gtfs-metrics.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { getFeedInfo } from "./queries/get-feed-info.queries"
 import { getStopBounds } from "./queries/get-stop-bounds.queries"
@@ -41,18 +43,19 @@ type ITripUpdate = GtfsRt.ITripUpdate
 export class GtfsService implements FeedProvider {
   private logger = new Logger(GtfsService.name)
   private feedCode: string
-  private config: GtfsConfig
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    @Inject(REQUEST) { feedCode }: FeedContext<GtfsConfig>,
+    @Inject(GTFS_CONFIG) private readonly config: GtfsConfig,
     private readonly cache: FeedCacheService,
     private readonly db: GtfsDbService,
     private readonly syncService: GtfsSyncService,
     private readonly realtimeService: GtfsRealtimeService,
+    private readonly metricsService: GtfsMetricsService,
   ) {
     this.feedCode = feedCode
     this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
-    this.config = GtfsConfigSchema.parse(config)
+    this.metricsService.activate()
   }
 
   async healthCheck(): Promise<void> {

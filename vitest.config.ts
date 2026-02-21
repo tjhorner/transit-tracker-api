@@ -9,12 +9,13 @@ export default defineConfig({
     coverage: {
       include: ["src/**/*.ts"],
     },
-    workspace: [
+    projects: [
       {
         extends: true,
         test: {
           name: "unit",
           include: ["test/unit/**/*.spec.ts"],
+          setupFiles: ["./test/unit/setup.ts"],
         }
       },
       {

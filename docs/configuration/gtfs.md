@@ -10,8 +10,7 @@ feeds:
     name: North County Transit District
     description: San Diego, California
     gtfs:
-      static:
-        url: https://lfportal.nctd.org/staticGTFS/google_transit.zip
+      static: https://lfportal.nctd.org/staticGTFS/google_transit.zip
       # If your transit agency doesn't support GTFS-rt, you can omit this section
       rtTripUpdates:
         url: https://api.goswift.ly/real-time/nctd/gtfs-rt-trip-updates

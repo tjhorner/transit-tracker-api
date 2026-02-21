@@ -8,7 +8,7 @@ import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
 import path from "path"
 import { AppModule } from "src/app.module"
-import { FeedSyncService } from "src/modules/feed/feed-sync.service"
+import { SyncCommand } from "src/commands/sync.command"
 import { TripDto } from "src/schedule/schedule.controller"
 import request from "supertest"
 import { promisify } from "util"
@@ -44,8 +44,13 @@ describe("E2E test", () => {
       "utf-8",
     )
 
-    process.env.PRE_IMPORT_HOOK = `touch ${preImportHookPath}`
-    process.env.POST_IMPORT_HOOK = `touch ${postImportHookPath}`
+    if (process.platform === "win32") {
+      process.env.PRE_IMPORT_HOOK = `type nul > "${preImportHookPath}"`
+      process.env.POST_IMPORT_HOOK = `type nul > "${postImportHookPath}"`
+    } else {
+      process.env.PRE_IMPORT_HOOK = `touch ${preImportHookPath}`
+      process.env.POST_IMPORT_HOOK = `touch ${postImportHookPath}`
+    }
 
     fakeGtfs = await setupFakeGtfsServer()
 
@@ -59,7 +64,7 @@ describe("E2E test", () => {
     app.useWebSocketAdapter(new WsAdapter(app))
     await app.init()
 
-    await app.get(FeedSyncService).syncAllFeeds()
+    await app.get(SyncCommand).run([], {})
   }, ms("2m"))
 
   afterAll(async () => {
@@ -420,6 +425,38 @@ describe("E2E test", () => {
         },
       )
 
+      test("with different arrival and departure time updates", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "STBA",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopId: "STAGECOACH",
+                arrival: {
+                  time: 1199455230,
+                },
+                departure: {
+                  time: 1199455260,
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        const trip = trips.find((trip) => trip.tripId === "testfeed:STBA")
+
+        expect(trip).toBeDefined()
+        expect(trip!.arrivalTime).toBe(1199455230)
+        expect(trip!.departureTime).toBe(1199455260)
+        expect(trip!.isRealtime).toBe(true)
+      })
+
       test.each(["arrival", "departure"])(
         "with %s delay",
         async (arrivalOrDeparture: string) => {
@@ -451,6 +488,38 @@ describe("E2E test", () => {
           expect(trip!.isRealtime).toBe(true)
         },
       )
+
+      test("with different arrival and departure delays", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "STBA",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopId: "STAGECOACH",
+                arrival: {
+                  delay: 30,
+                },
+                departure: {
+                  delay: 60,
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        const trip = trips.find((trip) => trip.tripId === "testfeed:STBA")
+
+        expect(trip).toBeDefined()
+        expect(trip!.arrivalTime).toBe(1199455230) // + 30
+        expect(trip!.departureTime).toBe(1199455260) // + 60
+        expect(trip!.isRealtime).toBe(true)
+      })
 
       test("with cancelled trip", async () => {
         fakeGtfs.setTripUpdates([
@@ -595,6 +664,137 @@ describe("E2E test", () => {
         expect(trips.some((trip) => trip.tripId === "testfeed:AAMV3")).toBe(
           true,
         )
+      })
+
+      // Tests for fallback delay from previous stop updates
+      test("with fallback delay from previous stop", async () => {
+        const delaySeconds = 120
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "CITY1",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopSequence: 0,
+                arrival: {
+                  delay: delaySeconds,
+                },
+              },
+              // No update for stopSequence: 2, should use fallback
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
+        const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
+        expect(trip).toBeDefined()
+
+        // Should use the 120s delay from previous stop
+        const scheduledTimeArrivalTime = 1199455920
+        const scheduledDepartureTime = 1199456040
+        expect(trip!.arrivalTime).toBe(scheduledTimeArrivalTime + delaySeconds)
+        expect(trip!.departureTime).toBe(scheduledDepartureTime + delaySeconds)
+        expect(trip!.isRealtime).toBe(true)
+      })
+
+      test("with fallback delay when multiple previous stops exist", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "CITY1",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopSequence: 1,
+                arrival: {
+                  delay: 60,
+                },
+              },
+              {
+                stopSequence: 2,
+                arrival: {
+                  delay: 90, // More recent delay
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
+        const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
+        expect(trip).toBeDefined()
+
+        // Should use the 90s delay from stop sequence 2
+        const scheduledTimeArrivalTime = 1199455920
+        const scheduledDepartureTime = 1199456040
+        expect(trip!.arrivalTime).toBe(scheduledTimeArrivalTime + 90)
+        expect(trip!.departureTime).toBe(scheduledDepartureTime + 90)
+        expect(trip!.isRealtime).toBe(true)
+      })
+
+      test("without fallback when no previous stop updates exist", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "CITY1",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopSequence: 4, // Update for a LATER stop (DADAN)
+                arrival: {
+                  delay: 120,
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
+        const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
+        expect(trip).toBeDefined()
+
+        // Should use scheduled time (1199455920) because update is for a later stop
+        expect(trip!.arrivalTime).toBe(1199455920)
+        expect(trip!.isRealtime).toBe(false)
+      })
+
+      test("with fallback delay respects 90m deviation limit", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "CITY1",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopSequence: 1, // Update for an EARLIER stop (STAGECOACH)
+                arrival: {
+                  delay: 6000, // 100 minutes delay - exceeds 90m limit
+                },
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
+        const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
+        expect(trip).toBeDefined()
+
+        // Should fall back to scheduled time due to excessive deviation (> 90m)
+        expect(trip!.arrivalTime).toBe(1199455920)
+        expect(trip!.isRealtime).toBe(false)
       })
     })
   })

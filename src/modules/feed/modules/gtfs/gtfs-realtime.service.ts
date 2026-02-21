@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from "@nestjs/common"
+import { Inject, Injectable, Logger, Scope } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { Counter } from "@opentelemetry/api"
 import axios from "axios"
@@ -8,28 +8,28 @@ import ms, { StringValue } from "ms"
 import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
-import { FetchConfig, GtfsConfig } from "./config"
+import type { FetchConfig, GtfsConfig } from "./config"
+import { GTFS_CONFIG } from "./const"
 import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-route.queries"
 
 type ITripUpdate = GtfsRt.ITripUpdate
 type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class GtfsRealtimeService {
   private readonly feedCode: string
-  private readonly config: GtfsConfig
   private readonly logger: Logger
   private readonly requestsCounter: Counter
   private readonly failuresCounter: Counter
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    @Inject(REQUEST) { feedCode }: FeedContext<GtfsConfig>,
+    @Inject(GTFS_CONFIG) private readonly config: GtfsConfig,
     private readonly cache: FeedCacheService,
     metricService: MetricService,
   ) {
     this.feedCode = feedCode
     this.logger = new Logger(`${GtfsRealtimeService.name}[${feedCode}]`)
-    this.config = config
 
     this.requestsCounter = metricService.getCounter("gtfs_realtime_requests", {
       description: "Number of GTFS-RT fetch requests",
@@ -149,19 +149,19 @@ export class GtfsRealtimeService {
     const scheduledArrivalTime = new Date(trip.arrival_time)
     const scheduledDepartureTime = new Date(trip.departure_time)
 
-    let delay = 0
+    let inferredDelay = 0
     if (stopTimeUpdate) {
-      const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
-      const hasOnlyOneUpdate =
-        !stopTimeUpdate.arrival || !stopTimeUpdate.departure
+      const definedDelay =
+        stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
 
-      if (hasAnyUpdate && hasOnlyOneUpdate) {
-        const definedDelay =
-          stopTimeUpdate.arrival?.delay ?? stopTimeUpdate.departure?.delay
+      if (typeof definedDelay === "number") {
+        inferredDelay = definedDelay
+      } else {
+        const hasAnyUpdate = stopTimeUpdate.arrival || stopTimeUpdate.departure
+        const hasOnlyOneUpdate =
+          !stopTimeUpdate.arrival || !stopTimeUpdate.departure
 
-        if (definedDelay) {
-          delay = definedDelay
-        } else {
+        if (hasAnyUpdate && hasOnlyOneUpdate) {
           // Infer delay from difference between schedule and update
           for (const key of ["arrival", "departure"] as const) {
             const time = stopTimeUpdate[key]?.time
@@ -169,7 +169,8 @@ export class GtfsRealtimeService {
               continue
             }
 
-            delay = time - new Date(trip[`${key}_time`]).getTime() / 1000
+            inferredDelay =
+              time - new Date(trip[`${key}_time`]).getTime() / 1000
           }
         }
       }
@@ -177,11 +178,17 @@ export class GtfsRealtimeService {
 
     const departureTime = stopTimeUpdate?.departure?.time
       ? new Date((stopTimeUpdate.departure?.time as number) * 1000)
-      : new Date(scheduledDepartureTime.getTime() + delay * 1000)
+      : new Date(
+          scheduledDepartureTime.getTime() +
+            (stopTimeUpdate?.departure?.delay ?? inferredDelay) * 1000,
+        )
 
     const arrivalTime = stopTimeUpdate?.arrival?.time
       ? new Date((stopTimeUpdate.arrival?.time as number) * 1000)
-      : new Date(scheduledArrivalTime.getTime() + delay * 1000)
+      : new Date(
+          scheduledArrivalTime.getTime() +
+            (stopTimeUpdate?.arrival?.delay ?? inferredDelay) * 1000,
+        )
 
     if (arrivalTime > departureTime) {
       departureTime.setTime(arrivalTime.getTime())
@@ -242,11 +249,36 @@ export class GtfsRealtimeService {
       )
     })
 
-    const stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
+    let stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
       (update) =>
         update.stopSequence === trip.stop_sequence ||
         update.stopId === trip.stop_id,
     )
+
+    // If no exact match, find the latest stop update before our stop as fallback
+    if (!stopTimeUpdate && tripUpdate?.stopTimeUpdate) {
+      const previousStopUpdates = tripUpdate.stopTimeUpdate
+        .filter(
+          (update) =>
+            typeof update.stopSequence === "number" &&
+            update.stopSequence < trip.stop_sequence,
+        )
+        .sort((a, b) => b.stopSequence! - a.stopSequence!)
+
+      if (previousStopUpdates.length > 0) {
+        const latestUpdate = previousStopUpdates[0]
+
+        // Synthesize stop time update with only delay
+        stopTimeUpdate = {
+          departure: {
+            delay: latestUpdate.departure?.delay,
+          },
+          arrival: {
+            delay: latestUpdate.arrival?.delay,
+          },
+        }
+      }
+    }
 
     return { tripUpdate, stopTimeUpdate }
   }
