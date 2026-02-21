@@ -370,7 +370,7 @@ export class GtfsService implements FeedProvider {
           stopName: staticTrip.stop_name ?? "Unnamed Stop",
           arrivalTime,
           departureTime,
-          vehicle,
+          vehicle: isRealtime ? vehicle : null,
           isRealtime,
         })
       })
