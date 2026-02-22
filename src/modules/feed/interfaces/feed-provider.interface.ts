@@ -15,6 +15,7 @@ export interface TripStop {
   headsign: string
   arrivalTime: Date
   departureTime: Date
+  vehicle: string | null
   isRealtime: boolean
 }
 

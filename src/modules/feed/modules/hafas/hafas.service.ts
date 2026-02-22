@@ -144,6 +144,7 @@ export class HafasService implements FeedProvider {
               "Unknown",
             arrivalTime: new Date(when),
             departureTime: new Date(when),
+            vehicle: null, // Hafas does not appear to provide vehicle IDs
             isRealtime,
           })
         }

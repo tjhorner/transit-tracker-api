@@ -243,6 +243,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "5097",
+              label: "411"
+            }
           },
           {
             trip: {
@@ -259,6 +263,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "5277",
+              label: "420"
+            }
           },
         ])
 
@@ -270,9 +278,11 @@ describe("E2E test", () => {
         expect(updatedTrips).toHaveLength(2)
 
         expect(updatedTrips[0].arrivalTime).toBe(1199455200)
+        expect(updatedTrips[0].vehicle).toBe("411")
         expect(updatedTrips[0].isRealtime).toBe(true)
 
         expect(updatedTrips[1].arrivalTime).toBe(1199541600)
+        expect(updatedTrips[1].vehicle).toBe("420")
         expect(updatedTrips[1].isRealtime).toBe(true)
       })
 
@@ -292,6 +302,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "5097",
+              label: "411"
+            }
           },
         ])
 
@@ -303,9 +317,11 @@ describe("E2E test", () => {
         expect(updatedTrips).toHaveLength(2)
 
         expect(updatedTrips[0].arrivalTime).toBe(1199455200)
+        expect(updatedTrips[0].vehicle).toBe("411")
         expect(updatedTrips[0].isRealtime).toBe(true)
 
         expect(updatedTrips[1].arrivalTime).toBe(1199541600)
+        expect(updatedTrips[1].vehicle).toBeNull()
         expect(updatedTrips[1].isRealtime).toBe(false)
       })
 
@@ -412,6 +428,10 @@ describe("E2E test", () => {
                   },
                 },
               ],
+              vehicle: {
+                id: "5097",
+                label: "411"
+              }
             },
           ])
 
@@ -421,6 +441,7 @@ describe("E2E test", () => {
           expect(trip).toBeDefined()
           expect(trip!.arrivalTime).toBe(1199455230)
           expect(trip!.departureTime).toBe(1199455230)
+          expect(trip!.vehicle).toBe("411")
           expect(trip!.isRealtime).toBe(true)
         },
       )
@@ -445,6 +466,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "5097",
+              label: "411"
+            }
           },
         ])
 
@@ -454,6 +479,7 @@ describe("E2E test", () => {
         expect(trip).toBeDefined()
         expect(trip!.arrivalTime).toBe(1199455230)
         expect(trip!.departureTime).toBe(1199455260)
+        expect(trip!.vehicle).toBe("411")
         expect(trip!.isRealtime).toBe(true)
       })
 
@@ -476,6 +502,10 @@ describe("E2E test", () => {
                   },
                 },
               ],
+              vehicle: {
+                id: "5097",
+                label: "411"
+              }
             },
           ])
 
@@ -485,6 +515,7 @@ describe("E2E test", () => {
           expect(trip).toBeDefined()
           expect(trip!.arrivalTime).toBe(1199455230)
           expect(trip!.departureTime).toBe(1199455230)
+          expect(trip!.vehicle).toBe("411")
           expect(trip!.isRealtime).toBe(true)
         },
       )
@@ -509,6 +540,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "5097",
+              label: "411"
+            }
           },
         ])
 
@@ -518,6 +553,7 @@ describe("E2E test", () => {
         expect(trip).toBeDefined()
         expect(trip!.arrivalTime).toBe(1199455230) // + 30
         expect(trip!.departureTime).toBe(1199455260) // + 60
+        expect(trip!.vehicle).toBe("411")
         expect(trip!.isRealtime).toBe(true)
       })
 
@@ -686,6 +722,10 @@ describe("E2E test", () => {
               },
               // No update for stopSequence: 2, should use fallback
             ],
+            vehicle: {
+              id: "53967",
+              label: "1594"
+            }
           },
         ])
 
@@ -698,6 +738,7 @@ describe("E2E test", () => {
         const scheduledDepartureTime = 1199456040
         expect(trip!.arrivalTime).toBe(scheduledTimeArrivalTime + delaySeconds)
         expect(trip!.departureTime).toBe(scheduledDepartureTime + delaySeconds)
+        expect(trip!.vehicle).toBe("1594")
         expect(trip!.isRealtime).toBe(true)
       })
 
@@ -724,6 +765,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "53967",
+              label: "1594"
+            }
           },
         ])
 
@@ -736,6 +781,7 @@ describe("E2E test", () => {
         const scheduledDepartureTime = 1199456040
         expect(trip!.arrivalTime).toBe(scheduledTimeArrivalTime + 90)
         expect(trip!.departureTime).toBe(scheduledDepartureTime + 90)
+        expect(trip!.vehicle).toBe("1594")
         expect(trip!.isRealtime).toBe(true)
       })
 
@@ -756,6 +802,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "53967",
+              label: "1594"
+            }
           },
         ])
 
@@ -765,6 +815,7 @@ describe("E2E test", () => {
 
         // Should use scheduled time (1199455920) because update is for a later stop
         expect(trip!.arrivalTime).toBe(1199455920)
+        expect(trip!.vehicle).toBeNull()
         expect(trip!.isRealtime).toBe(false)
       })
 
@@ -785,6 +836,10 @@ describe("E2E test", () => {
                 },
               },
             ],
+            vehicle: {
+              id: "53967",
+              label: "1594"
+            }
           },
         ])
 
@@ -794,6 +849,7 @@ describe("E2E test", () => {
 
         // Should fall back to scheduled time due to excessive deviation (> 90m)
         expect(trip!.arrivalTime).toBe(1199455920)
+        expect(trip!.vehicle).toBeNull()
         expect(trip!.isRealtime).toBe(false)
       })
     })
