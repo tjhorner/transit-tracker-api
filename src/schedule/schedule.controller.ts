@@ -68,6 +68,14 @@ export class TripDto {
 
   @ApiProperty({
     required: true,
+    nullable: true,
+    description: "The direction ID for the trip, if available",
+    example: "0",
+  })
+  directionId!: string | null
+
+  @ApiProperty({
+    required: true,
     description: "The arrival time of the trip at the stop in Unix time",
     example: 1619029200,
   })

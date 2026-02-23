@@ -48,6 +48,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199455200,
     "departureTime": 1199455200,
+    "directionId": null,
     "headsign": "Shuttle",
     "isRealtime": false,
     "routeColor": null,
@@ -60,6 +61,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199521800,
     "departureTime": 1199521800,
+    "directionId": null,
     "headsign": "Shuttle Overnight",
     "isRealtime": false,
     "routeColor": null,
@@ -72,6 +74,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199541600,
     "departureTime": 1199541600,
+    "directionId": null,
     "headsign": "Shuttle",
     "isRealtime": false,
     "routeColor": null,
@@ -84,6 +87,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199548800,
     "departureTime": 1199548800,
+    "directionId": "0",
     "headsign": "to Amargosa Valley",
     "isRealtime": false,
     "routeColor": null,
@@ -96,6 +100,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199559600,
     "departureTime": 1199559600,
+    "directionId": "1",
     "headsign": "to Airport",
     "isRealtime": false,
     "routeColor": null,
@@ -108,6 +113,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199566800,
     "departureTime": 1199566800,
+    "directionId": "0",
     "headsign": "to Amargosa Valley",
     "isRealtime": false,
     "routeColor": null,
@@ -120,6 +126,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199577600,
     "departureTime": 1199577600,
+    "directionId": "1",
     "headsign": "to Airport",
     "isRealtime": false,
     "routeColor": null,
@@ -132,6 +139,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
   {
     "arrivalTime": 1199608200,
     "departureTime": 1199608200,
+    "directionId": null,
     "headsign": "Shuttle Overnight",
     "isRealtime": false,
     "routeColor": null,
@@ -149,6 +157,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with service exception in st
   {
     "arrivalTime": 1181048400,
     "departureTime": 1181048400,
+    "directionId": null,
     "headsign": "Shuttle",
     "isRealtime": false,
     "routeColor": null,
@@ -161,6 +170,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with service exception in st
   {
     "arrivalTime": 1181115000,
     "departureTime": 1181115000,
+    "directionId": null,
     "headsign": "Shuttle Overnight",
     "isRealtime": false,
     "routeColor": null,
@@ -178,6 +188,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199455200,
     "departureTime": 1199455200,
+    "directionId": null,
     "headsign": "Shuttle",
     "isRealtime": false,
     "routeColor": null,
@@ -190,6 +201,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199521800,
     "departureTime": 1199521800,
+    "directionId": null,
     "headsign": "Shuttle Overnight",
     "isRealtime": false,
     "routeColor": null,
@@ -202,6 +214,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199541600,
     "departureTime": 1199541600,
+    "directionId": null,
     "headsign": "Shuttle",
     "isRealtime": false,
     "routeColor": null,
@@ -214,6 +227,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199548800,
     "departureTime": 1199548800,
+    "directionId": "0",
     "headsign": "to Amargosa Valley",
     "isRealtime": false,
     "routeColor": null,
@@ -226,6 +240,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199559600,
     "departureTime": 1199559600,
+    "directionId": "1",
     "headsign": "to Airport",
     "isRealtime": false,
     "routeColor": null,
@@ -238,6 +253,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199566800,
     "departureTime": 1199566800,
+    "directionId": "0",
     "headsign": "to Amargosa Valley",
     "isRealtime": false,
     "routeColor": null,
@@ -250,6 +266,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199577600,
     "departureTime": 1199577600,
+    "directionId": "1",
     "headsign": "to Airport",
     "isRealtime": false,
     "routeColor": null,
@@ -262,6 +279,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
   {
     "arrivalTime": 1199608200,
     "departureTime": 1199608200,
+    "directionId": null,
     "headsign": "Shuttle Overnight",
     "isRealtime": false,
     "routeColor": null,

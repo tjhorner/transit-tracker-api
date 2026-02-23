@@ -137,6 +137,7 @@ export class HafasService implements FeedProvider {
             routeName: trip.line?.name ?? "Unnamed Route",
             routeColor: null,
             stopName: trip.stop?.name ?? "Unnamed Stop",
+            directionId: trip.direction ?? null,
             headsign:
               trip.direction ??
               trip.destination?.name ??

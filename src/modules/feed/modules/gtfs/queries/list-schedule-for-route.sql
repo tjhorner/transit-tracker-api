@@ -51,7 +51,7 @@ final_active_services AS (
 ),
 route_trips AS (
     -- Fetch trips for the specific route and active services
-    SELECT t.trip_id, t.trip_headsign, r.route_short_name, r.route_long_name, r.route_id
+    SELECT t.trip_id, t.trip_headsign, t.direction_id, r.route_short_name, r.route_long_name, r.route_id
     FROM "trips" t
     JOIN "routes" r ON t.route_id = r.route_id
     WHERE t.route_id = :routeId!
@@ -80,6 +80,7 @@ SELECT
     st.trip_id,
     st.stop_id,
     st.stop_sequence,
+    rt.direction_id::text,
     rt.route_id,
     CASE
         WHEN coalesce(TRIM(rt.route_short_name), '') = '' THEN rt.route_long_name

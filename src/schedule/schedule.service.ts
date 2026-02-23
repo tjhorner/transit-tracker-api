@@ -28,6 +28,7 @@ export interface ScheduleTrip {
   stopId: string
   stopName: string
   headsign: string
+  directionId: string | null
   arrivalTime: number
   departureTime: number
   isRealtime: boolean
@@ -91,7 +92,8 @@ export class ScheduleService {
       .sort((a, b) => a[sortKey] - b[sortKey])
 
     if (listMode === "nextPerRoute") {
-      const pairKey = (trip: ScheduleTrip) => `${trip.routeId}-${trip.stopId}`
+      const pairKey = (trip: ScheduleTrip) =>
+        `${trip.routeId}-${trip.directionId}`
 
       const pairs = new Set<string>(trips.map((trip) => pairKey(trip)))
 

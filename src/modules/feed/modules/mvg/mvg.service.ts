@@ -256,6 +256,7 @@ export class MvgService implements FeedProvider {
           routeName: departure.label,
           routeColor: null,
           stopName: stop.name,
+          directionId: null,
           headsign: departure.destination,
           arrivalTime: departureTime,
           departureTime: departureTime,

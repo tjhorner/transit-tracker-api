@@ -13,6 +13,7 @@ export interface TripStop {
   routeColor: string | null
   stopName: string
   headsign: string
+  directionId: string | null
   arrivalTime: Date
   departureTime: Date
   isRealtime: boolean

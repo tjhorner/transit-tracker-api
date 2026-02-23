@@ -166,6 +166,7 @@ describe("ScheduleService", () => {
         feedCode: "testFeed",
         routes: [
           { routeId: "route1", stopId: "stop1", offset: 0 },
+          { routeId: "route1", stopId: "stop2", offset: 0 },
           { routeId: "route2", stopId: "stop2", offset: 0 },
           { routeId: "route2", stopId: "stop3", offset: 0 },
         ],
@@ -174,9 +175,10 @@ describe("ScheduleService", () => {
       }
 
       const mockTripStops = [
-        ...makeMockTripStops("route1", "stop1", 2),
-        ...makeMockTripStops("route2", "stop2", 2),
-        ...makeMockTripStops("route2", "stop3", 2),
+        ...makeMockTripStops("route1", "stop1", 2, "0"),
+        ...makeMockTripStops("route1", "stop2", 2, "0"),
+        ...makeMockTripStops("route2", "stop2", 2, "0"),
+        ...makeMockTripStops("route2", "stop3", 2, "1"),
       ]
 
       mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
@@ -438,6 +440,7 @@ describe("ScheduleService", () => {
     routeId: string,
     stopId: string,
     length: number,
+    directionId: string | null = null,
   ): TripStop[] {
     return Array.from({ length }, (_, i) => ({
       tripId: randomUUID(),
@@ -447,6 +450,7 @@ describe("ScheduleService", () => {
       routeColor: "#FFFFFF",
       stopName: `Stop ${stopId}`,
       headsign: `Headsign ${i}`,
+      directionId,
       arrivalTime: new Date(Date.now() + (i + 1) * 60000),
       departureTime: new Date(Date.now() + (i + 2) * 60000),
       isRealtime: false,

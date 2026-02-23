@@ -407,15 +407,6 @@ export class OneBusAwayService implements FeedProvider {
           continue
         }
 
-        const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
-          (s) => s.id === stopId,
-        )
-
-        const staticRoute =
-          arrivalsAndDeparturesResp.data.references.routes.find(
-            (r) => r.id === ad.routeId,
-          )
-
         const departureTime =
           ad.predicted && ad.predictedDepartureTime
             ? new Date(ad.predictedDepartureTime)
@@ -430,11 +421,25 @@ export class OneBusAwayService implements FeedProvider {
             ? new Date(ad.predictedArrivalTime)
             : new Date(ad.scheduledArrivalTime)
 
+        const staticTrip = arrivalsAndDeparturesResp.data.references.trips.find(
+          (t) => t.id === ad.tripId,
+        )
+
+        const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
+          (s) => s.id === stopId,
+        )
+
+        const staticRoute =
+          arrivalsAndDeparturesResp.data.references.routes.find(
+            (r) => r.id === ad.routeId,
+          )
+
         const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
 
         tripStops.push({
           tripId: ad.tripId,
           stopId,
+          directionId: staticTrip?.directionId ?? null,
           routeId: ad.routeId,
           routeName: ad.routeShortName ?? "Unnamed Route",
           routeColor: color?.trim() !== "" ? color : null,

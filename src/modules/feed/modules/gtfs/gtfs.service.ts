@@ -361,6 +361,7 @@ export class GtfsService implements FeedProvider {
           stopId: staticTrip.stop_id,
           routeName: staticTrip.route_name ?? "Unnamed Route",
           routeColor: staticTrip.route_color?.replaceAll("#", "") ?? null,
+          directionId: staticTrip.direction_id,
           headsign: staticTrip.stop_headsign
             ? this.removeRouteNameFromHeadsign(
                 staticTrip.route_name,
