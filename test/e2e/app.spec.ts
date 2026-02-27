@@ -188,6 +188,36 @@ describe("E2E test", () => {
       expect(new Date(trips[0].arrivalTime * 1000).getUTCDate()).toBe(5)
     })
 
+    test("with daylight saving time ending on service day", async () => {
+      const targetSchedule = "testfeed:STBA,testfeed:STAGECOACH"
+
+      dateSpy.mockImplementation(() =>
+        new Date("2007-11-03T12:30:00Z").getTime(),
+      )
+
+      const tripsBeforeDstEnds = await getTripSchedule(targetSchedule)
+
+      dateSpy.mockImplementation(() =>
+        new Date("2007-11-04T13:30:00Z").getTime(),
+      )
+
+      const tripsAfterDstEnds = await getTripSchedule(targetSchedule)
+
+      expect(tripsBeforeDstEnds[0].tripId).toBe(tripsAfterDstEnds[0].tripId)
+
+      const arrivalBeforeDstEnds = new Date(
+        tripsBeforeDstEnds[0].arrivalTime * 1000,
+      )
+      const arrivalAfterDstEnds = new Date(
+        tripsAfterDstEnds[0].arrivalTime * 1000,
+      )
+
+      // Local time switches from GMT-7 to GMT-8, UTC time of arrival should be 1 hour later
+      expect(
+        arrivalAfterDstEnds.getUTCHours() - arrivalBeforeDstEnds.getUTCHours(),
+      ).toBe(1)
+    })
+
     test("with interpolated stop_times", async () => {
       const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
 
