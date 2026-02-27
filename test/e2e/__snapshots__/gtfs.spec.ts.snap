@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`E2E test > GET /feeds/service-areas 1`] = `
+exports[`GTFS E2E test > GET /feeds/service-areas 1`] = `
 {
   "features": [
     {
@@ -43,7 +43,7 @@ exports[`E2E test > GET /feeds/service-areas 1`] = `
 }
 `;
 
-exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls back to static schedule if GTFS-RT fails 1`] = `
+exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls back to static schedule if GTFS-RT fails 1`] = `
 [
   {
     "arrivalTime": 1199455200,
@@ -152,7 +152,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with GTFS-RT updates > falls
 ]
 `;
 
-exports[`E2E test > GET /schedule/:routeStopPairs > with service exception in static schedule 1`] = `
+exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with service exception in static schedule 1`] = `
 [
   {
     "arrivalTime": 1181048400,
@@ -183,7 +183,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with service exception in st
 ]
 `;
 
-exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
+exports[`GTFS E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
 [
   {
     "arrivalTime": 1199455200,
@@ -292,7 +292,7 @@ exports[`E2E test > GET /schedule/:routeStopPairs > with static schedule 1`] = `
 ]
 `;
 
-exports[`E2E test > GET /stops/:id/routes 1`] = `
+exports[`GTFS E2E test > GET /stops/:id/routes 1`] = `
 [
   {
     "color": null,
@@ -306,7 +306,7 @@ exports[`E2E test > GET /stops/:id/routes 1`] = `
 ]
 `;
 
-exports[`E2E test > GET /stops/within/:bbox 1`] = `
+exports[`GTFS E2E test > GET /stops/within/:bbox 1`] = `
 [
   {
     "lat": 36.914894,

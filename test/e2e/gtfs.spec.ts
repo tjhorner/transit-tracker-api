@@ -21,7 +21,7 @@ const testTmpDir = path.join(__dirname, "tmp", `test-${Date.now()}`)
 const preImportHookPath = path.join(testTmpDir, "pre-import-hook.txt")
 const postImportHookPath = path.join(testTmpDir, "post-import-hook.txt")
 
-describe("E2E test", () => {
+describe("GTFS E2E test", () => {
   let postgresContainer: StartedPostgreSqlContainer
   let redisContainer: StartedRedisContainer
   let fakeGtfs: Awaited<ReturnType<typeof setupFakeGtfsServer>>
