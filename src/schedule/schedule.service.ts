@@ -32,6 +32,7 @@ export interface ScheduleTrip {
   arrivalTime: number
   departureTime: number
   isRealtime: boolean
+  remainingTrips?: number  // Number of trips remaining after this one for the same route/stop today
 }
 
 export interface ScheduleUpdate {
@@ -90,6 +91,20 @@ export class ScheduleService {
       })
       .filter((trip) => trip[sortKey] > Date.now() / 1000)
       .sort((a, b) => a[sortKey] - b[sortKey])
+
+    // Calculate remaining trips for each route/stop combination
+    // This counts how many trips come after the current one for the same route and stop
+    trips = trips.map((trip, index) => {
+      const remainingTrips = trips.slice(index + 1).filter(
+        (laterTrip) =>
+          laterTrip.routeId === trip.routeId && laterTrip.stopId === trip.stopId
+      ).length
+
+      return {
+        ...trip,
+        remainingTrips,
+      }
+    })
 
     if (listMode === "nextPerRoute") {
       const pairKey = (trip: ScheduleTrip) =>
