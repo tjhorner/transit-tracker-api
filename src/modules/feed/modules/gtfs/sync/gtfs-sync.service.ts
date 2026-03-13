@@ -15,6 +15,7 @@ import type {
 import type { GtfsConfig } from "../config"
 import { GTFS_CONFIG } from "../const"
 import { GTFS_TABLES, GtfsDbService } from "../gtfs-db.service"
+import { GtfsValidatorService } from "./gtfs-validator.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
 import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
@@ -32,6 +33,7 @@ export class GtfsSyncService {
     @Inject(REQUEST) { feedCode }: FeedContext<GtfsConfig>,
     @Inject(GTFS_CONFIG) private readonly config: GtfsConfig,
     private readonly webResourceService: WebResourceService,
+    private readonly gtfsValidatorService: GtfsValidatorService,
     private readonly zipFileService: ZipFileService,
     private readonly db: GtfsDbService,
   ) {
@@ -111,6 +113,8 @@ export class GtfsSyncService {
       }
     }
 
+    const directory = path.join(tmpdir(), "gtfs-import")
+
     try {
       const resourceMetadata =
         await this.webResourceService.getResourceMetadata(
@@ -130,8 +134,6 @@ export class GtfsSyncService {
         }
       }
 
-      const directory = path.join(tmpdir(), "gtfs-import")
-
       if (fs.existsSync(directory)) {
         await rimraf(directory)
       }
@@ -149,6 +151,16 @@ export class GtfsSyncService {
 
       await this.createPartitions()
 
+      const validationResult =
+        await this.gtfsValidatorService.validateFeed(zipDirectory)
+
+      if (!validationResult.isValid) {
+        this.logger.warn(
+          `GTFS feed validation failed with errors: ${validationResult.errors.join(", ").trim()}`,
+        )
+        return
+      }
+
       this.logger.log("Importing GTFS feed")
       await this.importFromDirectory(zipDirectory)
 
@@ -164,11 +176,11 @@ export class GtfsSyncService {
       )
 
       await this.runPostProcessors()
+    } finally {
+      await this.releaseSyncLock()
 
       this.logger.log("Cleaning up")
       await rimraf(directory)
-    } finally {
-      await this.releaseSyncLock()
     }
   }
 

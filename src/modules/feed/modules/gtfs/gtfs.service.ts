@@ -86,22 +86,31 @@ export class GtfsService implements FeedProvider {
     await this.syncService.import(opts)
   }
 
-  async getLastSync(): Promise<Date> {
-    return new Date(
-      await this.cache.cached(
-        "lastSync",
-        async () => {
-          const [metadata] = await getImportMetadata.run(
-            {
-              feedCode: this.feedCode,
-            },
-            this.db,
-          )
-          return metadata.imported_at
-        },
-        ms("5m"),
-      ),
+  async getLastSync(): Promise<Date | null> {
+    const importedAt = await this.cache.cached(
+      "lastSync",
+      async () => {
+        const [metadata] = await getImportMetadata.run(
+          {
+            feedCode: this.feedCode,
+          },
+          this.db,
+        )
+
+        if (!metadata) {
+          return null
+        }
+
+        return metadata.imported_at
+      },
+      ms("5m"),
     )
+
+    if (!importedAt) {
+      return null
+    }
+
+    return new Date(importedAt)
   }
 
   async getMetadata(): Promise<Record<string, any>> {

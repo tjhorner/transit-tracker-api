@@ -10,6 +10,7 @@ import { GtfsMetricsService } from "./gtfs-metrics.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
 import { GtfsService } from "./gtfs.service"
 import { GtfsSyncService } from "./sync/gtfs-sync.service"
+import { GtfsValidatorService } from "./sync/gtfs-validator.service"
 import { WebResourceService } from "./sync/web-resource.service"
 import { ZipFileService } from "./sync/zip-file.service"
 
@@ -21,6 +22,7 @@ import { ZipFileService } from "./sync/zip-file.service"
     GtfsService,
     GtfsDbService,
     GtfsRealtimeService,
+    GtfsValidatorService,
     GtfsSyncService,
     GtfsMetricsService,
     {

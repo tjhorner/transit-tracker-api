@@ -9,6 +9,7 @@ import ms from "ms"
 import path from "path"
 import { AppModule } from "src/app.module"
 import { SyncCommand } from "src/commands/sync.command"
+import { FeedService } from "src/modules/feed/feed.service"
 import { TripDto } from "src/schedule/schedule.controller"
 import request from "supertest"
 import { promisify } from "util"
@@ -93,13 +94,21 @@ describe("GTFS E2E test", () => {
     expect(postImportHookExists).toBe(true)
   })
 
+  test("does not sync feeds with service dates in the future", async () => {
+    const provider = app.get(FeedService).getFeedProvider("farfuturefeed")
+    expect(provider).toBeDefined()
+
+    const lastSync = await provider!.getLastSync?.()
+    expect(lastSync).toBeNull()
+  })
+
   test("GET /feeds", async () => {
     const response = await request(app.getHttpServer())
       .get("/feeds")
       .expect("Content-Type", /json/)
       .expect(200)
 
-    expect(response.body).toHaveLength(2)
+    expect(response.body).toHaveLength(3)
 
     const feed = response.body.find((f: any) => f.code === "testfeed")
 

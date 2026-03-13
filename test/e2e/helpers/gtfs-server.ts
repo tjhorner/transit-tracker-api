@@ -22,22 +22,13 @@ export async function setupFakeGtfsServer() {
   let currentTripUpdates: GtfsRt.ITripUpdate[] = []
   let simulateTripUpdatesFailure = false
 
-  gtfsServerApp.get("/feed.zip", (_, res) => {
-    res.setHeader("Content-Type", "application/zip")
-
-    const archive = archiver("zip")
-    archive.pipe(res)
-    archive.directory(path.join(__dirname, "..", "fixtures", "gtfs-feed"), "/")
-    archive.finalize()
-  })
-
-  gtfsServerApp.get("/feed-2.zip", (_, res) => {
+  gtfsServerApp.get("/feeds/:feedName.zip", (req, res) => {
     res.setHeader("Content-Type", "application/zip")
 
     const archive = archiver("zip")
     archive.pipe(res)
     archive.directory(
-      path.join(__dirname, "..", "fixtures", "gtfs-feed-2"),
+      path.join(__dirname, "..", "fixtures", "feeds", req.params.feedName),
       "/",
     )
     archive.finalize()

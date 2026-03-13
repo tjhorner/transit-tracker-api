@@ -4,7 +4,7 @@ feeds:
     description: Test Feed Description
     gtfs:
       static:
-        url: http://127.0.0.1:3123/feed.zip
+        url: http://127.0.0.1:3123/feeds/gtfs-feed.zip
         headers:
           Authorization: fake-auth
       rtTripUpdates:
@@ -16,6 +16,14 @@ feeds:
     description: Test Feed 2 Description
     gtfs:
       static:
-        url: http://127.0.0.1:3123/feed-2.zip
+        url: http://127.0.0.1:3123/feeds/gtfs-feed-2.zip
+        headers:
+          Authorization: fake-auth
+  farfuturefeed:
+    name: Far Future Feed
+    description: A feed with service dates far in the future
+    gtfs:
+      static:
+        url: http://127.0.0.1:3123/feeds/gtfs-feed-far-future.zip
         headers:
           Authorization: fake-auth
