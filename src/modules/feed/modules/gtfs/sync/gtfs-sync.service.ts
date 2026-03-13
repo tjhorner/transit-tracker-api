@@ -155,10 +155,9 @@ export class GtfsSyncService {
         await this.gtfsValidatorService.validateFeed(zipDirectory)
 
       if (!validationResult.isValid) {
-        this.logger.warn(
+        throw new Error(
           `GTFS feed validation failed with errors: ${validationResult.errors.join(", ").trim()}`,
         )
-        return
       }
 
       this.logger.log("Importing GTFS feed")
