@@ -74,7 +74,7 @@ export class GtfsValidatorService {
 
     await Promise.all([calendarStream, calendarDatesStream])
 
-    if (!earliestServiceDate) {
+    if (earliestServiceDate.getFullYear() === 9999) {
       return {
         isValid: false,
         errors: [
