@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger, Scope } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { Counter } from "@opentelemetry/api"
-import axios from "axios"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms, { StringValue } from "ms"
@@ -81,38 +80,51 @@ export class GtfsRealtimeService {
 
           let maxAge = isNaN(minCacheAge) ? -1 : minCacheAge
 
-          const resp = await axios.get(config.url, {
-            timeout: 5000,
-            responseType: "arraybuffer",
-            responseEncoding: "binary",
-            headers: {
-              "User-Agent":
-                "Transit Tracker API (https://transit-tracker.eastsideurbanism.org/)",
-              ...(config.headers ?? {}),
-            },
-          })
+          const controller = new AbortController()
+          const timeoutId = setTimeout(() => controller.abort(), 5000)
 
-          if (resp.headers["cache-control"]) {
-            const directives = parseCacheControl(resp.headers["cache-control"])
-            if (typeof directives["max-age"] === "number") {
-              maxAge = Math.max(maxAge, directives["max-age"])
-            } else if (directives["no-cache"]) {
-              maxAge = Math.max(maxAge, 0)
+          try {
+            const resp = await fetch(config.url, {
+              signal: controller.signal,
+              headers: {
+                "User-Agent":
+                  "Transit Tracker API (https://transit-tracker.eastsideurbanism.org/)",
+                ...(config.headers ?? {}),
+              },
+            })
+
+            clearTimeout(timeoutId)
+
+            if (!resp.ok) {
+              throw new Error(`HTTP ${resp.status}: ${resp.statusText}`)
             }
-          }
 
-          const feedMessage = GtfsRt.FeedMessage.toObject(
-            GtfsRt.FeedMessage.decode(Uint8Array.from(resp.data)),
-            { longs: Number },
-          ) as GtfsRt.IFeedMessage
+            const cacheControl = resp.headers.get("cache-control")
+            if (cacheControl) {
+              const directives = parseCacheControl(cacheControl)
+              if (typeof directives["max-age"] === "number") {
+                maxAge = Math.max(maxAge, directives["max-age"])
+              } else if (directives["no-cache"]) {
+                maxAge = Math.max(maxAge, 0)
+              }
+            }
 
-          const tripUpdates = feedMessage.entity?.filter(
-            (entity) => entity.tripUpdate,
-          )
+            const arrayBuffer = await resp.arrayBuffer()
+            const feedMessage = GtfsRt.FeedMessage.toObject(
+              GtfsRt.FeedMessage.decode(new Uint8Array(arrayBuffer)),
+              { longs: Number },
+            ) as GtfsRt.IFeedMessage
 
-          return {
-            value: tripUpdates ?? [],
-            ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
+            const tripUpdates = feedMessage.entity?.filter(
+              (entity) => entity.tripUpdate,
+            )
+
+            return {
+              value: tripUpdates ?? [],
+              ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
+            }
+          } finally {
+            clearTimeout(timeoutId)
           }
         }),
       ),

@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common"
-import axios from "axios"
 import { tmpdir } from "node:os"
 import path from "node:path"
+import { Readable } from "node:stream"
 import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
 import { FetchConfig } from "../config"
@@ -46,29 +46,36 @@ export class ZipFileService {
       return
     }
 
-    await axios({
-      url: url.toString(),
-      method: "get",
-      responseType: "stream",
-      responseEncoding: "binary",
+    const response = await fetch(url, {
+      method: "GET",
       headers: resource.headers,
-    }).then((response) => {
-      const extractor = unzipper.Extract({ path: destinationPath })
-      return new Promise<typeof response>((resolve, reject) => {
-        response.data.pipe(extractor)
+    })
 
-        let error: any = null
-        extractor.on("error", (err) => {
-          error = err
-          extractor.end()
-          reject(err)
-        })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
 
-        extractor.on("close", () => {
-          if (!error) {
-            resolve(response)
-          }
-        })
+    if (!response.body) {
+      throw new Error("Response body is null")
+    }
+
+    const nodeStream = Readable.fromWeb(response.body as any)
+    const extractor = unzipper.Extract({ path: destinationPath })
+
+    return new Promise<void>((resolve, reject) => {
+      nodeStream.pipe(extractor)
+
+      let error: any = null
+      extractor.on("error", (err) => {
+        error = err
+        extractor.end()
+        reject(err)
+      })
+
+      extractor.on("close", () => {
+        if (!error) {
+          resolve()
+        }
       })
     })
   }

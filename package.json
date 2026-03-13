@@ -46,7 +46,6 @@
     "@sentry/node": "^9.47.1",
     "@sentry/profiling-node": "^9.47.1",
     "@turf/turf": "^7.3.4",
-    "axios": "^1.13.5",
     "cache-control-parser": "^2.2.0",
     "cacheable": "~1.8.10",
     "class-transformer": "^0.5.1",
