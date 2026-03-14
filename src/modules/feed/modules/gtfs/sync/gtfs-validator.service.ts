@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common"
 import { parseFile } from "fast-csv"
-import stream from "node:stream/promises"
+import fs from "node:fs"
 
 export interface ValidationResult {
   isValid: boolean
@@ -25,56 +25,14 @@ export class GtfsValidatorService {
   private async validateServiceDates(
     directory: string,
   ): Promise<ValidationResult> {
-    let earliestServiceDate = new Date("9999-12-31")
+    const dates = await Promise.all([
+      this.findEarliestDateInFile(directory, "calendar.txt", "start_date"),
+      this.findEarliestDateInFile(directory, "calendar_dates.txt", "date"),
+    ])
 
-    const calendarPath = `${directory}/calendar.txt`
-    const calendarStream = stream.finished(
-      parseFile(calendarPath, { headers: true, ignoreEmpty: true })
-        .on("error", (error) => {
-          this.logger.error(`Error reading calendar.txt: ${error.message}`)
-        })
-        .on("data", (row) => {
-          if (!row.start_date) {
-            this.logger.warn(
-              `Missing start_date in calendar.txt row: ${JSON.stringify(row)}`,
-            )
-            return
-          }
-          const startDate = this.parseDate(row.start_date)
-          if (
-            startDate &&
-            (!earliestServiceDate || startDate < earliestServiceDate)
-          ) {
-            earliestServiceDate = startDate
-          }
-        }),
-    )
+    const validDates = dates.filter((date): date is Date => date !== null)
 
-    const calendarDatesPath = `${directory}/calendar_dates.txt`
-    const calendarDatesStream = stream.finished(
-      parseFile(calendarDatesPath, { headers: true, ignoreEmpty: true })
-        .on("error", (error) => {
-          this.logger.error(
-            `Error reading calendar_dates.txt: ${error.message}`,
-          )
-        })
-        .on("data", (row) => {
-          if (!row.date) {
-            this.logger.warn(
-              `Missing date in calendar_dates.txt row: ${JSON.stringify(row)}`,
-            )
-            return
-          }
-          const date = this.parseDate(row.date)
-          if (date && (!earliestServiceDate || date < earliestServiceDate)) {
-            earliestServiceDate = date
-          }
-        }),
-    )
-
-    await Promise.all([calendarStream, calendarDatesStream])
-
-    if (earliestServiceDate.getFullYear() === 9999) {
+    if (validDates.length === 0) {
       return {
         isValid: false,
         errors: [
@@ -82,6 +40,10 @@ export class GtfsValidatorService {
         ],
       }
     }
+
+    const earliestServiceDate = new Date(
+      Math.min(...validDates.map((d) => d.getTime())),
+    )
 
     // This technically isn't timezone-aware, but I don't really care enough
     // because this will happen so infrequently, lol
@@ -96,6 +58,42 @@ export class GtfsValidatorService {
     }
 
     return { isValid: true, errors: [] }
+  }
+
+  private async findEarliestDateInFile(
+    directory: string,
+    filename: string,
+    dateField: string,
+  ): Promise<Date | null> {
+    const filePath = `${directory}/${filename}`
+    if (!fs.existsSync(filePath)) return null
+
+    let earliestDate: Date | null = null
+
+    try {
+      for await (const row of parseFile(filePath, {
+        headers: true,
+        ignoreEmpty: true,
+      })) {
+        if (!row[dateField]) {
+          this.logger.warn(
+            `Missing ${dateField} in ${filename} row: ${JSON.stringify(row)}`,
+          )
+          continue
+        }
+
+        const date = this.parseDate(row[dateField])
+        if (date && (!earliestDate || date < earliestDate)) {
+          earliestDate = date
+        }
+      }
+    } catch (error) {
+      this.logger.error(
+        `Error reading ${filename}: ${error instanceof Error ? error.message : String(error)}`,
+      )
+    }
+
+    return earliestDate
   }
 
   private parseDate(dateStr: string): Date | null {
