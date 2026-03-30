@@ -72,23 +72,25 @@ export class FeedsController {
   async getFeeds(): Promise<FeedDto[]> {
     const feeds = this.feedService.getAllFeeds()
 
-    const resp: FeedDto[] = []
-    for (const [feedCode, feed] of Object.entries(feeds)) {
-      const provider = this.feedService.getFeedProvider(feedCode)!
-      const lastSync = await provider.getLastSync?.()
-      const metadata = await provider.getMetadata?.()
+    return Promise.all(
+      Object.entries(feeds).map(async ([feedCode, feed]) => {
+        const provider = this.feedService.getFeedProvider(feedCode)!
+        const [lastSync, metadata, serviceArea] = await Promise.all([
+          provider.getLastSync?.() ?? null,
+          provider.getMetadata?.() ?? {},
+          this.feedService.getServiceArea(feedCode),
+        ])
 
-      resp.push({
-        code: feedCode,
-        lastSyncedAt: lastSync ?? null,
-        name: feed.name,
-        description: feed.description,
-        bounds: turf.bbox(await this.feedService.getServiceArea(feedCode)),
-        metadata: metadata ?? {},
-      })
-    }
-
-    return resp
+        return {
+          code: feedCode,
+          lastSyncedAt: lastSync ?? null,
+          name: feed.name,
+          description: feed.description,
+          bounds: turf.bbox(serviceArea),
+          metadata: metadata ?? {},
+        }
+      }),
+    )
   }
 
   @Get("service-areas")
