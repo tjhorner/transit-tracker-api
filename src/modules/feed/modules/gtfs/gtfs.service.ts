@@ -300,7 +300,12 @@ export class GtfsService implements FeedProvider {
       )
     }
 
+    const tripUpdateIndex =
+      this.realtimeService.buildTripUpdateIndex(tripUpdates)
+
     const tripStops: TripStop[] = []
+    const seenTrips = new Set<string>()
+
     for (const scheduleDate of scheduleDates) {
       const staticTrips = (
         await Promise.all(
@@ -312,7 +317,10 @@ export class GtfsService implements FeedProvider {
 
       staticTrips.forEach((staticTrip) => {
         const { tripUpdate, stopTimeUpdate } =
-          this.realtimeService.matchTripToTripUpdate(staticTrip, tripUpdates)
+          this.realtimeService.matchTripToTripUpdate(
+            staticTrip,
+            tripUpdateIndex,
+          )
 
         const { arrivalTime, departureTime, isRealtime } =
           this.realtimeService.resolveTripTimes(staticTrip, stopTimeUpdate)
@@ -352,17 +360,11 @@ export class GtfsService implements FeedProvider {
           }
         }
 
-        if (
-          tripStops.some(
-            (ts) =>
-              ts.tripId === staticTrip.trip_id &&
-              ts.arrivalTime === arrivalTime &&
-              ts.departureTime === departureTime,
-          )
-        ) {
-          // Don't add duplicate trip
+        const dedupKey = `${staticTrip.trip_id}-${arrivalTime.getTime()}-${departureTime.getTime()}`
+        if (seenTrips.has(dedupKey)) {
           return
         }
+        seenTrips.add(dedupKey)
 
         tripStops.push({
           tripId: staticTrip.trip_id,
