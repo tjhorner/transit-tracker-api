@@ -1,0 +1,48 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+          - "@nest-lab/*"
+      sentry:
+        patterns:
+          - "@sentry/*"
+      opentelemetry:
+        patterns:
+          - "@opentelemetry/*"
+          - "nestjs-otel"
+      testing:
+        patterns:
+          - "vitest"
+          - "@vitest/*"
+          - "vitest-mock-extended"
+          - "supertest"
+          - "superwstest"
+          - "msw"
+          - "@testcontainers/*"
+      linting:
+        patterns:
+          - "eslint"
+          - "eslint-*"
+          - "prettier"
+          - "prettier-*"
+          - "@typescript-eslint/*"
+      swc:
+        patterns:
+          - "@swc/*"
+          - "unplugin-swc"
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
