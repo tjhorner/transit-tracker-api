@@ -2,6 +2,8 @@
 
 Thank you for contributing to the Transit Tracker project! If you are considering opening a PR, please take a quick look through these guidelines to help you get started.
 
+See also: [development quickstart guide](./docs/development/quickstart.md)
+
 ## Discuss Your Changes
 
 If you are implementing a feature which has a wide scope or significant changes, please first open an issue to discuss the proposed changes with the maintainers. This helps ensure that your efforts align with the project's goals and avoids duplicate work.
