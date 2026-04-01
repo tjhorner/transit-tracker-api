@@ -377,16 +377,23 @@ export class GtfsSyncService {
         `Inserting ${rows.length.toLocaleString()} ${tableName} rows ${completedRows.toLocaleString()} - ${(completedRows + rows.length).toLocaleString()}`,
       )
 
-      for (const row of rows) {
-        const columns = Object.keys(row)
-        const values = columns.map((column) => row[column])
-        await client.query(
-          `INSERT INTO ${this.partitionOf(tableName)} (${columns.join(",")}) VALUES (${values
-            .map((_, i) => `$${i + 1}`)
-            .join(",")})`,
-          values,
+      const columns = Object.keys(rows[0])
+      const valuePlaceholders: string[] = []
+      const allValues: any[] = []
+
+      for (let i = 0; i < rows.length; i++) {
+        const values = columns.map((column) => rows[i][column])
+        const offset = i * columns.length
+        valuePlaceholders.push(
+          `(${columns.map((_, j) => `$${offset + j + 1}`).join(",")})`,
         )
+        allValues.push(...values)
       }
+
+      await client.query(
+        `INSERT INTO ${this.partitionOf(tableName)} (${columns.join(",")}) VALUES ${valuePlaceholders.join(",")}`,
+        allValues,
+      )
 
       completedRows += rows.length
     }

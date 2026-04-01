@@ -63,17 +63,21 @@ route_trips AS (
       )
 ),
 last_stops AS (
-    SELECT 
-        st.trip_id,
-        st.stop_id AS last_stop_id,
-        s.stop_name AS last_stop_name
-    FROM "stop_times" st
-    JOIN "stops" s ON st.stop_id = s.stop_id
-    WHERE st.stop_sequence = (
-        SELECT MAX(st2.stop_sequence)
-        FROM "stop_times" st2
-        WHERE st2.trip_id = st.trip_id
-    )
+    SELECT
+        trip_id,
+        last_stop_id,
+        last_stop_name
+    FROM (
+        SELECT
+            st.trip_id,
+            st.stop_id AS last_stop_id,
+            s.stop_name AS last_stop_name,
+            ROW_NUMBER() OVER (PARTITION BY st.trip_id ORDER BY st.stop_sequence DESC) AS rn
+        FROM "stop_times" st
+        JOIN "stops" s ON st.stop_id = s.stop_id
+        WHERE st.trip_id IN (SELECT trip_id FROM route_trips)
+    ) ranked
+    WHERE rn = 1
 )
 -- Fetch stop_times with stop_timezone and route_short_name
 SELECT 

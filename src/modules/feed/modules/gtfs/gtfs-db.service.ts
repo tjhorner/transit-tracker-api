@@ -45,8 +45,6 @@ export class GtfsDbService
 
     try {
       await client.query("BEGIN")
-      await client.query("SET LOCAL ROLE gtfs")
-      await client.query(`SET LOCAL app.current_feed = '${this.feedCode}'`)
       const result = await fn(client)
       await client.query("COMMIT")
       return result
@@ -70,9 +68,7 @@ export class GtfsDbService
       query = query.replaceAll(`"${table}"`, `"${table}__${this.feedCode}"`)
     }
 
-    return this.tx(
-      async (client) => client.query(query, bindings) as Promise<any>,
-    )
+    return this.pool.query(query, bindings) as Promise<any>
   }
 
   obtainConnection(): Promise<PoolClient> {
