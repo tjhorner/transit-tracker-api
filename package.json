@@ -66,6 +66,7 @@
     "onebusaway-sdk": "^1.10.12",
     "pg": "^8.20.0",
     "pg-copy-streams": "^6.0.6",
+    "protobufjs": "^7.5.4",
     "proxy-addr": "^2.0.7",
     "reflect-metadata": "^0.2.2",
     "rimraf": "^6.1.3",

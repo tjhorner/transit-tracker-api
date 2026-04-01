@@ -9,6 +9,7 @@ import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import type { FetchConfig, GtfsConfig } from "./config"
 import { GTFS_CONFIG } from "./const"
+import { decodeTripUpdatesOnly } from "./decode-trip-updates"
 import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-route.queries"
 
 type ITripUpdate = GtfsRt.ITripUpdate
@@ -112,17 +113,12 @@ export class GtfsRealtimeService {
             }
 
             const arrayBuffer = await resp.arrayBuffer()
-            const feedMessage = GtfsRt.FeedMessage.toObject(
-              GtfsRt.FeedMessage.decode(new Uint8Array(arrayBuffer)),
-              { longs: Number },
-            ) as GtfsRt.IFeedMessage
-
-            const tripUpdates = feedMessage.entity?.filter(
-              (entity) => entity.tripUpdate,
+            const tripUpdates = decodeTripUpdatesOnly(
+              new Uint8Array(arrayBuffer),
             )
 
             return {
-              value: tripUpdates ?? [],
+              value: tripUpdates,
               ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
             }
           } finally {
@@ -148,12 +144,7 @@ export class GtfsRealtimeService {
       return []
     }
 
-    const tripUpdates = successfulResponses
-      .flatMap((r) => r.value)
-      .map((entity) => entity.tripUpdate)
-      .filter((tripUpdate) => !!tripUpdate)
-
-    return tripUpdates
+    return successfulResponses.flatMap((r) => r.value)
   }
 
   resolveTripTimes(
