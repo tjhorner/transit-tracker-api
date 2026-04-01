@@ -18,6 +18,7 @@ import { GTFS_TABLES, GtfsDbService } from "../gtfs-db.service"
 import { GtfsValidatorService } from "./gtfs-validator.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
+import { VacuumTablesPostProcessor } from "./postprocessors/vacuum-tables"
 import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
 import { getImportMetadata } from "./queries/get-import-metadata.queries"
 import { upsertImportMetadata } from "./queries/upsert-import-metadata.queries"
@@ -237,6 +238,7 @@ export class GtfsSyncService {
 
     const postProcessors: SyncPostProcessor[] = [
       new InterpolateEmptyStopTimesPostProcessor(),
+      new VacuumTablesPostProcessor(),
     ]
 
     for (const processor of postProcessors) {
