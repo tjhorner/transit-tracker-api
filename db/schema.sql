@@ -1,3 +1,8 @@
+\restrict dbmate
+
+-- Dumped from database version 18.3 (Debian 18.3-1.pgdg13+1)
+-- Dumped by pg_dump version 18.3
+
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
@@ -115,8 +120,8 @@ CREATE TABLE public.import_metadata (
     last_modified timestamp without time zone,
     feed_code text NOT NULL,
     etag text,
-    hash text,
-    imported_at timestamp with time zone DEFAULT now() NOT NULL
+    imported_at timestamp with time zone DEFAULT now() NOT NULL,
+    hash text
 );
 
 
@@ -130,15 +135,7 @@ CREATE TABLE public.routes (
     agency_id text DEFAULT public.default_agency_id() NOT NULL,
     route_short_name text,
     route_long_name text,
-    route_desc text,
-    route_type integer,
-    route_url text,
-    route_color text,
-    route_text_color text,
-    route_sort_order integer,
-    continuous_pickup integer,
-    continuous_drop_off integer,
-    network_id text
+    route_color text
 )
 PARTITION BY LIST (feed_code);
 
@@ -164,10 +161,7 @@ CREATE TABLE public.stop_times (
     stop_id text NOT NULL,
     stop_sequence smallint NOT NULL,
     stop_headsign text,
-    pickup_type smallint,
-    drop_off_type smallint,
-    shape_dist_traveled real,
-    timepoint boolean
+    shape_dist_traveled real
 )
 PARTITION BY LIST (feed_code);
 
@@ -181,15 +175,8 @@ CREATE TABLE public.stops (
     stop_id text NOT NULL,
     stop_code text,
     stop_name text,
-    stop_desc text,
     stop_lat real,
-    stop_lon real,
-    zone_id text,
-    stop_url text,
-    location_type integer,
-    parent_station text,
-    stop_timezone text,
-    wheelchair_boarding integer
+    stop_lon real
 )
 PARTITION BY LIST (feed_code);
 
@@ -214,14 +201,7 @@ CREATE TABLE public.trips (
     route_id text,
     service_id text,
     trip_headsign text,
-    trip_short_name text,
-    direction_id integer,
-    block_id text,
-    shape_id text,
-    peak_flag integer,
-    fare_id text,
-    wheelchair_accessible integer,
-    bikes_allowed integer
+    direction_id integer
 )
 PARTITION BY LIST (feed_code);
 
@@ -322,45 +302,10 @@ CREATE INDEX agency_agency_id_idx ON ONLY public.agency USING btree (agency_id);
 
 
 --
--- Name: calendar_dates_service_id_date_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX calendar_dates_service_id_date_idx ON ONLY public.calendar_dates USING btree (service_id, date);
-
-
---
--- Name: calendar_service_id_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX calendar_service_id_idx ON ONLY public.calendar USING btree (service_id);
-
-
---
--- Name: idx_agency_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_agency_feed_code ON ONLY public.agency USING btree (feed_code);
-
-
---
 -- Name: idx_calendar_dates_date_exception; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_calendar_dates_date_exception ON ONLY public.calendar_dates USING btree (date, exception_type);
-
-
---
--- Name: idx_calendar_dates_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_calendar_dates_feed_code ON ONLY public.calendar_dates USING btree (feed_code);
-
-
---
--- Name: idx_calendar_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_calendar_feed_code ON ONLY public.calendar USING btree (feed_code);
 
 
 --
@@ -371,13 +316,6 @@ CREATE INDEX idx_calendar_service_date_range ON ONLY public.calendar USING btree
 
 
 --
--- Name: idx_feed_info_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_feed_info_feed_code ON ONLY public.feed_info USING btree (feed_code);
-
-
---
 -- Name: idx_frequencies_trip_id; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -385,45 +323,10 @@ CREATE INDEX idx_frequencies_trip_id ON ONLY public.frequencies USING btree (tri
 
 
 --
--- Name: idx_import_metadata_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_import_metadata_feed_code ON public.import_metadata USING btree (feed_code);
-
-
---
--- Name: idx_routes_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_routes_feed_code ON ONLY public.routes USING btree (feed_code);
-
-
---
--- Name: idx_stop_times_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_stop_times_feed_code ON ONLY public.stop_times USING btree (feed_code);
-
-
---
 -- Name: idx_stop_times_stop_id; Type: INDEX; Schema: public; Owner: -
 --
 
 CREATE INDEX idx_stop_times_stop_id ON ONLY public.stop_times USING btree (stop_id);
-
-
---
--- Name: idx_stops_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_stops_feed_code ON ONLY public.stops USING btree (feed_code);
-
-
---
--- Name: idx_trips_feed_code; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX idx_trips_feed_code ON ONLY public.trips USING btree (feed_code);
 
 
 --
@@ -452,13 +355,6 @@ CREATE INDEX stop_times_null_arrival_time_idx ON ONLY public.stop_times USING bt
 --
 
 CREATE INDEX stop_times_null_departure_time_idx ON ONLY public.stop_times USING btree (departure_time) WHERE (departure_time IS NULL);
-
-
---
--- Name: stop_times_trip_id_stop_sequence_idx; Type: INDEX; Schema: public; Owner: -
---
-
-CREATE INDEX stop_times_trip_id_stop_sequence_idx ON ONLY public.stop_times USING btree (trip_id, stop_sequence);
 
 
 --
@@ -549,6 +445,8 @@ CREATE POLICY rls_trips ON public.trips USING ((feed_code = current_setting('app
 -- PostgreSQL database dump complete
 --
 
+\unrestrict dbmate
+
 
 --
 -- Dbmate schema migrations
@@ -558,4 +456,7 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20251016032731'),
     ('20251017224354'),
     ('20251027221833'),
-    ('20251118045713');
+    ('20251118045713'),
+    ('20251120062000'),
+    ('20260331100000'),
+    ('20260331100001');
