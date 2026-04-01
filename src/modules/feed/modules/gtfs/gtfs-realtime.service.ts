@@ -231,18 +231,10 @@ export class GtfsRealtimeService {
   }
 
   buildTripUpdateIndex(tripUpdates: ITripUpdate[]): TripUpdateIndex {
-    const index: TripUpdateIndex = new Map()
-    for (const update of tripUpdates) {
-      const tripId = update.trip?.tripId
-      if (!tripId) continue
-      let list = index.get(tripId)
-      if (!list) {
-        list = []
-        index.set(tripId, list)
-      }
-      list.push(update)
-    }
-    return index
+    return Map.groupBy(
+      tripUpdates.filter((u) => u.trip?.tripId),
+      (u) => u.trip!.tripId!,
+    )
   }
 
   matchTripToTripUpdate(

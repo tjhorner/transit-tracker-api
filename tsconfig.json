@@ -1,6 +1,10 @@
 {
+  "extends": "@tsconfig/node24/tsconfig.json",
   "compilerOptions": {
-    "types": [ "node", "vitest/globals" ],
+    "types": [
+      "node",
+      "vitest/globals"
+    ],
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "declaration": true,
@@ -8,20 +12,15 @@
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
-    "target": "ES2021",
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
     "incremental": true,
-    "skipLibCheck": true,
     "noImplicitAny": false,
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
-    "strict": true,
     "inlineSources": true,
-    "isolatedModules": true,
     "resolveJsonModule": true
-
     // Set `sourceRoot` to  "/" to strip the build path prefix
     // from generated source code references.
     // This improves issue grouping in Sentry.
