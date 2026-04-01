@@ -1,10 +1,8 @@
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
-import { describe, expect, it } from "vitest"
 import { decodeTripUpdatesOnly } from "src/modules/feed/modules/gtfs/decode-trip-updates"
+import { describe, expect, it } from "vitest"
 
-function encodeFeedMessage(
-  entities: GtfsRt.IFeedEntity[],
-): Uint8Array {
+function encodeFeedMessage(entities: GtfsRt.IFeedEntity[]): Uint8Array {
   const message = new GtfsRt.FeedMessage({
     header: {
       gtfsRealtimeVersion: "1.0",
