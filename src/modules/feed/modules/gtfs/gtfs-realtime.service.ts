@@ -14,6 +14,8 @@ import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-ro
 type ITripUpdate = GtfsRt.ITripUpdate
 type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate
 
+export type TripUpdateIndex = Map<string, ITripUpdate[]>
+
 @Injectable({ scope: Scope.REQUEST })
 export class GtfsRealtimeService {
   private readonly feedCode: string
@@ -228,38 +230,43 @@ export class GtfsRealtimeService {
     }
   }
 
-  private isTripIdSimilar(
-    trip: IGetScheduleForRouteAtStopResult,
-    tripUpdate: ITripUpdate,
-  ): boolean {
-    if (trip.trip_id === tripUpdate.trip.tripId) {
-      return true
-    }
-
-    if (this.config.quirks?.fuzzyMatchTripUpdates && tripUpdate.trip.tripId) {
-      return trip.trip_id.includes(tripUpdate.trip.tripId)
-    }
-
-    return false
+  buildTripUpdateIndex(tripUpdates: ITripUpdate[]): TripUpdateIndex {
+    return Map.groupBy(
+      tripUpdates.filter((u) => u.trip?.tripId),
+      (u) => u.trip!.tripId!,
+    )
   }
 
   matchTripToTripUpdate(
     trip: IGetScheduleForRouteAtStopResult,
-    tripUpdates: ITripUpdate[],
+    tripUpdateIndex: TripUpdateIndex,
   ): {
     tripUpdate: ITripUpdate | undefined
     stopTimeUpdate: IStopTimeUpdate | undefined
   } {
-    // Filter by trip updates with:
-    //   - the same trip_id and start_date *or*
-    //   - the same trip_id and no start_date
-    const tripUpdate = tripUpdates.find((update) => {
-      const tripIdMatches = this.isTripIdSimilar(trip, update)
-      return (
-        (tripIdMatches && update.trip.startDate === trip.start_date) ||
-        (tripIdMatches && !update.trip.startDate)
+    // Look up candidates from the index by exact trip ID
+    let tripUpdate: ITripUpdate | undefined
+    const exactCandidates = tripUpdateIndex.get(trip.trip_id)
+    if (exactCandidates) {
+      tripUpdate = exactCandidates.find(
+        (update) =>
+          update.trip.startDate === trip.start_date || !update.trip.startDate,
       )
-    })
+    }
+
+    // Fall back to fuzzy match if enabled and no exact match found
+    if (!tripUpdate && this.config.quirks?.fuzzyMatchTripUpdates) {
+      for (const [tripId, candidates] of tripUpdateIndex) {
+        if (trip.trip_id.includes(tripId)) {
+          tripUpdate = candidates.find(
+            (update) =>
+              update.trip.startDate === trip.start_date ||
+              !update.trip.startDate,
+          )
+          if (tripUpdate) break
+        }
+      }
+    }
 
     let stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
       (update) =>
