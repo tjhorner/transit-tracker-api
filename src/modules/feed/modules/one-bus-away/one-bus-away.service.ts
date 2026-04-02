@@ -328,54 +328,54 @@ export class OneBusAwayService implements FeedProvider {
         throw new InternalServerErrorException(e)
       }
 
-      let ttl = ms("30s")
-      let result: ArrivalsAndDeparturesResponse | null = null
       if (resp === null) {
-        ttl = ms("10s")
         this.logger.warn(
           `getArrivalsAndDeparturesForStop: Received null response for stop ${stopId}`,
         )
+        return { value: null, ttl: ms("30s") }
       } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
         // no arrivals for the next two hours so we can cache for longer
-        ttl = ms("2h")
-      } else {
-        resp.data.entry.arrivalsAndDepartures.sort(
-          (a, b) =>
-            (a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime) -
-            (b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime),
-        )
-
-        const firstArrival = resp.data.entry.arrivalsAndDepartures[0]
-        const firstArrivalTime = firstArrival.predicted
-          ? firstArrival.predictedArrivalTime
-          : firstArrival.scheduledArrivalTime
-
-        const timeUntilFirstArrival = firstArrivalTime - Date.now()
-        if (timeUntilFirstArrival > ms("5m")) {
-          ttl = ms("1m")
-        }
-
-        const tripsById = Object.fromEntries(
-          resp.data.references.trips.map((t) => [t.id, t]),
-        )
-        const stopsById = Object.fromEntries(
-          resp.data.references.stops.map((s) => [s.id, s]),
-        )
-        const routesById = Object.fromEntries(
-          resp.data.references.routes.map((r) => [r.id, r]),
-        )
-
-        result = {
-          arrivalsAndDepartures: resp.data.entry.arrivalsAndDepartures,
-          references: {
-            trips: tripsById,
-            stops: stopsById,
-            routes: routesById,
-          },
-        }
+        return { value: null, ttl: ms("2h") }
       }
 
-      return { value: result, ttl }
+      let ttl = ms("30s")
+
+      resp.data.entry.arrivalsAndDepartures.sort(
+        (a, b) =>
+          (a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime) -
+          (b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime),
+      )
+
+      const firstArrival = resp.data.entry.arrivalsAndDepartures[0]
+      const firstArrivalTime = firstArrival.predicted
+        ? firstArrival.predictedArrivalTime
+        : firstArrival.scheduledArrivalTime
+
+      const timeUntilFirstArrival = firstArrivalTime - Date.now()
+      if (timeUntilFirstArrival > ms("5m")) {
+        ttl = ms("1m")
+      }
+
+      const tripsById = Object.fromEntries(
+        resp.data.references.trips.map((t) => [t.id, t]),
+      )
+      const stopsById = Object.fromEntries(
+        resp.data.references.stops.map((s) => [s.id, s]),
+      )
+      const routesById = Object.fromEntries(
+        resp.data.references.routes.map((r) => [r.id, r]),
+      )
+
+      const value = {
+        arrivalsAndDepartures: resp.data.entry.arrivalsAndDepartures,
+        references: {
+          trips: tripsById,
+          stops: stopsById,
+          routes: routesById,
+        },
+      }
+
+      return { value, ttl }
     })
   }
 
