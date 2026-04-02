@@ -389,7 +389,10 @@ export class OneBusAwayService implements FeedProvider {
     )
 
     const tripStops: TripStop[] = []
-    const seenTripStops = new Set<string>()
+    const seenTripStops = new Map<
+      string,
+      { index: number; lastUpdateTime: number }
+    >()
 
     for (let i = 0; i < stopIds.length; i++) {
       const stopId = stopIds[i]
@@ -419,7 +422,8 @@ export class OneBusAwayService implements FeedProvider {
 
       for (const ad of arrivalsAndDepartures) {
         const tripStopKey = `${ad.tripId}-${stopId}`
-        if (seenTripStops.has(tripStopKey)) {
+        const existing = seenTripStops.get(tripStopKey)
+        if (existing && existing.lastUpdateTime >= (ad.lastUpdateTime ?? 0)) {
           continue
         }
 
@@ -443,8 +447,7 @@ export class OneBusAwayService implements FeedProvider {
 
         const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
 
-        seenTripStops.add(tripStopKey)
-        tripStops.push({
+        const tripStop: TripStop = {
           tripId: ad.tripId,
           stopId,
           directionId: staticTrip?.directionId ?? null,
@@ -459,7 +462,18 @@ export class OneBusAwayService implements FeedProvider {
           arrivalTime,
           departureTime,
           isRealtime: ad.predicted ?? false,
-        })
+        }
+
+        if (existing) {
+          tripStops[existing.index] = tripStop
+          existing.lastUpdateTime = ad.lastUpdateTime ?? 0
+        } else {
+          seenTripStops.set(tripStopKey, {
+            index: tripStops.length,
+            lastUpdateTime: ad.lastUpdateTime ?? 0,
+          })
+          tripStops.push(tripStop)
+        }
       }
     }
 
