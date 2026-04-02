@@ -35,9 +35,6 @@ export interface Name {
   type: string
 }
 
-type ArrayElement<ArrayType extends readonly unknown[]> =
-  ArrayType extends readonly (infer ElementType)[] ? ElementType : never
-
 interface ArrivalsAndDeparturesResponse {
   arrivalsAndDepartures: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data.Entry.ArrivalsAndDeparture[]
   references: {
