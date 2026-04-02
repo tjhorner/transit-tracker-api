@@ -1,13 +1,13 @@
 import { Logger } from "@nestjs/common"
-import { GtfsDbService } from "../../gtfs-db.service"
+import { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface"
+import { GTFS_TABLES, GtfsDbService } from "../../gtfs-db.service"
 import { SyncPostProcessor } from "../interface/sync-post-processor.interface"
-import { vacuumTables } from "../queries/vacuum-tables.queries"
 
 export class VacuumTablesPostProcessor implements SyncPostProcessor {
   private readonly logger = new Logger(VacuumTablesPostProcessor.name)
 
-  async process(db: GtfsDbService): Promise<void> {
-    this.logger.log("Vacuuming GTFS tables...")
+  async process(db: GtfsDbService, { feedCode }: FeedContext): Promise<void> {
+    this.logger.log("Running VACUUM ANALYZE on partition tables...")
 
     const connection = await db.obtainConnection()
 
@@ -18,7 +18,10 @@ export class VacuumTablesPostProcessor implements SyncPostProcessor {
     })
 
     try {
-      await vacuumTables.run(undefined, connection)
+      for (const table of GTFS_TABLES) {
+        const partition = `${table}__${feedCode}`
+        await connection.query(`VACUUM ANALYZE "${partition}"`)
+      }
     } catch (e: any) {
       this.logger.warn(
         `Error during vacuuming GTFS tables; skipping: ${e.message}`,
@@ -27,6 +30,6 @@ export class VacuumTablesPostProcessor implements SyncPostProcessor {
       connection.release()
     }
 
-    this.logger.log("Vacuuming completed")
+    this.logger.log("VACUUM ANALYZE completed")
   }
 }
