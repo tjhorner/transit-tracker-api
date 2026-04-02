@@ -169,22 +169,23 @@ export class OneBusAwayService implements FeedProvider {
           throw new NotFoundException(`Stop ${stopId} not found`)
         }
 
-        const stopRoutes: StopRoute[] = []
-        for (const route of stop.data.references.routes) {
-          const headsigns = await this.getPossibleHeadsignsForRouteAtStop(
-            route.id,
-            stopId,
-          )
+        const stopRoutes: StopRoute[] = await Promise.all(
+          stop.data.references.routes.map(async (route) => {
+            const headsigns = await this.getPossibleHeadsignsForRouteAtStop(
+              route.id,
+              stopId,
+            )
 
-          const color = route.color?.replaceAll("#", "").trim() ?? null
+            const color = route.color?.replaceAll("#", "").trim() ?? null
 
-          stopRoutes.push({
-            routeId: route.id,
-            name: route.shortName ?? "Unnamed Route",
-            color: color?.trim() !== "" ? color : null,
-            headsigns,
-          })
-        }
+            return {
+              routeId: route.id,
+              name: route.shortName ?? "Unnamed Route",
+              color: color?.trim() !== "" ? color : null,
+              headsigns,
+            }
+          }),
+        )
 
         return stopRoutes
       },
@@ -382,15 +383,36 @@ export class OneBusAwayService implements FeedProvider {
       {} as Record<string, string[]>,
     )
 
+    const stopIds = Object.keys(stopRouteMap)
+    const arrivalsPerStop = await Promise.all(
+      stopIds.map((stopId) => this.getArrivalsAndDeparturesForStop(stopId)),
+    )
+
     const tripStops: TripStop[] = []
-    for (const stopId of Object.keys(stopRouteMap)) {
+    const seenTripStops = new Map<
+      string,
+      { index: number; lastUpdateTime: number }
+    >()
+
+    for (let i = 0; i < stopIds.length; i++) {
+      const stopId = stopIds[i]
+      const arrivalsAndDeparturesResp = arrivalsPerStop[i]
       const routeIds = stopRouteMap[stopId]
-      const arrivalsAndDeparturesResp =
-        await this.getArrivalsAndDeparturesForStop(stopId)
 
       if (!arrivalsAndDeparturesResp) {
         continue
       }
+
+      // Pre-index reference arrays for O(1) lookups
+      const tripsById = new Map(
+        arrivalsAndDeparturesResp.data.references.trips.map((t) => [t.id, t]),
+      )
+      const stopsById = new Map(
+        arrivalsAndDeparturesResp.data.references.stops.map((s) => [s.id, s]),
+      )
+      const routesById = new Map(
+        arrivalsAndDeparturesResp.data.references.routes.map((r) => [r.id, r]),
+      )
 
       const arrivalsAndDepartures =
         arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
@@ -399,11 +421,9 @@ export class OneBusAwayService implements FeedProvider {
         )
 
       for (const ad of arrivalsAndDepartures) {
-        if (
-          tripStops.some(
-            (ts) => ts.tripId === ad.tripId && ts.stopId === stopId,
-          )
-        ) {
+        const tripStopKey = `${ad.tripId}-${stopId}`
+        const existing = seenTripStops.get(tripStopKey)
+        if (existing && existing.lastUpdateTime >= (ad.lastUpdateTime ?? 0)) {
           continue
         }
 
@@ -421,22 +441,13 @@ export class OneBusAwayService implements FeedProvider {
             ? new Date(ad.predictedArrivalTime)
             : new Date(ad.scheduledArrivalTime)
 
-        const staticTrip = arrivalsAndDeparturesResp.data.references.trips.find(
-          (t) => t.id === ad.tripId,
-        )
-
-        const staticStop = arrivalsAndDeparturesResp.data.references.stops.find(
-          (s) => s.id === stopId,
-        )
-
-        const staticRoute =
-          arrivalsAndDeparturesResp.data.references.routes.find(
-            (r) => r.id === ad.routeId,
-          )
+        const staticTrip = tripsById.get(ad.tripId)
+        const staticStop = stopsById.get(stopId)
+        const staticRoute = routesById.get(ad.routeId)
 
         const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
 
-        tripStops.push({
+        const tripStop: TripStop = {
           tripId: ad.tripId,
           stopId,
           directionId: staticTrip?.directionId ?? null,
@@ -451,7 +462,18 @@ export class OneBusAwayService implements FeedProvider {
           arrivalTime,
           departureTime,
           isRealtime: ad.predicted ?? false,
-        })
+        }
+
+        if (existing) {
+          tripStops[existing.index] = tripStop
+          existing.lastUpdateTime = ad.lastUpdateTime ?? 0
+        } else {
+          seenTripStops.set(tripStopKey, {
+            index: tripStops.length,
+            lastUpdateTime: ad.lastUpdateTime ?? 0,
+          })
+          tripStops.push(tripStop)
+        }
       }
     }
 
