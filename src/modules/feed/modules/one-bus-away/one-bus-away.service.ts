@@ -42,19 +42,19 @@ interface ArrivalsAndDeparturesResponse {
   arrivalsAndDepartures: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data.Entry.ArrivalsAndDeparture[]
   references: {
     stops: {
-      [key: string]: ArrayElement<
-        OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["stops"]
-      >
+      [
+        key: string
+      ]: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["stops"][number]
     }
     routes: {
-      [key: string]: ArrayElement<
-        OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["routes"]
-      >
+      [
+        key: string
+      ]: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["routes"][number]
     }
     trips: {
-      [key: string]: ArrayElement<
-        OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["trips"]
-      >
+      [
+        key: string
+      ]: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["trips"][number]
     }
   }
 }
@@ -332,7 +332,7 @@ export class OneBusAwayService implements FeedProvider {
         this.logger.warn(
           `getArrivalsAndDeparturesForStop: Received null response for stop ${stopId}`,
         )
-        return { value: null, ttl: ms("30s") }
+        return { value: null, ttl: ms("10s") }
       } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
         // no arrivals for the next two hours so we can cache for longer
         return { value: null, ttl: ms("2h") }
