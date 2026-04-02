@@ -35,6 +35,27 @@ export interface Name {
   type: string
 }
 
+interface ArrivalsAndDeparturesResponse {
+  arrivalsAndDepartures: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data.Entry.ArrivalsAndDeparture[]
+  references: {
+    stops: {
+      [
+        key: string
+      ]: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["stops"][number]
+    }
+    routes: {
+      [
+        key: string
+      ]: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["routes"][number]
+    }
+    trips: {
+      [
+        key: string
+      ]: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data["references"]["trips"][number]
+    }
+  }
+}
+
 function latLonSpanToBounds(
   latCenter: number,
   lonCenter: number,
@@ -275,7 +296,7 @@ export class OneBusAwayService implements FeedProvider {
 
   async getArrivalsAndDeparturesForStop(
     stopId: string,
-  ): Promise<OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null> {
+  ): Promise<ArrivalsAndDeparturesResponse | null> {
     return this.cache.cached(`arrivalsAndDepartures-${stopId}`, async () => {
       let resp!: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
       try {
@@ -304,34 +325,54 @@ export class OneBusAwayService implements FeedProvider {
         throw new InternalServerErrorException(e)
       }
 
-      let ttl = ms("30s")
       if (resp === null) {
-        ttl = ms("10s")
         this.logger.warn(
           `getArrivalsAndDeparturesForStop: Received null response for stop ${stopId}`,
         )
+        return { value: null, ttl: ms("10s") }
       } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
         // no arrivals for the next two hours so we can cache for longer
-        ttl = ms("2h")
-      } else {
-        resp.data.entry.arrivalsAndDepartures.sort(
-          (a, b) =>
-            (a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime) -
-            (b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime),
-        )
-
-        const firstArrival = resp.data.entry.arrivalsAndDepartures[0]
-        const firstArrivalTime = firstArrival.predicted
-          ? firstArrival.predictedArrivalTime
-          : firstArrival.scheduledArrivalTime
-
-        const timeUntilFirstArrival = firstArrivalTime - Date.now()
-        if (timeUntilFirstArrival > ms("5m")) {
-          ttl = ms("1m")
-        }
+        return { value: null, ttl: ms("2h") }
       }
 
-      return { value: resp, ttl }
+      let ttl = ms("30s")
+
+      resp.data.entry.arrivalsAndDepartures.sort(
+        (a, b) =>
+          (a.predicted ? a.predictedArrivalTime : a.scheduledArrivalTime) -
+          (b.predicted ? b.predictedArrivalTime : b.scheduledArrivalTime),
+      )
+
+      const firstArrival = resp.data.entry.arrivalsAndDepartures[0]
+      const firstArrivalTime = firstArrival.predicted
+        ? firstArrival.predictedArrivalTime
+        : firstArrival.scheduledArrivalTime
+
+      const timeUntilFirstArrival = firstArrivalTime - Date.now()
+      if (timeUntilFirstArrival > ms("5m")) {
+        ttl = ms("1m")
+      }
+
+      const tripsById = Object.fromEntries(
+        resp.data.references.trips.map((t) => [t.id, t]),
+      )
+      const stopsById = Object.fromEntries(
+        resp.data.references.stops.map((s) => [s.id, s]),
+      )
+      const routesById = Object.fromEntries(
+        resp.data.references.routes.map((r) => [r.id, r]),
+      )
+
+      const value = {
+        arrivalsAndDepartures: resp.data.entry.arrivalsAndDepartures,
+        references: {
+          trips: tripsById,
+          stops: stopsById,
+          routes: routesById,
+        },
+      }
+
+      return { value, ttl }
     })
   }
 
@@ -403,19 +444,8 @@ export class OneBusAwayService implements FeedProvider {
         continue
       }
 
-      // Pre-index reference arrays for O(1) lookups
-      const tripsById = new Map(
-        arrivalsAndDeparturesResp.data.references.trips.map((t) => [t.id, t]),
-      )
-      const stopsById = new Map(
-        arrivalsAndDeparturesResp.data.references.stops.map((s) => [s.id, s]),
-      )
-      const routesById = new Map(
-        arrivalsAndDeparturesResp.data.references.routes.map((r) => [r.id, r]),
-      )
-
       const arrivalsAndDepartures =
-        arrivalsAndDeparturesResp.data.entry.arrivalsAndDepartures.filter(
+        arrivalsAndDeparturesResp.arrivalsAndDepartures.filter(
           (ad) =>
             routeIds.includes(ad.routeId) && ad.departureEnabled !== false,
         )
@@ -441,9 +471,10 @@ export class OneBusAwayService implements FeedProvider {
             ? new Date(ad.predictedArrivalTime)
             : new Date(ad.scheduledArrivalTime)
 
-        const staticTrip = tripsById.get(ad.tripId)
-        const staticStop = stopsById.get(stopId)
-        const staticRoute = routesById.get(ad.routeId)
+        const staticTrip = arrivalsAndDeparturesResp.references.trips[ad.tripId]
+        const staticStop = arrivalsAndDeparturesResp.references.stops[stopId]
+        const staticRoute =
+          arrivalsAndDeparturesResp.references.routes[ad.routeId]
 
         const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
 
