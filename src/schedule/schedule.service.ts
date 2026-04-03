@@ -51,6 +51,10 @@ export interface ScheduleOptions {
 @Injectable()
 export class ScheduleService {
   private readonly logger = new Logger(ScheduleService.name)
+  private readonly sharedSubscriptions = new Map<
+    string,
+    Observable<ScheduleUpdate>
+  >()
 
   constructor(
     private readonly feedService: FeedService,
@@ -157,12 +161,27 @@ export class ScheduleService {
     return routeStopPairs
   }
 
+  private getSubscriptionKey(options: ScheduleOptions): string {
+    const routes = [...options.routes]
+      .sort((a, b) => {
+        const cmp = a.routeId.localeCompare(b.routeId)
+        return cmp !== 0 ? cmp : a.stopId.localeCompare(b.stopId)
+      })
+      .map((r) => `${r.routeId},${r.stopId},${r.offset}`)
+      .join(";")
+    return `${options.feedCode ?? ""}|${routes}|${options.limit}|${!!options.sortByDeparture}|${options.listMode ?? "sequential"}`
+  }
+
   subscribeToSchedule(
     subscription: ScheduleOptions,
   ): Observable<ScheduleUpdate> {
+    const key = this.getSubscriptionKey(subscription)
+    const existing = this.sharedSubscriptions.get(key)
+    if (existing) return existing
+
     const feedProvider = this.getFeedProvider(subscription)
 
-    return defer(() => {
+    const shared$ = defer(() => {
       this.logger.verbose(
         `Subscribed to schedule updates: ${JSON.stringify(subscription)}`,
       )
@@ -188,9 +207,13 @@ export class ScheduleService {
           )
 
           this.metricsService.remove(subscription)
+          this.sharedSubscriptions.delete(key)
         }),
       )
     }).pipe(share())
+
+    this.sharedSubscriptions.set(key, shared$)
+    return shared$
   }
 
   private scheduleUpdatesAreEqual(
