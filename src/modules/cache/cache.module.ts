@@ -12,7 +12,7 @@ import ms from "ms"
       useFactory: () =>
         new Cacheable({
           primary: createKeyvMemory({
-            lruSize: 50,
+            lruSize: 1000,
             checkInterval: ms("15m"),
           }),
           secondary: process.env.REDIS_URL
