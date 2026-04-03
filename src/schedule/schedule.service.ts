@@ -6,9 +6,9 @@ import {
   concat,
   defer,
   distinctUntilChanged,
+  exhaustMap,
   finalize,
   from,
-  mergeMap,
   Observable,
   share,
   timer,
@@ -179,7 +179,7 @@ export class ScheduleService {
 
       return concat(
         getTrips$,
-        timer(initialDelay, period).pipe(mergeMap(() => getTrips$)),
+        timer(initialDelay, period).pipe(exhaustMap(() => getTrips$)),
       ).pipe(
         distinctUntilChanged(this.scheduleUpdatesAreEqual.bind(this)),
         finalize(() => {
