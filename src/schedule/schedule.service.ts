@@ -159,7 +159,7 @@ export class ScheduleService {
 
   subscribeToSchedule(
     subscription: ScheduleOptions,
-  ): Observable<ScheduleUpdate | null> {
+  ): Observable<ScheduleUpdate> {
     const feedProvider = this.getFeedProvider(subscription)
 
     return defer(() => {
@@ -181,26 +181,7 @@ export class ScheduleService {
         getTrips$,
         timer(initialDelay, period).pipe(mergeMap(() => getTrips$)),
       ).pipe(
-        distinctUntilChanged((prev, curr) => {
-          if (prev === null || curr === null) {
-            return prev === curr
-          }
-          const pt = prev.trips
-          const ct = curr.trips
-          if (pt.length !== ct.length) {
-            return false
-          }
-          for (let i = 0; i < pt.length; i++) {
-            if (
-              pt[i].tripId !== ct[i].tripId ||
-              pt[i].arrivalTime !== ct[i].arrivalTime ||
-              pt[i].departureTime !== ct[i].departureTime ||
-              pt[i].isRealtime !== ct[i].isRealtime
-            )
-              return false
-          }
-          return true
-        }),
+        distinctUntilChanged(this.scheduleUpdatesAreEqual.bind(this)),
         finalize(() => {
           this.logger.verbose(
             `Unsubscribed from schedule updates: ${JSON.stringify(subscription)}`,
@@ -210,5 +191,26 @@ export class ScheduleService {
         }),
       )
     }).pipe(share())
+  }
+
+  private scheduleUpdatesAreEqual(
+    prev: ScheduleUpdate,
+    curr: ScheduleUpdate,
+  ): boolean {
+    const pt = prev.trips
+    const ct = curr.trips
+    if (pt.length !== ct.length) {
+      return false
+    }
+    for (let i = 0; i < pt.length; i++) {
+      if (
+        pt[i].tripId !== ct[i].tripId ||
+        pt[i].arrivalTime !== ct[i].arrivalTime ||
+        pt[i].departureTime !== ct[i].departureTime ||
+        pt[i].isRealtime !== ct[i].isRealtime
+      )
+        return false
+    }
+    return true
   }
 }
