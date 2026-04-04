@@ -1,8 +1,6 @@
 import { Inject, Injectable } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
-import * as Sentry from "@sentry/node"
-import { RateLimiter } from "limiter"
 import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { OneBusAwayConfig } from "./config"
@@ -13,10 +11,6 @@ export class OneBusAwayInstrumentationService {
   private obaRequestCounter: Counter
   private obaResponseCounter: Counter
   private obaRequestDuration: Histogram
-  private obaRateLimiter = new RateLimiter({
-    tokensPerInterval: 1,
-    interval: 200,
-  })
 
   constructor(
     @Inject(REQUEST) { feedCode }: FeedContext<OneBusAwayConfig>,
@@ -51,17 +45,6 @@ export class OneBusAwayInstrumentationService {
   }
 
   async fetch(url: any, init?: any): Promise<any> {
-    await Sentry.startSpan(
-      {
-        op: "throttle.wait",
-        name: "obaRateLimiter",
-      },
-      async (span) => {
-        const remainingTokens = await this.obaRateLimiter.removeTokens(1)
-        span.setAttribute("throttle.remaining_tokens", remainingTokens)
-      },
-    )
-
     const methodName = new URL(url).pathname.split("/")[3].split(".")[0]
 
     this.obaRequestCounter.add(1, {
