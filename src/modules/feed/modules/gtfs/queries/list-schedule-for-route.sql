@@ -61,19 +61,6 @@ route_trips AS (
         SELECT 1 FROM "frequencies" f
         WHERE f.trip_id = t.trip_id
       )
-),
-last_stops AS (
-    SELECT 
-        st.trip_id,
-        st.stop_id AS last_stop_id,
-        s.stop_name AS last_stop_name
-    FROM "stop_times" st
-    JOIN "stops" s ON st.stop_id = s.stop_id
-    WHERE st.stop_sequence = (
-        SELECT MAX(st2.stop_sequence)
-        FROM "stop_times" st2
-        WHERE st2.trip_id = st.trip_id
-    )
 )
 -- Fetch stop_times with stop_timezone and route_short_name
 SELECT 
@@ -106,7 +93,14 @@ JOIN "routes" r ON rt.route_id = r.route_id
 JOIN "stops" s ON st.stop_id = s.stop_id
 JOIN current_day ON true
 JOIN agency_timezone ON true
-LEFT JOIN last_stops ls ON st.trip_id = ls.trip_id
+LEFT JOIN LATERAL (
+    SELECT s2.stop_name AS last_stop_name
+    FROM "stop_times" st2
+    JOIN "stops" s2 ON st2.stop_id = s2.stop_id
+    WHERE st2.trip_id = st.trip_id
+    ORDER BY st2.stop_sequence DESC
+    LIMIT 1
+) ls ON true
 WHERE st.stop_id = :stopId!
 AND st.arrival_time IS NOT NULL
 AND st.departure_time IS NOT NULL
