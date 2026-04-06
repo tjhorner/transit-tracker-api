@@ -77,7 +77,7 @@ describe("ScheduleGateway", () => {
       const mockRequest = mock<IncomingMessage>()
       const mockSocket = mock<Socket>()
 
-      // @ts-ignore
+      // @ts-expect-error - assigning read-only property for testing
       mockSocket.remoteAddress = "1.1.1.1"
       mockRequest.socket = mockSocket
 
@@ -140,7 +140,7 @@ describe("ScheduleGateway", () => {
       const dto = new ScheduleSubscriptionDto()
       dto.routeStopPairs = ""
 
-      let pairs: RouteAtStopWithOffset[] = []
+      const pairs: RouteAtStopWithOffset[] = []
       for (let i = 1; i <= 26; i++) {
         dto.routeStopPairs += `route${i},stop${i}`
         if (i < 26) {

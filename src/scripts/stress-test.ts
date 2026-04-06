@@ -38,10 +38,6 @@ async function subscribe(rsps: string) {
       Math.floor(Math.random() * ms("30s")),
     )
   })
-
-  ws.on("message", (data) => {
-    // console.log(data)
-  })
 }
 
 async function wait(ms: number) {

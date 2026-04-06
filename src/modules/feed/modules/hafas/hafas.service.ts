@@ -32,6 +32,7 @@ export class HafasService implements FeedProvider {
     this.logger = new Logger(`${HafasService.name}[${feedCode}]`)
 
     this.logger.log(`Initializing with HAFAS profile: ${config.profile}`)
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { profile } = require(`hafas-client/p/${config.profile}`)
     this.hafasClient = createClient(profile, config.userAgent)
   }
@@ -154,7 +155,7 @@ export class HafasService implements FeedProvider {
     })
   }
 
-  getStop(stopId: string): Promise<Stop> {
+  getStop(): Promise<Stop> {
     throw new Error("Method not implemented.")
   }
 

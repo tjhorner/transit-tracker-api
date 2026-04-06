@@ -159,7 +159,7 @@ export class FeedSyncService implements OnModuleInit {
 
   private async runScript(script: string) {
     return new Promise((resolve, reject) => {
-      const scriptProcess = exec(script, (error, stdout, _) => {
+      const scriptProcess = exec(script, (error, stdout) => {
         if (error) {
           return reject(error)
         }

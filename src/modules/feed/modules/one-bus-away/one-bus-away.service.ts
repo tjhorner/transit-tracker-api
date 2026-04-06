@@ -98,6 +98,7 @@ export class OneBusAwayService implements FeedProvider {
         try {
           obaConfig = await this.obaSdk.config.retrieve()
         } catch (e: any) {
+          this.logger.error(`Error retrieving OneBusAway config: ${e.message}`)
           return {
             oneBusAwayServer: this.config.baseUrl,
           }

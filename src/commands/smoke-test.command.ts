@@ -18,10 +18,7 @@ export class SmokeTestCommand extends CommandRunner {
     super()
   }
 
-  async run(
-    passedParams: string[],
-    options?: Record<string, any>,
-  ): Promise<void> {
+  async run(passedParams: string[]): Promise<void> {
     const [feedCode] = passedParams
     this.logger.log(`Running smoke test for feed: ${feedCode}`)
 

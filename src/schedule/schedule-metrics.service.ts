@@ -3,13 +3,6 @@ import { MetricService } from "nestjs-otel"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleOptions } from "./schedule.service"
 
-interface RouteStopMetric {
-  feedCode: string
-  routeId: string
-  stopId: string
-  count: number
-}
-
 @Injectable()
 export class ScheduleMetricsService implements OnApplicationBootstrap {
   private readonly subscribers: Set<ScheduleOptions> = new Set()

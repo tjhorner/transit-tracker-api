@@ -6,7 +6,7 @@ import { WsAdapter } from "@nestjs/platform-ws"
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger"
 import { AppModule } from "./app.module"
 import otelSDK from "./tracing"
-import { ConsoleLogger, Logger } from "@nestjs/common"
+import { ConsoleLogger } from "@nestjs/common"
 
 function configureForFly(app: NestExpressApplication) {
   if (!process.env.FLY_MACHINE_ID) {

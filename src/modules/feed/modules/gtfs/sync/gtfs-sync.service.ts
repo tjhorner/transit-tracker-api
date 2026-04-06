@@ -335,7 +335,7 @@ export class GtfsSyncService {
       lastLoggedAt = Date.now()
     }
 
-    let statusUpdateInterval: NodeJS.Timeout = setInterval(
+    const statusUpdateInterval: NodeJS.Timeout = setInterval(
       logStatus.bind(this),
       1000,
     )
