@@ -340,6 +340,7 @@ describe("ScheduleGateway", () => {
             arrivalTime: Date.now() / 1000 + 300,
             departureTime: Date.now() / 1000 + 330,
             isRealtime: false,
+            directionId: null,
           },
         ],
       }
@@ -357,6 +358,7 @@ describe("ScheduleGateway", () => {
             arrivalTime: Date.now() / 1000 + 600,
             departureTime: Date.now() / 1000 + 630,
             isRealtime: false,
+            directionId: null,
           },
         ],
       }

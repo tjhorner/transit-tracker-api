@@ -1,2 +1,3 @@
+pnpm lint
 pnpm format --log-level silent
 git update-index --again
