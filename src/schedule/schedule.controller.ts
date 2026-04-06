@@ -12,6 +12,10 @@ import {
   ApiParam,
   ApiProperty,
 } from "@nestjs/swagger"
+import { featureCollection, point } from "@turf/turf"
+import { FeedService } from "src/modules/feed/feed.service"
+import { StopRoute } from "src/modules/feed/interfaces/feed-provider.interface"
+import { ScheduleMetricsService } from "./schedule-metrics.service"
 import { ScheduleService } from "./schedule.service"
 
 export class TripDto {
@@ -108,7 +112,69 @@ export class ScheduleDto {
 
 @Controller("schedule")
 export class ScheduleController {
-  constructor(private readonly scheduleService: ScheduleService) {}
+  constructor(
+    private readonly scheduleService: ScheduleService,
+    private readonly feedService: FeedService,
+    private readonly metricsService: ScheduleMetricsService,
+  ) {}
+
+  @Get("subscribers")
+  @ApiOperation({
+    description:
+      "Get the number of active schedule subscribers per route-stop pair",
+  })
+  @ApiOkResponse({
+    description: "Subscriber counts keyed by routeId:stopId",
+  })
+  async getSubscriberCounts(): Promise<any> {
+    const counts = await this.metricsService.getSubscriberCounts()
+
+    const stopsToRoutes: Record<string, Record<string, number>> = {}
+    const totalSubscribersForStop: Record<string, number> = {}
+
+    for (const [routeStop, count] of Object.entries(counts)) {
+      const [routeId, stopId] = routeStop
+        .split(",")
+        .map((part) => decodeURIComponent(part))
+
+      if (!stopsToRoutes[stopId]) {
+        stopsToRoutes[stopId] = {}
+      }
+      stopsToRoutes[stopId][routeId] = count
+
+      if (!totalSubscribersForStop[stopId]) {
+        totalSubscribersForStop[stopId] = 0
+      }
+      totalSubscribersForStop[stopId] += count
+    }
+
+    const feedProvider = this.feedService.all
+    const stops = await Promise.all(
+      Object.keys(stopsToRoutes).map(async (stopId) => {
+        const stop = await feedProvider.getStop(stopId).catch(() => null)
+        if (!stop) {
+          return null
+        }
+
+        const routes: StopRoute[] = await feedProvider
+          .getRoutesForStop(stopId)
+          .catch(() => [])
+
+        return point([stop?.lon, stop?.lat], {
+          id: stopId,
+          name: stop.name,
+          totalSubscriberCount: totalSubscribersForStop[stopId] || 0,
+          routes: routes.map((route) => ({
+            id: route.routeId,
+            name: route.name,
+            subscriberCount: stopsToRoutes[stopId][route.routeId] || 0,
+          })),
+        })
+      }),
+    )
+
+    return featureCollection(stops.filter((stop) => stop !== null) as any)
+  }
 
   @Get(":routeStopPairs")
   @ApiOperation({

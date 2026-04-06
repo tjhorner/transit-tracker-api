@@ -1,8 +1,11 @@
 import KeyvRedis from "@keyv/redis"
 import { Global, Module } from "@nestjs/common"
 import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
+import Redis from "ioredis"
 import Keyv from "keyv"
 import ms from "ms"
+
+export const REDIS_CLIENT = Symbol("REDIS_CLIENT")
 
 @Global()
 @Module({
@@ -28,7 +31,12 @@ import ms from "ms"
             : undefined,
         }),
     },
+    {
+      provide: REDIS_CLIENT,
+      useFactory: () =>
+        process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null,
+    },
   ],
-  exports: [Cacheable],
+  exports: [Cacheable, REDIS_CLIENT],
 })
 export class CacheModule {}
