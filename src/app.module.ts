@@ -12,6 +12,7 @@ import { HealthController } from "./health/health.controller"
 import { CacheModule } from "./modules/cache/cache.module"
 import { FeedModule } from "./modules/feed/feed.module"
 import { NotificationsModule } from "./modules/notifications/notifications.module"
+import { ScheduleMetricsController } from "./schedule/schedule-metrics.controller"
 import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
 import { ScheduleController } from "./schedule/schedule.controller"
 import { ScheduleGateway } from "./schedule/schedule.gateway"
@@ -50,7 +51,12 @@ import { SystemAlertListener } from "./system-alert.listener"
     FeedModule,
     NotificationsModule,
   ],
-  controllers: [ScheduleController, StopsController, HealthController],
+  controllers: [
+    ScheduleController,
+    ScheduleMetricsController,
+    StopsController,
+    HealthController,
+  ],
   providers: [
     SyncCommand,
     SmokeTestCommand,

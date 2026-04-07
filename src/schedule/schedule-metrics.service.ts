@@ -4,7 +4,9 @@ import {
   Logger,
   OnApplicationBootstrap,
   OnApplicationShutdown,
+  Optional,
 } from "@nestjs/common"
+import { randomUUID } from "crypto"
 import Redis from "ioredis"
 import { MetricService } from "nestjs-otel"
 import { hostname } from "os"
@@ -12,7 +14,7 @@ import { REDIS_CLIENT } from "src/modules/cache/cache.module"
 import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleOptions } from "./schedule.service"
 
-const REDIS_KEY_PREFIX = "schedule_subscribers"
+const REDIS_KEY_PREFIX = "schedule_subscriptions"
 const HEARTBEAT_INTERVAL_MS = 30_000
 const KEY_TTL_SECONDS = 60
 
@@ -21,15 +23,15 @@ export class ScheduleMetricsService
   implements OnApplicationBootstrap, OnApplicationShutdown
 {
   private readonly logger = new Logger(ScheduleMetricsService.name)
-  private readonly subscribers: Set<ScheduleOptions> = new Set()
+  private readonly subscriptionHandles: Map<ScheduleOptions, string> = new Map()
   private subscribersByFeedCode: Map<string, number> = new Map()
   private readonly instanceKey = `${REDIS_KEY_PREFIX}:${hostname()}`
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
 
   constructor(
     private readonly feedService: FeedService,
-    @Inject(REDIS_CLIENT) private readonly redis: Redis | null,
     metricService: MetricService,
+    @Inject(REDIS_CLIENT) @Optional() private readonly redis?: Redis,
   ) {
     metricService
       .getObservableGauge("schedule_subscriptions", {
@@ -70,24 +72,26 @@ export class ScheduleMetricsService
   }
 
   add(subscription: ScheduleOptions) {
-    this.subscribers.add(subscription)
+    const handle = randomUUID()
+    this.subscriptionHandles.set(subscription, handle)
     this.incrementFeedCodeMetrics(1, subscription)
-    this.incrementGlobalCount(1, subscription)
+    this.syncToRedis("add", handle, subscription)
   }
 
   remove(subscription: ScheduleOptions) {
-    if (!this.subscribers.has(subscription)) {
+    const handle = this.subscriptionHandles.get(subscription)
+    if (!handle) {
       return
     }
 
-    this.subscribers.delete(subscription)
+    this.subscriptionHandles.delete(subscription)
     this.incrementFeedCodeMetrics(-1, subscription)
-    this.incrementGlobalCount(-1, subscription)
+    this.syncToRedis("remove", handle)
   }
 
-  async getSubscriberCounts(): Promise<Record<string, number>> {
+  async getSubscriptions(): Promise<ScheduleOptions[]> {
     if (!this.redis) {
-      return {}
+      return []
     }
 
     const keys: string[] = []
@@ -104,34 +108,42 @@ export class ScheduleMetricsService
       keys.push(...matchedKeys)
     } while (cursor !== "0")
 
-    const totals: Record<string, number> = {}
+    const subscriptions: ScheduleOptions[] = []
 
     for (const key of keys) {
       const fields = await this.redis.hgetall(key)
-      for (const [field, value] of Object.entries(fields)) {
-        const count = parseInt(value, 10)
-        if (!isNaN(count)) {
-          totals[field] = (totals[field] ?? 0) + count
+      for (const value of Object.values(fields)) {
+        try {
+          subscriptions.push(JSON.parse(value))
+        } catch {
+          // skip malformed entries
         }
       }
     }
 
-    return totals
+    return subscriptions
   }
 
-  private incrementGlobalCount(value: number, subscription: ScheduleOptions) {
+  private syncToRedis(
+    action: "add" | "remove",
+    handle: string,
+    subscription?: ScheduleOptions,
+  ) {
     if (!this.redis) {
       return
     }
 
-    const fields = this.getRouteStopFields(subscription)
     const pipeline = this.redis.pipeline()
-    for (const field of fields) {
-      pipeline.hincrby(this.instanceKey, field, value)
+
+    if (action === "add") {
+      pipeline.hset(this.instanceKey, handle, JSON.stringify(subscription))
+    } else {
+      pipeline.hdel(this.instanceKey, handle)
     }
+
     pipeline.expire(this.instanceKey, KEY_TTL_SECONDS)
     pipeline.exec().catch((err) => {
-      this.logger.warn(`Failed to update Redis subscriber counts: ${err}`)
+      this.logger.warn(`Failed to update Redis subscriptions: ${err}`)
     })
   }
 
@@ -139,21 +151,6 @@ export class ScheduleMetricsService
     this.redis?.expire(this.instanceKey, KEY_TTL_SECONDS).catch((err) => {
       this.logger.warn(`Failed to refresh Redis TTL: ${err}`)
     })
-  }
-
-  private getRouteStopFields(subscription: ScheduleOptions): string[] {
-    if (!subscription.feedCode) {
-      return subscription.routes.map(
-        (r) =>
-          `${encodeURIComponent(r.routeId)},${encodeURIComponent(r.stopId)}`,
-      )
-    }
-
-    const { feedCode } = subscription
-    return subscription.routes.map(
-      (r) =>
-        `${encodeURIComponent(`${feedCode}:${r.routeId}`)},${encodeURIComponent(`${feedCode}:${r.stopId}`)}`,
-    )
   }
 
   private incrementFeedCodeMetrics(

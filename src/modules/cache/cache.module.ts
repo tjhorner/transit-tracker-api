@@ -34,7 +34,7 @@ export const REDIS_CLIENT = Symbol("REDIS_CLIENT")
     {
       provide: REDIS_CLIENT,
       useFactory: () =>
-        process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : null,
+        process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : undefined,
     },
   ],
   exports: [Cacheable, REDIS_CLIENT],
