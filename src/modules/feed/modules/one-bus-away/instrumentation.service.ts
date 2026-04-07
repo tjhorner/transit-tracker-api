@@ -21,10 +21,10 @@ export class OneBusAwayInstrumentationService {
   ) {
     this.feedCode = feedCode
 
-    if (config.rateLimiter.enabled) {
+    if (config.rateLimiter?.enabled !== false) {
       this.obaRateLimiter = new RateLimiter({
-        tokensPerInterval: config.rateLimiter.tokensPerInterval,
-        interval: config.rateLimiter.interval,
+        tokensPerInterval: config.rateLimiter?.tokensPerInterval ?? 1,
+        interval: config.rateLimiter?.interval ?? 200,
       })
     }
 
