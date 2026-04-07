@@ -125,6 +125,28 @@
                 "apiKey": {
                   "type": "string",
                   "description": "Your OneBusAway API key."
+                },
+                "rateLimiter": {
+                  "type": "object",
+                  "description": "Configuration for client-side rate limiting.",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether to enable rate limiting for this feed. Defaults to true.",
+                      "default": true
+                    },
+                    "tokensPerInterval": {
+                      "type": "number",
+                      "description": "Number of tokens to add to the bucket per interval. Each request will remove 1 token from the bucket. Defaults to 1.",
+                      "default": 1
+                    },
+                    "interval": {
+                      "type": "number",
+                      "description": "Length of each interval in milliseconds. Defaults to 200ms.",
+                      "default": 200
+                    }
+                  },
+                  "additionalProperties": false
                 }
               },
               "required": [
@@ -139,7 +161,10 @@
               "properties": {
                 "profile": {
                   "type": "string",
-                  "examples": [ "vbb", "db" ],
+                  "examples": [
+                    "vbb",
+                    "db"
+                  ],
                   "description": "A preset HAFAS profile to use for `hafas-client`. See: https://github.com/public-transport/hafas-client/blob/main/p/readme.md#built-in-profiles"
                 },
                 "userAgent": {

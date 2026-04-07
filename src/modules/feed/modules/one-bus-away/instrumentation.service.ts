@@ -13,20 +13,19 @@ export class OneBusAwayInstrumentationService {
   private obaRequestCounter: Counter
   private obaResponseCounter: Counter
   private obaRequestDuration: Histogram
-  private rateLimiterEnabled: boolean = true
-  private obaRateLimiter = new RateLimiter({
-    tokensPerInterval: 1,
-    interval: 200,
-  })
+  private obaRateLimiter?: RateLimiter
 
   constructor(
-    @Inject(REQUEST) { feedCode }: FeedContext<OneBusAwayConfig>,
+    @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
     metricService: MetricService,
   ) {
     this.feedCode = feedCode
 
-    if (process.env.OBA_DISABLE_RATE_LIMITER === "true") {
-      this.rateLimiterEnabled = false
+    if (config.rateLimiter.enabled) {
+      this.obaRateLimiter = new RateLimiter({
+        tokensPerInterval: config.rateLimiter.tokensPerInterval,
+        interval: config.rateLimiter.interval,
+      })
     }
 
     this.obaRequestCounter = metricService.getCounter(
@@ -56,14 +55,14 @@ export class OneBusAwayInstrumentationService {
   }
 
   async fetch(url: any, init?: any): Promise<any> {
-    if (this.rateLimiterEnabled) {
+    if (this.obaRateLimiter !== undefined) {
       await Sentry.startSpan(
         {
           op: "throttle.wait",
           name: "obaRateLimiter",
         },
         async (span) => {
-          const remainingTokens = await this.obaRateLimiter.removeTokens(1)
+          const remainingTokens = await this.obaRateLimiter!.removeTokens(1)
           span.setAttribute("throttle.remaining_tokens", remainingTokens)
         },
       )
