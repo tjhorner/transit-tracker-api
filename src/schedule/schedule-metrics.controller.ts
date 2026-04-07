@@ -1,8 +1,16 @@
-import { Controller, Get, Header, UseGuards } from "@nestjs/common"
+import {
+  Controller,
+  Get,
+  Header,
+  UseGuards,
+  UseInterceptors,
+} from "@nestjs/common"
 import { featureCollection, point } from "@turf/turf"
+import ms from "ms"
 import { InternalApiGuard } from "src/guards/internal-api.guard"
+import { CacheTTL } from "src/modules/cache/decorators/cache-ttl.decorator"
+import { CacheInterceptor } from "src/modules/cache/interceptors/cache.interceptor"
 import { FeedService } from "src/modules/feed/feed.service"
-import { StopRoute } from "src/modules/feed/interfaces/feed-provider.interface"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
 
 @Controller("schedule-metrics")
@@ -15,30 +23,22 @@ export class ScheduleMetricsController {
 
   @Get("subscriptions.geojson")
   @Header("Content-Type", "application/vnd.geo+json")
+  @UseInterceptors(CacheInterceptor)
+  @CacheTTL(ms("5m"))
   async getSubscriptionsGeojson(): Promise<any> {
     const subscriptions = await this.metricsService.getSubscriptions()
 
     let minStopSubscribers = 0
     let maxStopSubscribers = 0
 
-    const stopsToRoutes: Record<string, Record<string, number>> = {}
     const totalSubscribersForStop: Record<string, number> = {}
 
     for (const subscription of subscriptions) {
       const uniqueStopIds = new Set()
       for (const route of subscription.routes) {
-        const routeId = subscription.feedCode
-          ? `${subscription.feedCode}:${route.routeId}`
-          : route.routeId
         const stopId = subscription.feedCode
           ? `${subscription.feedCode}:${route.stopId}`
           : route.stopId
-
-        if (!stopsToRoutes[stopId]) {
-          stopsToRoutes[stopId] = {}
-        }
-        stopsToRoutes[stopId][routeId] =
-          (stopsToRoutes[stopId][routeId] ?? 0) + 1
 
         if (!uniqueStopIds.has(stopId)) {
           totalSubscribersForStop[stopId] =
@@ -59,15 +59,11 @@ export class ScheduleMetricsController {
 
     const feedProvider = this.feedService.all
     const stops = await Promise.all(
-      Object.keys(stopsToRoutes).map(async (stopId) => {
+      Object.keys(totalSubscribersForStop).map(async (stopId) => {
         const stop = await feedProvider.getStop(stopId).catch(() => null)
         if (!stop) {
           return null
         }
-
-        const routes: StopRoute[] = await feedProvider
-          .getRoutesForStop(stopId)
-          .catch(() => [])
 
         const subscriberCount = totalSubscribersForStop[stopId] || 0
 
@@ -85,11 +81,6 @@ export class ScheduleMetricsController {
           name: stop.name,
           subscriberCount,
           "marker-color": color,
-          routes: routes.map((route) => ({
-            id: route.routeId,
-            name: route.name,
-            subscriberCount: stopsToRoutes[stopId][route.routeId] || 0,
-          })),
         })
       }),
     )

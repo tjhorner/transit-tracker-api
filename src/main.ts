@@ -35,6 +35,7 @@ export async function bootstrap() {
     app.set("trust proxy", trustProxy)
   }
 
+  app.enableShutdownHooks()
   app.useWebSocketAdapter(new WsAdapter(app))
   app.enableCors()
 
