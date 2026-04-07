@@ -8,7 +8,6 @@ import { MetricService } from "nestjs-otel"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import type { FetchConfig, GtfsConfig } from "./config"
-import { GTFS_CONFIG } from "./const"
 import { decodeTripUpdatesOnly } from "./decode-trip-updates"
 import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-route.queries"
 
@@ -20,17 +19,18 @@ export type TripUpdateIndex = Map<string, ITripUpdate[]>
 @Injectable({ scope: Scope.REQUEST })
 export class GtfsRealtimeService {
   private readonly feedCode: string
+  private readonly config: GtfsConfig
   private readonly logger: Logger
   private readonly requestsCounter: Counter
   private readonly failuresCounter: Counter
 
   constructor(
-    @Inject(REQUEST) { feedCode }: FeedContext<GtfsConfig>,
-    @Inject(GTFS_CONFIG) private readonly config: GtfsConfig,
+    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly cache: FeedCacheService,
     metricService: MetricService,
   ) {
     this.feedCode = feedCode
+    this.config = config
     this.logger = new Logger(`${GtfsRealtimeService.name}[${feedCode}]`)
 
     this.requestsCounter = metricService.getCounter("gtfs_realtime_requests", {

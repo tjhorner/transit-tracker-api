@@ -18,7 +18,7 @@ import type {
   TripStop,
 } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
-import { HafasConfig } from "./config"
+import { HafasConfig, HafasConfigSchema } from "./config"
 
 @RegisterFeedProvider("hafas")
 export class HafasService implements FeedProvider {
@@ -35,6 +35,10 @@ export class HafasService implements FeedProvider {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { profile } = require(`hafas-client/p/${config.profile}`)
     this.hafasClient = createClient(profile, config.userAgent)
+  }
+
+  static validateConfig(config: any): HafasConfig {
+    return HafasConfigSchema.parse(config)
   }
 
   getMetadata(): Promise<Record<string, any>> {

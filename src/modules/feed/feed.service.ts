@@ -23,6 +23,10 @@ export const FeedConfigSchema = z
 
 export type FeedConfig = z.infer<typeof FeedConfigSchema>
 
+type FeedProviderConstructor = Type<FeedProvider> & {
+  validateConfig?: <T>(config: any) => T
+}
+
 @Injectable()
 export class FeedService implements OnModuleInit {
   /**
@@ -62,7 +66,7 @@ export class FeedService implements OnModuleInit {
   }
 
   private getRegisteredProviders() {
-    const registeredProviders: { [key: string]: Type<FeedProvider> } =
+    const registeredProviders: { [key: string]: FeedProviderConstructor } =
       Object.fromEntries(
         this.discoveryService
           .getProviders({
@@ -70,7 +74,7 @@ export class FeedService implements OnModuleInit {
           })
           .map((item) => [
             this.discoveryService.getMetadataByDecorator(ProviderKey, item),
-            item.metatype as Type<FeedProvider>,
+            item.metatype as FeedProviderConstructor,
           ]),
       )
 
@@ -109,11 +113,24 @@ export class FeedService implements OnModuleInit {
             `Initializing feed "${feedName}" with provider ${providerType.name}`,
           )
 
+          let feedConfig: any = config[key]
+          if (providerType.validateConfig) {
+            try {
+              feedConfig = providerType.validateConfig(config[key])
+            } catch (e: any) {
+              this.logger.error(
+                `Configuration validation failed for feed "${feedName}" with provider ${providerType.name}: ${e.message}`,
+                e.stack,
+              )
+              break
+            }
+          }
+
           const contextId = ContextIdFactory.create()
           this.moduleRef.registerRequestByContextId<FeedContext>(
             {
               feedCode: feedName,
-              config: config[key],
+              config: feedConfig,
             },
             contextId,
           )

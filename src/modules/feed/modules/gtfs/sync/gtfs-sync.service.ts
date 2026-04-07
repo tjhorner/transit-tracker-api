@@ -13,7 +13,6 @@ import type {
   SyncOptions,
 } from "../../../interfaces/feed-provider.interface"
 import type { GtfsConfig } from "../config"
-import { GTFS_CONFIG } from "../const"
 import { GTFS_TABLES, GtfsDbService } from "../gtfs-db.service"
 import { GtfsValidatorService } from "./gtfs-validator.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
@@ -29,10 +28,10 @@ import { ZipFileService } from "./zip-file.service"
 export class GtfsSyncService {
   private readonly logger: Logger
   private readonly feedCode: string
+  private readonly config: GtfsConfig
 
   constructor(
-    @Inject(REQUEST) { feedCode }: FeedContext<GtfsConfig>,
-    @Inject(GTFS_CONFIG) private readonly config: GtfsConfig,
+    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly webResourceService: WebResourceService,
     private readonly gtfsValidatorService: GtfsValidatorService,
     private readonly zipFileService: ZipFileService,
@@ -40,6 +39,7 @@ export class GtfsSyncService {
   ) {
     this.logger = new Logger(`${GtfsSyncService.name}[${feedCode}]`)
     this.feedCode = feedCode
+    this.config = config
   }
 
   async hasEverSynced() {

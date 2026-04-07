@@ -67,8 +67,12 @@ export class MvgService implements FeedProvider {
     private readonly cache: FeedCacheService,
   ) {
     this.logger = new Logger(`${MvgService.name}[${feedCode}]`)
-    this.config = MvgConfigSchema.parse(config)
+    this.config = config
     this.baseUrl = this.config.baseUrl
+  }
+
+  static validateConfig(config: unknown): MvgConfig {
+    return MvgConfigSchema.parse(config)
   }
 
   async healthCheck(): Promise<void> {

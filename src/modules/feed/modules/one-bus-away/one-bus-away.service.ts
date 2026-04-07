@@ -81,7 +81,11 @@ export class OneBusAwayService implements FeedProvider {
     private readonly obaSdk: OnebusawaySDK,
   ) {
     this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
-    this.config = OneBusAwayConfigSchema.parse(config)
+    this.config = config
+  }
+
+  static validateConfig(config: any): OneBusAwayConfig {
+    return OneBusAwayConfigSchema.parse(config)
   }
 
   async healthCheck(): Promise<void> {
