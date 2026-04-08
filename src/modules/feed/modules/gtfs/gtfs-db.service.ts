@@ -55,7 +55,9 @@ export class GtfsDbService
   }
 
   async onApplicationShutdown() {
-    await this.pool.end()
+    if (!this.pool.ending && !this.pool.ended) {
+      await this.pool.end()
+    }
   }
 
   async tx<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
