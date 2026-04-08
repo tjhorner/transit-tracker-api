@@ -42,9 +42,6 @@ import { SystemAlertListener } from "./system-alert.listener"
     OpenTelemetryModule.forRoot({
       metrics: {
         hostMetrics: false,
-        apiMetrics: {
-          enable: true,
-        },
       },
     }),
     SentryModule.forRoot(),
