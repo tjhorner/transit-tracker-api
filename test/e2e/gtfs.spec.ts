@@ -37,7 +37,7 @@ describe("GTFS E2E test", () => {
     postgresContainer = pgContainer
     process.env.DATABASE_URL = connectionUrl.toString()
 
-    redisContainer = await new RedisContainer().start()
+    redisContainer = await new RedisContainer("redis:7.2").start()
     process.env.REDIS_URL = redisContainer.getConnectionUrl()
 
     process.env.FEEDS_CONFIG = await fs.readFile(

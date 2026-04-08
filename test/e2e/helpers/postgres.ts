@@ -27,7 +27,9 @@ async function runCmd(
 }
 
 export async function setupTestDatabase() {
-  const postgresContainer = await new PostgreSqlContainer()
+  const postgresContainer = await new PostgreSqlContainer(
+    "postgres:13.3-alpine",
+  )
     .withDatabase("postgres")
     .withUsername("postgres")
     .withPassword("postgres")
