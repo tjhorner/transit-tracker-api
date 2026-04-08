@@ -84,7 +84,7 @@
     "@nestjs/schematics": "^11.0.10",
     "@nestjs/testing": "^11.1.18",
     "@pgtyped/cli": "^2.4.3",
-    "@swc/cli": "^0.7.10",
+    "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.24",
     "@testcontainers/postgresql": "^11.13.0",
     "@testcontainers/redis": "^11.13.0",
