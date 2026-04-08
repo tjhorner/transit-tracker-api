@@ -100,7 +100,7 @@
     "@types/pg-copy-streams": "^1.2.5",
     "@types/proxy-addr": "^2.0.3",
     "@types/redlock": "^4.0.8",
-    "@types/supertest": "^7.0.0",
+    "@types/supertest": "^7.2.0",
     "@types/unzipper": "^0.10.11",
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.58.1",
