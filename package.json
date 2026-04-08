@@ -74,7 +74,7 @@
     "unzipper": "^0.12.3",
     "ws": "^8.20.0",
     "zod": "^3.25.76",
-    "zod-validation-error": "^3.5.4"
+    "zod-validation-error": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.5",
