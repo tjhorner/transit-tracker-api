@@ -1,4 +1,5 @@
 import { ArgumentMetadata, BadRequestException } from "@nestjs/common"
+import * as fc from "fast-check"
 import { BBox } from "geojson"
 import { ParseBboxPipe } from "src/pipes/parse-bbox.pipe"
 
@@ -20,6 +21,30 @@ describe("ParseBboxPipe", () => {
 
     const expected: BBox = [-122.4, 37.6, -122.3, 37.7]
     expect(result).toEqual(expected)
+  })
+
+  it("should parse any valid lon/lat values back to their original numbers", async () => {
+    // -0 stringifies to "0" so the round-trip breaks; exclude it
+    const lon = fc
+      .double({ min: -180, max: 180, noNaN: true })
+      .filter((n) => !Object.is(n, -0))
+    const lat = fc
+      .double({ min: -90, max: 90, noNaN: true })
+      .filter((n) => !Object.is(n, -0))
+
+    await fc.assert(
+      fc.asyncProperty(
+        lon,
+        lat,
+        lon,
+        lat,
+        async (minLon, minLat, maxLon, maxLat) => {
+          const input = `${minLon},${minLat},${maxLon},${maxLat}`
+          const result = await pipe.transform(input, metadata)
+          expect(result).toEqual([minLon, minLat, maxLon, maxLat])
+        },
+      ),
+    )
   })
 
   it("should throw BadRequestException when input has fewer than 4 numbers", async () => {
@@ -50,85 +75,51 @@ describe("ParseBboxPipe", () => {
     await expect(pipe.transform(value, metadata)).rejects.toThrow()
   })
 
-  it("should handle integer values correctly", async () => {
-    const value = "-122,37,-121,38"
-    const result = await pipe.transform(value, metadata)
+  it("should throw BadRequestException for any longitude out of range", async () => {
+    const outOfRangeLon = fc.oneof(
+      fc.double({ max: -180.01, noNaN: true }),
+      fc.double({ min: 180.01, noNaN: true }),
+    )
+    const validLat = fc.double({ min: -90, max: 90, noNaN: true })
 
-    const expected: BBox = [-122, 37, -121, 38]
-    expect(result).toEqual(expected)
+    await fc.assert(
+      fc.asyncProperty(outOfRangeLon, validLat, async (badLon, lat) => {
+        const minLonOut = `${badLon},${lat},0,0`
+        await expect(pipe.transform(minLonOut, metadata)).rejects.toThrow(
+          BadRequestException,
+        )
+        const maxLonOut = `0,0,${badLon},${lat}`
+        await expect(pipe.transform(maxLonOut, metadata)).rejects.toThrow(
+          BadRequestException,
+        )
+      }),
+    )
   })
 
-  it("should handle decimal values correctly", async () => {
-    const value = "-122.456,37.123,-121.789,38.456"
-    const result = await pipe.transform(value, metadata)
+  it("should throw BadRequestException for any latitude out of range", async () => {
+    const validLon = fc.double({ min: -180, max: 180, noNaN: true })
+    const outOfRangeLat = fc.oneof(
+      fc.double({ max: -90.01, noNaN: true }),
+      fc.double({ min: 90.01, noNaN: true }),
+    )
 
-    const expected: BBox = [-122.456, 37.123, -121.789, 38.456]
-    expect(result).toEqual(expected)
-  })
-
-  it("should handle negative values correctly", async () => {
-    const value = "-180,-90,180,90"
-    const result = await pipe.transform(value, metadata)
-
-    const expected: BBox = [-180, -90, 180, 90]
-    expect(result).toEqual(expected)
+    await fc.assert(
+      fc.asyncProperty(validLon, outOfRangeLat, async (lon, badLat) => {
+        const minLatOut = `${lon},${badLat},0,0`
+        await expect(pipe.transform(minLatOut, metadata)).rejects.toThrow(
+          BadRequestException,
+        )
+        const maxLatOut = `0,0,${lon},${badLat}`
+        await expect(pipe.transform(maxLatOut, metadata)).rejects.toThrow(
+          BadRequestException,
+        )
+      }),
+    )
   })
 
   it("should reject empty string input", async () => {
     const value = ""
     await expect(pipe.transform(value, metadata)).rejects.toThrow()
-  })
-
-  it("should throw BadRequestException when longitude is out of range", async () => {
-    // Test minLon out of range (below -180)
-    let value = "-190,37,-121,38"
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      BadRequestException,
-    )
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      "minLon ([0]) must be between -180 and 180",
-    )
-
-    // Test maxLon out of range (above 180)
-    value = "-122,37,190,38"
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      BadRequestException,
-    )
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      "maxLon ([2]) must be between -180 and 180",
-    )
-  })
-
-  it("should throw BadRequestException when latitude is out of range", async () => {
-    // Test minLat out of range (below -90)
-    let value = "-122,-95,-121,38"
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      BadRequestException,
-    )
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      "minLat ([1]) must be between -90 and 90",
-    )
-
-    // Test maxLat out of range (above 90)
-    value = "-122,37,-121,95"
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      BadRequestException,
-    )
-    await expect(pipe.transform(value, metadata)).rejects.toThrow(
-      "maxLat ([3]) must be between -90 and 90",
-    )
-  })
-
-  it("should accept boundary values for lat/lon ranges", async () => {
-    // Test minimum boundary values
-    let value = "-180,-90,-170,-80"
-    expect(await pipe.transform(value, metadata)).toEqual([
-      -180, -90, -170, -80,
-    ])
-
-    // Test maximum boundary values
-    value = "170,80,180,90"
-    expect(await pipe.transform(value, metadata)).toEqual([170, 80, 180, 90])
   })
 
   it("should reject null input", async () => {

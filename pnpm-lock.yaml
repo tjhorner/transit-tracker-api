@@ -261,6 +261,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1
+      fast-check:
+        specifier: ^4.6.0
+        version: 4.6.0
       globals:
         specifier: ^17.4.0
         version: 17.4.0
@@ -3558,6 +3561,10 @@ packages:
     resolution: {integrity: sha512-yblEwXAbGv1VQDmow7s38W77hzAgJAO50ztBLMcUyUBfxv1HC+LGwtiEN+Co6LtlqT/5uwVOxsD4TNIilWhwdQ==}
     engines: {node: '>=4'}
 
+  fast-check@4.6.0:
+    resolution: {integrity: sha512-h7H6Dm0Fy+H4ciQYFxFjXnXkzR2kr9Fb22c0UBpHnm59K2zpr2t13aPTHlltFiNT6zuxp6HMPAVVvgur4BLdpA==}
+    engines: {node: '>=12.17.0'}
+
   fast-csv@5.0.5:
     resolution: {integrity: sha512-9//QpogDIPln5Dc8e3Q3vbSSLXlTeU7z1JqsUOXZYOln8EIn/OOO8+NS2c3ukR6oYngDd3+P1HXSkby3kNV9KA==}
     engines: {node: '>=10.0.0'}
@@ -4740,6 +4747,9 @@ packages:
   punycode@2.3.1:
     resolution: {integrity: sha512-vYt7UD1U9Wg6138shLtLOvdAu+8DsC/ilFtEVHcH+wydcSpNE20AfSOduf6MkRFahL5FY7X1oU7nKVZFtfq8Fg==}
     engines: {node: '>=6'}
+
+  pure-rand@8.4.0:
+    resolution: {integrity: sha512-IoM8YF/jY0hiugFo/wOWqfmarlE6J0wc6fDK1PhftMk7MGhVZl88sZimmqBBFomLOCSmcCCpsfj7wXASCpvK9A==}
 
   qs@6.15.0:
     resolution: {integrity: sha512-mAZTtNCeetKMH+pSjrb76NAM8V9a05I9aBZOHztWy/UqcJdQYNsf59vrRKWnojAT9Y+GbIvoTBC++CPHqpDBhQ==}
@@ -9911,6 +9921,10 @@ snapshots:
       ext-list: 2.2.2
       sort-keys-length: 1.0.1
 
+  fast-check@4.6.0:
+    dependencies:
+      pure-rand: 8.4.0
+
   fast-csv@5.0.5:
     dependencies:
       '@fast-csv/format': 5.0.5
@@ -11096,6 +11110,8 @@ snapshots:
   punycode.js@2.3.1: {}
 
   punycode@2.3.1: {}
+
+  pure-rand@8.4.0: {}
 
   qs@6.15.0:
     dependencies:

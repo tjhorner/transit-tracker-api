@@ -111,6 +111,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.5",
     "express": "^5.2.1",
+    "fast-check": "^4.6.0",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
     "msw": "^2.13.1",
