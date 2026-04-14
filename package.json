@@ -47,7 +47,7 @@
     "@sentry/profiling-node": "^10.47.0",
     "@turf/turf": "^7.3.4",
     "cache-control-parser": "^2.2.0",
-    "cacheable": "~1.8.10",
+    "cacheable": "~2.3.4",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "cron": "^4.4.0",
