@@ -25,7 +25,7 @@
     "cli": "nest start --entryFile cli --"
   },
   "dependencies": {
-    "@anchan828/nest-redlock": "^0.3.18",
+    "@anchan828/nest-redlock": "^0.4.26",
     "@keyv/redis": "^5.1.6",
     "@nest-lab/throttler-storage-redis": "^1.2.0",
     "@nestjs/common": "^11.1.18",
