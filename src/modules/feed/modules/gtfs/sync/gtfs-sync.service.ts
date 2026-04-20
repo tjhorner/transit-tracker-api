@@ -14,6 +14,7 @@ import type {
 } from "../../../interfaces/feed-provider.interface"
 import type { GtfsConfig } from "../config"
 import { GTFS_TABLES, GtfsDbService } from "../gtfs-db.service"
+import { CSV_PARSE_OPTIONS } from "./const"
 import { GtfsValidatorService } from "./gtfs-validator.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
@@ -301,13 +302,7 @@ export class GtfsSyncService {
 
     const outputCsv = fs
       .createReadStream(filePath)
-      .pipe(
-        csv.parse({
-          headers: true,
-          ltrim: true,
-          ignoreEmpty: true,
-        }),
-      )
+      .pipe(csv.parse(CSV_PARSE_OPTIONS))
       .pipe(
         csv.format({
           headers: true,
@@ -402,13 +397,7 @@ export class GtfsSyncService {
 
     const batch: any[] = []
     await pipeline(
-      fs.createReadStream(filePath).pipe(
-        csv.parse({
-          headers: true,
-          ltrim: true,
-          ignoreEmpty: true,
-        }),
-      ),
+      fs.createReadStream(filePath).pipe(csv.parse(CSV_PARSE_OPTIONS)),
       async (rows: AsyncIterable<any>) => {
         for await (const item of rows) {
           batch.push(mapRow(item))

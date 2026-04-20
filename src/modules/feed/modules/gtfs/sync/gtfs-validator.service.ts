@@ -1,6 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common"
 import { parseFile } from "fast-csv"
 import fs from "node:fs"
+import { CSV_PARSE_OPTIONS } from "./const"
 
 export interface ValidationResult {
   isValid: boolean
@@ -71,10 +72,7 @@ export class GtfsValidatorService {
     let earliestDate: Date | null = null
 
     try {
-      for await (const row of parseFile(filePath, {
-        headers: true,
-        ignoreEmpty: true,
-      })) {
+      for await (const row of parseFile(filePath, CSV_PARSE_OPTIONS)) {
         if (!row[dateField]) {
           this.logger.warn(
             `Missing ${dateField} in ${filename} row: ${JSON.stringify(row)}`,
