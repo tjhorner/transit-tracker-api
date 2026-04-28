@@ -14,4 +14,8 @@ It's important to write tests for your changes to ensure maintainability as the 
 
 ## AI/LLM Usage
 
-If you use a generative AI tool (e.g., ChatGPT, Claude Code, etc.) in any part of your contribution process, please disclose this in your PR description. This helps maintain transparency and allows us to understand the context of your changes better.
+We allow contributions that utilize AI tools (GitHub Copilot, Claude Code, etc.), but we require them to be disclosed. This helps maintainers understand the context of your change and avoid a deluge of low-quality slop. When opening a PR, you will be asked to specify if AI was used to assist and, if so, to what extent.
+
+## Pull Request Template
+
+To ensure maintainers have all the relevant information related to your contribution, we have a [template](./.github/PULL_REQUEST_TEMPLATE.md) that you must follow when opening a PR. If anything is missing, a maintainer will request the information before proceeding with review/merge.
