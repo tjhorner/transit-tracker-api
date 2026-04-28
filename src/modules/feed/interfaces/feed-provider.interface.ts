@@ -17,6 +17,7 @@ export interface TripStop {
   arrivalTime: Date
   departureTime: Date
   isRealtime: boolean
+  remainingTrips?: number  // Number of trips remaining after this one for the same route/stop today
 }
 
 export interface Stop {
