@@ -79,7 +79,7 @@
     "@eslint/eslintrc": "^3.3.5",
     "@eslint/js": "^10.0.1",
     "@flydotio/dockerfile": "^0.7.10",
-    "@nestjs/cli": "^11.0.18",
+    "@nestjs/cli": "^11.0.21",
     "@nestjs/schematics": "^11.0.10",
     "@nestjs/testing": "^11.1.18",
     "@pgtyped/cli": "^2.4.3",

@@ -7,14 +7,4 @@ const otelSDK = new NodeSDK({
   }),
 })
 
-process.on("SIGTERM", () => {
-  otelSDK
-    .shutdown()
-    .then(
-      () => console.log("OTel SDK shut down successfully"),
-      (err) => console.log("Error shutting down OTel SDK", err),
-    )
-    .finally(() => process.exit(0))
-})
-
 export default otelSDK

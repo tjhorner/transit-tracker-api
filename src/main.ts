@@ -5,7 +5,6 @@ import { NestExpressApplication } from "@nestjs/platform-express"
 import { WsAdapter } from "@nestjs/platform-ws"
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger"
 import { AppModule } from "./app.module"
-import otelSDK from "./tracing"
 import { ConsoleLogger } from "@nestjs/common"
 
 function configureForFly(app: NestExpressApplication) {
@@ -18,8 +17,6 @@ function configureForFly(app: NestExpressApplication) {
 }
 
 export async function bootstrap() {
-  otelSDK.start()
-
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new ConsoleLogger({
       json: process.env.LOG_JSON === "true",
