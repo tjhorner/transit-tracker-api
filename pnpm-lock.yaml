@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@anchan828/nest-redlock':
-        specifier: ^0.3.18
-        version: 0.3.18
       '@keyv/redis':
         specifier: ^5.1.6
         version: 5.1.6(keyv@5.6.0)
@@ -225,9 +222,6 @@ importers:
       '@types/proxy-addr':
         specifier: ^2.0.3
         version: 2.0.3
-      '@types/redlock':
-        specifier: ^4.0.8
-        version: 4.0.8
       '@types/supertest':
         specifier: ^7.2.0
         version: 7.2.0
@@ -311,9 +305,6 @@ importers:
         version: 4.0.0(typescript@5.9.3)(vitest@4.1.3)
 
 packages:
-
-  '@anchan828/nest-redlock@0.3.18':
-    resolution: {integrity: sha512-SnN/TCvxJvnaFG5kFIwPYPYMcvaCisyYG8k8WanAx+joeCvT+OyKhjRqoLbCWyeYwXomocAuZq/2+KIFEaBowA==}
 
   '@angular-devkit/core@19.2.23':
     resolution: {integrity: sha512-RazHPQkUEsNU/OZ75w9UeHxGFMthRiuAW2B/uA7eXExBj/1meHrrBfoCA56ujW2GUxVjRtSrMjylKh4R4meiYA==}
@@ -2333,9 +2324,6 @@ packages:
   '@types/archiver@7.0.0':
     resolution: {integrity: sha512-/3vwGwx9n+mCQdYZ2IKGGHEFL30I96UgBlk8EtRDDFQ9uxM1l4O5Ci6r00EMAkiDaTqD9DQ6nVrWRICnBPtzzg==}
 
-  '@types/bluebird@3.5.42':
-    resolution: {integrity: sha512-Jhy+MWRlro6UjVi578V/4ZGNfeCOcNCp0YaFNIUGFKlImowqwb1O/22wDVk3FDGMLqxdpOV3qQHD5fPEH4hK6A==}
-
   '@types/body-parser@1.19.6':
     resolution: {integrity: sha512-HLFeCYgz89uk22N5Qg3dvGvsv46B8GLvKKo1zKG4NybA8U2DiEO3w9lqGg29t/tfLRJpJ6iQxnVw4OnB7MoM9g==}
 
@@ -2395,9 +2383,6 @@ packages:
 
   '@types/inquirer@8.2.10':
     resolution: {integrity: sha512-IdD5NmHyVjWM8SHWo/kPBgtzXatwPkfwzyP3fN1jF2g9BWt5WO+8hL2F4o2GKIYsU40PpqeevuUWvkS/roXJkA==}
-
-  '@types/ioredis@4.28.10':
-    resolution: {integrity: sha512-69LyhUgrXdgcNDv7ogs1qXZomnfOEnSmrmMFqKgt1XMJxmoOSG/u3wYy13yACIfKuMJ8IhKgHafDO3sx19zVQQ==}
 
   '@types/js-yaml@4.0.9':
     resolution: {integrity: sha512-k4MGaQl5TGo/iipqb2UDG2UwjXziSWkh0uysQelTlJpX1qGlpUZYm8PnO4DxG1qBomtJUdYJ6qR6xdIah10JLg==}
@@ -2464,12 +2449,6 @@ packages:
 
   '@types/readdir-glob@1.1.5':
     resolution: {integrity: sha512-raiuEPUYqXu+nvtY2Pe8s8FEmZ3x5yAH4VkLdihcPdalvsHltomrRC9BzuStrJ9yk06470hS0Crw0f1pXqD+Hg==}
-
-  '@types/redis@2.8.32':
-    resolution: {integrity: sha512-7jkMKxcGq9p242exlbsVzuJb57KqHRhNl4dHoQu2Y5v9bCAbtIXXH0R3HleSQW4CTOqpHIYUW3t6tpUj4BVQ+w==}
-
-  '@types/redlock@4.0.8':
-    resolution: {integrity: sha512-xuJs90FmH3fmGTuLdUzFIGXL3ThWhWRZLL6LFomtzj0DSW+py/brU7NzF1FZ3M/bs/S0Di+XvMGwzVU2j0RXSw==}
 
   '@types/retry@0.12.2':
     resolution: {integrity: sha512-XISRgDJ2Tc5q4TRqvgJtzsRkFYNJzZrhTdtMoGVBttwzzQJkPnS3WWTFc7kuDRoPtPakl+T+OfdEUjYJj7Jbow==}
@@ -4805,10 +4784,6 @@ packages:
     resolution: {integrity: sha512-DJnGAeenTdpMEH6uAJRK/uiyEIH9WVsUmoLwzudwGJUwZPp80PDBWPHXSAGNPwNvIXAbe7MSUB1zQFugFml66A==}
     engines: {node: '>=4'}
 
-  redlock@5.0.0-beta.2:
-    resolution: {integrity: sha512-2RDWXg5jgRptDrB1w9O/JgSZC0j7y4SlaXnor93H/UJm/QyDiFgBKNtrh0TI6oCXqYSaSoXxFh6Sd3VtYfhRXw==}
-    engines: {node: '>=12'}
-
   reflect-metadata@0.2.2:
     resolution: {integrity: sha512-urBwgfrvVP/eAyXx4hluJivBKzuEbSQs9rKWCrCkbSxNv8mxPcUZKeuoF3Uy4mJl3Lwprp6yy5/39VWigZ4K6Q==}
 
@@ -5664,10 +5639,6 @@ packages:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
 snapshots:
-
-  '@anchan828/nest-redlock@0.3.18':
-    dependencies:
-      redlock: 5.0.0-beta.2
 
   '@angular-devkit/core@19.2.23(chokidar@4.0.3)':
     dependencies:
@@ -8485,8 +8456,6 @@ snapshots:
     dependencies:
       '@types/readdir-glob': 1.1.5
 
-  '@types/bluebird@3.5.42': {}
-
   '@types/body-parser@1.19.6':
     dependencies:
       '@types/connect': 3.4.38
@@ -8562,10 +8531,6 @@ snapshots:
       '@types/through': 0.0.33
       rxjs: 7.8.2
 
-  '@types/ioredis@4.28.10':
-    dependencies:
-      '@types/node': 24.12.2
-
   '@types/js-yaml@4.0.9': {}
 
   '@types/json-schema@7.0.15': {}
@@ -8638,16 +8603,6 @@ snapshots:
   '@types/readdir-glob@1.1.5':
     dependencies:
       '@types/node': 24.12.2
-
-  '@types/redis@2.8.32':
-    dependencies:
-      '@types/node': 24.12.2
-
-  '@types/redlock@4.0.8':
-    dependencies:
-      '@types/bluebird': 3.5.42
-      '@types/ioredis': 4.28.10
-      '@types/redis': 2.8.32
 
   '@types/retry@0.12.2': {}
 
@@ -11175,10 +11130,6 @@ snapshots:
   redis-parser@3.0.0:
     dependencies:
       redis-errors: 1.2.0
-
-  redlock@5.0.0-beta.2:
-    dependencies:
-      node-abort-controller: 3.1.1
 
   reflect-metadata@0.2.2: {}
 
