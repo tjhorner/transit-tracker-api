@@ -37,10 +37,10 @@ fly postgres create
 
 It will ask a few questions like name, region, and database size. You can change these, but the defaults are sufficient for this guide.
 
-Once the database is created, export the provided connection string as `DATABASE_URL`. For example:
+Once the database is created, export the provided connection string as `GTFS_DATABASE_URL`. For example:
 
 ```shell
-export DATABASE_URL="postgres://username:password@postgres-app-name.flycast:5432"
+export GTFS_DATABASE_URL="postgres://username:password@postgres-app-name.flycast:5432"
 ```
 
 ## Deploy Redis
@@ -92,7 +92,7 @@ Now that we have our Postgres database, Redis instance, and feed configuration r
 Let's set the appropriate secrets for the app now:
 
 ```bash
-fly secrets set --stage "DATABASE_URL=$DATABASE_URL/gtfs?sslmode=disable" "REDIS_URL=$REDIS_URL/?family=6" "FEEDS_CONFIG=$(cat feeds.yaml)"
+fly secrets set --stage "GTFS_DATABASE_URL=$GTFS_DATABASE_URL/gtfs?sslmode=disable" "REDIS_URL=$REDIS_URL/?family=6" "FEEDS_CONFIG=$(cat feeds.yaml)"
 ```
 
 And deploy the app:

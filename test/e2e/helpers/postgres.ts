@@ -40,7 +40,7 @@ export async function setupTestDatabase() {
   connectionUrl.searchParams.set("sslmode", "disable")
 
   await runCmd(`pnpm gtfs:db:migrate`, {
-    DATABASE_URL: connectionUrl.toString(),
+    GTFS_DATABASE_URL: connectionUrl.toString(),
   })
 
   return {

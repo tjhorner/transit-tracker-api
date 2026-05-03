@@ -19,7 +19,7 @@
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string. |
+| `GTFS_DATABASE_URL` | Yes | — | PostgreSQL connection string. |
 | `GTFS_IMPORT_METHOD` | No | `copy` | Set to `insert` to use INSERT statements instead of COPY for importing GTFS data. |
 | `GTFS_IMPORT_BATCH_SIZE` | No | `5000` | Number of rows per batch when importing GTFS data. Only used when `GTFS_IMPORT_METHOD` is `insert`. |
 | `GTFS_RT_MIN_CACHE_AGE` | No | — | Minimum cache duration for GTFS Realtime data (e.g. `30s`, `1m`). Parsed with the `ms` library. |

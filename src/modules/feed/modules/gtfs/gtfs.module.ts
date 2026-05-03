@@ -29,7 +29,7 @@ import { ZipFileService } from "./sync/zip-file.service"
 
         const pool = new Pool({
           max: 2,
-          connectionString: process.env.DATABASE_URL,
+          connectionString: process.env.GTFS_DATABASE_URL,
         })
 
         pool.on("error", (err) => {
