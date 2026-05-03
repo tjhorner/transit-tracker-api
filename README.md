@@ -69,8 +69,8 @@ To facilitate fast queries of the static GTFS data, the API uses a PostgreSQL da
 Run the following command to perform the migrations on your PostgreSQL database:
 
 ```bash
-# Replace your DATABASE_URL below
-DATABASE_URL="postgres://postgres:your_password@localhost:5432/gtfs?sslmode=disable" pnpm gtfs:db:migrate
+# Replace your GTFS_DATABASE_URL below
+GTFS_DATABASE_URL="postgres://postgres:your_password@localhost:5432/gtfs?sslmode=disable" pnpm gtfs:db:migrate
 ```
 
 ## Usage

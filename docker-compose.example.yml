@@ -8,7 +8,7 @@ services:
       # Uncomment the below line if running through a reverse proxy (e.g., nginx, caddy, traefik)
       # TRUST_PROXY: "true"
       REDIS_URL: "redis://redis:6379"
-      DATABASE_URL: "postgres://postgres:postgres@postgres:5432/gtfs?sslmode=disable"
+      GTFS_DATABASE_URL: "postgres://postgres:postgres@postgres:5432/gtfs?sslmode=disable"
       # The below variable controls how frequently GTFS feeds are imported.
       # This example sets it to once daily at midnight, which is enough
       # for most use cases. Adjust as needed.
