@@ -1,4 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common"
+import fs from "fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { Readable } from "node:stream"
@@ -62,7 +63,7 @@ export class ZipFileService {
     const nodeStream = Readable.fromWeb(response.body as any)
     const extractor = unzipper.Extract({ path: destinationPath })
 
-    return new Promise<void>((resolve, reject) => {
+    await new Promise<void>((resolve, reject) => {
       nodeStream.pipe(extractor)
 
       let error: any = null
@@ -78,5 +79,29 @@ export class ZipFileService {
         }
       })
     })
+
+    await this.flattenDirectory(destinationPath)
+  }
+
+  private async flattenDirectory(directory: string): Promise<void> {
+    const subdirs = await fs.readdir(directory, {
+      withFileTypes: true,
+      recursive: false,
+    })
+
+    if (subdirs.length === 1 && subdirs[0].isDirectory()) {
+      const dirName = subdirs[0].name
+
+      this.logger.log(
+        `Found single directory "${dirName}" in zip, flattening...`,
+      )
+
+      const singleDir = path.join(directory, dirName)
+      const files = await fs.readdir(singleDir)
+      for (const file of files) {
+        await fs.rename(path.join(singleDir, file), path.join(directory, file))
+      }
+      await fs.rmdir(singleDir)
+    }
   }
 }
