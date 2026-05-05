@@ -17,6 +17,7 @@ export interface TripStop {
   departureTime: Date
   isRealtime: boolean
   remainingTrips?: number  // Number of trips remaining after this one for the same route/stop today
+  tripsRemainingToday?: number  // Trips remaining for the rest of the GTFS service day for the same route/stop. Set by GTFS-static providers; undefined when only realtime data is available.
 }
 
 export interface Stop {

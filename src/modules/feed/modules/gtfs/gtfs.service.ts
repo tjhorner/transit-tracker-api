@@ -292,6 +292,10 @@ export class GtfsService implements FeedProvider {
     }
 
     const tripStops: TripStop[] = []
+    // Tracks each pushed TripStop's bucket key (`${routeId}|${stopId}|${start_date}`)
+    // so we can assign tripsRemainingToday after all scheduleDates have been processed.
+    const tripStopBucketKeys: string[] = []
+
     for (const scheduleDate of scheduleDates) {
       const staticTrips = (
         await Promise.all(
@@ -372,9 +376,39 @@ export class GtfsService implements FeedProvider {
           departureTime,
           isRealtime,
         })
+        tripStopBucketKeys.push(
+          `${staticTrip.route_id}|${staticTrip.stop_id}|${staticTrip.start_date}`,
+        )
       })
     }
 
+    assignTripsRemainingToday(tripStops, tripStopBucketKeys)
+
     return tripStops
   }
+}
+
+/**
+ * Set tripsRemainingToday on each TripStop based on its position within its
+ * (route, stop, service_date) bucket. tripStops and bucketKeys are parallel
+ * arrays; within a bucket, items must be in arrival order (which they are,
+ * since the SQL sorts and Promise.all + flat preserves per-pair order).
+ *
+ * Exported for unit testing.
+ */
+export function assignTripsRemainingToday(
+  tripStops: TripStop[],
+  bucketKeys: string[],
+): void {
+  const bucketTotals = new Map<string, number>()
+  for (const key of bucketKeys) {
+    bucketTotals.set(key, (bucketTotals.get(key) ?? 0) + 1)
+  }
+  const seenInBucket = new Map<string, number>()
+  tripStops.forEach((ts, i) => {
+    const key = bucketKeys[i]
+    const seen = seenInBucket.get(key) ?? 0
+    ts.tripsRemainingToday = bucketTotals.get(key)! - 1 - seen
+    seenInBucket.set(key, seen + 1)
+  })
 }

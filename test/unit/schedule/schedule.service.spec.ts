@@ -235,6 +235,32 @@ describe("ScheduleService", () => {
         }
       },
     )
+
+    it("preserves tripsRemainingToday from upstream provider", async () => {
+      // Arrange
+      const scheduleOptions: ScheduleOptions = {
+        feedCode: "testFeed",
+        routes: [{ routeId: "route1", stopId: "stop1", offset: 0 }],
+        limit: 5,
+      }
+
+      const mockTripStops = makeMockTripStops("route1", "stop1", 3)
+      mockTripStops[0].tripsRemainingToday = 7
+      mockTripStops[1].tripsRemainingToday = 6
+      mockTripStops[2].tripsRemainingToday = 5
+
+      mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
+        mockTripStops,
+      )
+
+      // Act
+      const schedule = await scheduleService.getSchedule(scheduleOptions)
+
+      // Assert
+      expect(schedule.trips.map((t) => t.tripsRemainingToday)).toEqual([
+        7, 6, 5,
+      ])
+    })
   })
 
   describe("subscribeToSchedule", () => {
