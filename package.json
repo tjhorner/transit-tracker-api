@@ -112,7 +112,7 @@
     "fast-check": "^4.6.0",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
-    "msw": "^2.14.2",
+    "msw": "^2.14.3",
     "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0",
     "source-map-support": "^0.5.21",
