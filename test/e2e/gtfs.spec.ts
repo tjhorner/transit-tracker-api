@@ -108,7 +108,7 @@ describe("GTFS E2E test", () => {
       .expect("Content-Type", /json/)
       .expect(200)
 
-    expect(response.body).toHaveLength(3)
+    expect(response.body).toHaveLength(4)
 
     const feed = response.body.find((f: any) => f.code === "testfeed")
 

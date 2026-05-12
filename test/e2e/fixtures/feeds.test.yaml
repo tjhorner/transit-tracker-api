@@ -27,3 +27,11 @@ feeds:
         url: http://127.0.0.1:3123/feeds/gtfs-feed-far-future.zip
         headers:
           Authorization: fake-auth
+  feed-with-hyphen:
+    name: Feed with Hyphen
+    description: A feed with a hyphen in the name
+    gtfs:
+      static:
+        url: http://127.0.0.1:3123/feeds/gtfs-feed-2.zip
+        headers:
+          Authorization: fake-auth
