@@ -1,0 +1,11 @@
+allowBuilds:
+  '@nestjs/core': false
+  '@scarf/scarf': false
+  '@sentry-internal/node-cpu-profiler': true
+  '@sentry/cli': true
+  '@swc/core': true
+  cpu-features: false
+  esbuild: true
+  msw: false
+  protobufjs: false
+  ssh2: false
