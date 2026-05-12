@@ -26,7 +26,7 @@ You can create a `feeds.yaml` in the working directory, or provide it as a `FEED
 
 ```yaml
 feeds:
-  st: # <-- CHANGE THIS to something short and unique to each feed
+  st: # <-- This is the "feed code". See the section below for more info.
     name: Puget Sound Region
     description: All transit agencies in the Puget Sound region
     # You can optionally override the service area polygon for a feed.
@@ -57,9 +57,15 @@ feeds:
       baseUrl: https://www.mvg.de/api/bgw-pt/v3
 ```
 
-Due to its increased complexity, additional documentation on configuring GTFS feeds is [available here](./docs/configuration/gtfs.md).
+#### Feed Codes
+
+Each configured feed has its own "feed code" which is defined by its key in the YAML configuration. Each feed code must be unique. It's recommended to keep these identifiers as short as possible and not to include any special characters (though, underscores and dashes are known to work if needed).
+
+You **should not** change a feed code once it's in active use, as doing so will break clients that have used it in the past.
 
 ### GTFS Database Setup
+
+Due to its increased complexity, additional documentation on configuring GTFS feeds is [available here](./docs/configuration/gtfs.md).
 
 > [!NOTE]  
 > This setup is only required if one or more of your feeds is a GTFS feed.
