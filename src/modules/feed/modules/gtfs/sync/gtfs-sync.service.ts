@@ -54,7 +54,11 @@ export class GtfsSyncService {
   }
 
   private partitionOf(table: string) {
-    return `${table}__${this.feedCode}`
+    // Quote so feed codes containing hyphens (or other characters that aren't
+    // valid in unquoted SQL identifiers) don't break partition DDL/DML. All
+    // callers use this only as a SQL identifier, so the surrounding quotes
+    // are safe to bake in here.
+    return `"${table}__${this.feedCode}"`
   }
 
   private async createPartitions() {
