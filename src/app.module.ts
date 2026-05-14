@@ -1,9 +1,5 @@
 import { ThrottlerStorageRedisService } from "@nest-lab/throttler-storage-redis"
-import {
-  BeforeApplicationShutdown,
-  Module,
-  OnApplicationBootstrap,
-} from "@nestjs/common"
+import { BeforeApplicationShutdown, Module } from "@nestjs/common"
 import { APP_FILTER, APP_GUARD } from "@nestjs/core"
 import { EventEmitterModule } from "@nestjs/event-emitter"
 import { ScheduleModule } from "@nestjs/schedule"
@@ -76,13 +72,7 @@ import otelSDK from "./tracing"
     },
   ],
 })
-export class AppModule
-  implements OnApplicationBootstrap, BeforeApplicationShutdown
-{
-  onApplicationBootstrap() {
-    otelSDK.start()
-  }
-
+export class AppModule implements BeforeApplicationShutdown {
   async beforeApplicationShutdown() {
     await otelSDK.shutdown()
   }
