@@ -1,5 +1,4 @@
 import {
-  forwardRef,
   Inject,
   Injectable,
   OnApplicationShutdown,
@@ -34,7 +33,7 @@ export class GtfsDbService
   private readonly queryDuration: Histogram
 
   constructor(
-    @Inject(forwardRef(() => PG_POOL)) private readonly pool: Pool,
+    @Inject(PG_POOL) private readonly pool: Pool,
     @Inject(REQUEST) { feedCode }: FeedContext,
     private readonly metricService: MetricService,
   ) {
