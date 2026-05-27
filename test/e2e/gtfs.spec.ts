@@ -119,10 +119,15 @@ describe("GTFS E2E test", () => {
     expect(lastSyncedAt).toBeLessThanOrEqual(now)
     expect(lastSyncedAt).toBeGreaterThanOrEqual(now - ms("5m"))
 
-    expect(feed.code).toBe("testfeed")
     expect(feed.name).toBe("Test Feed")
     expect(feed.description).toBe("Test Feed Description")
     expect(feed.bounds).toEqual([-117.13316, 36.42529, -116.40094, 36.915684])
+    expect(feed.metadata).toMatchSnapshot()
+
+    const feed2 = response.body.find((f: any) => f.code === "testfeed2")
+
+    expect(feed2.bounds).toEqual([null, null, null, null])
+    expect(feed2.metadata).toMatchSnapshot()
   })
 
   test("GET /feeds/service-areas", async () => {

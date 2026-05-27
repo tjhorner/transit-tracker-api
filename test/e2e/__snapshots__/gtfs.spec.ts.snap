@@ -1,5 +1,29 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`GTFS E2E test > GET /feeds 1`] = `
+{
+  "feedEndDate": null,
+  "feedLang": "en-US",
+  "feedPublisherName": "Google",
+  "feedPublisherUrl": "http://google.com",
+  "feedStartDate": null,
+  "feedVersion": "1.0",
+  "supportsGtfsRealtime": true,
+}
+`;
+
+exports[`GTFS E2E test > GET /feeds 2`] = `
+{
+  "feedEndDate": null,
+  "feedLang": "en-US",
+  "feedPublisherName": "Google 2",
+  "feedPublisherUrl": "http://google.com",
+  "feedStartDate": null,
+  "feedVersion": "1.0",
+  "supportsGtfsRealtime": false,
+}
+`;
+
 exports[`GTFS E2E test > GET /feeds/service-areas 1`] = `
 {
   "features": [
