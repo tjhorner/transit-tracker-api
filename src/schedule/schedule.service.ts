@@ -170,7 +170,7 @@ export class ScheduleService {
       this.metricsService.add(subscription)
 
       const initialDelay = Math.floor(Math.random() * 10000)
-      const jitter = Math.floor(Math.random() * 1000)
+      const jitter = Math.floor(Math.random() * 5000)
       const period = ms("30s") + jitter
 
       const getTrips$ = defer(() =>
