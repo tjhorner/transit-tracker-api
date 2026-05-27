@@ -27,7 +27,7 @@ RUN if [[ -n "${BUILD_FOR_FLY}" ]] ; then apk add curl jq && \
   ln -s /root/.fly/bin/fly /usr/local/bin/fly ; fi
 
 WORKDIR /app
-COPY --from=build /app/package.json ./
+COPY --from=build /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --from=build /app/db ./db
 COPY --from=build /app/dist/ ./dist/
 COPY --from=build /app/node_modules ./node_modules
