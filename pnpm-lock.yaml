@@ -117,7 +117,7 @@ importers:
         specifier: ^3.20.1
         version: 3.20.1(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.24)(@types/inquirer@8.2.10)(@types/node@24.12.2)(typescript@5.9.3)
       nestjs-otel:
-        specifier: 8.0.3
+        specifier: ^8.0.3
         version: 8.0.3(@nestjs/common@11.1.24(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@11.1.24)
       onebusaway-sdk:
         specifier: ^1.10.12
