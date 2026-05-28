@@ -10,8 +10,8 @@ swap_size_mb = 512
   release_command = '"pnpm sentry:sourcemaps ; pnpm gtfs:db:migrate"'
 
 [env]
-  GTFS_RT_MIN_CACHE_AGE = "15s"
-  NODE_OPTIONS = "--max-old-space-size=1125"
+  GTFS_RT_MIN_CACHE_AGE = "30s"
+  NODE_OPTIONS = "--max-old-space-size=768"
   LOG_COMPACT = "true"
 
 [http_service]
@@ -38,4 +38,4 @@ swap_size_mb = 512
   path = "/metrics"
 
 [[vm]]
-  size = "shared-cpu-6x"
+  size = "shared-cpu-4x"

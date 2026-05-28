@@ -3,6 +3,7 @@ import { nodeProfilingIntegration } from "@sentry/profiling-node"
 
 Sentry.init({
   integrations: [nodeProfilingIntegration() as any],
+  debug: process.env.SENTRY_DEBUG === "true",
   profileLifecycle: "trace",
   profileSessionSampleRate: process.env.SENTRY_PROFILE_SESSION_SAMPLE_RATE
     ? parseFloat(process.env.SENTRY_PROFILE_SESSION_SAMPLE_RATE)
