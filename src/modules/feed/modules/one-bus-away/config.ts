@@ -3,6 +3,7 @@ import { z } from "zod"
 export const OneBusAwayConfigSchema = z.strictObject({
   baseUrl: z.string(),
   apiKey: z.string(),
+  timeout: z.number().default(5000),
   rateLimiter: z
     .object({
       enabled: z.boolean().default(true),

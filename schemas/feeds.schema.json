@@ -126,6 +126,11 @@
                   "type": "string",
                   "description": "Your OneBusAway API key."
                 },
+                "timeout": {
+                  "type": "number",
+                  "description": "Number of milliseconds to wait before timing out a request to the OneBusAway API. Defaults to 5000 (5 seconds).",
+                  "default": 5000
+                },
                 "rateLimiter": {
                   "type": "object",
                   "description": "Configuration for client-side rate limiting.",

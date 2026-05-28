@@ -21,6 +21,7 @@ export const oneBusAwaySdkProvider: FactoryProvider<OnebusawaySDK> = {
     new OnebusawaySDK({
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
+      timeout: config.timeout,
       maxRetries: 5,
       defaultQuery: {
         version: "2",
