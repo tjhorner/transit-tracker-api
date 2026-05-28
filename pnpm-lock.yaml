@@ -282,6 +282,9 @@ importers:
       superwstest:
         specifier: ^3.0.0
         version: 3.0.0(@types/supertest@7.2.0)(supertest@7.2.2)
+      ts-essentials:
+        specifier: ^10.2.0
+        version: 10.2.0(typescript@5.9.3)
       ts-loader:
         specifier: ^9.5.7
         version: 9.5.7(typescript@5.9.3)(webpack@5.106.0(@swc/core@1.15.40))
@@ -5245,6 +5248,14 @@ packages:
 
   ts-essentials@10.1.1:
     resolution: {integrity: sha512-4aTB7KLHKmUvkjNj8V+EdnmuVTiECzn3K+zIbRthumvHu+j44x3w63xpfs0JL3NGIzGXqoQ7AV591xHO+XrOTw==}
+    peerDependencies:
+      typescript: '>=4.5.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
+  ts-essentials@10.2.0:
+    resolution: {integrity: sha512-z9FlLywg0XEV46Ws1FwYN4NZDMr9qAe38lTTtgVBqzhhyEgwrnCUkFe4MEqnvar1kY1kFEnlkp56bxn2g0V+UA==}
     peerDependencies:
       typescript: '>=4.5.0'
     peerDependenciesMeta:
@@ -11589,6 +11600,10 @@ snapshots:
       typescript: 5.9.3
 
   ts-essentials@10.1.1(typescript@5.9.3):
+    optionalDependencies:
+      typescript: 5.9.3
+
+  ts-essentials@10.2.0(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
 

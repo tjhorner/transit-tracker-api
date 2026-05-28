@@ -196,7 +196,7 @@ export class FeedService implements OnModuleInit {
     }
 
     const agencyBounds = await provider.getAgencyBounds()
-    return turf.bboxPolygon(agencyBounds)
+    return turf.bboxPolygon(agencyBounds as BBox)
   }
 
   async getFeedProvidersInBounds(targetBbox: BBox): Promise<

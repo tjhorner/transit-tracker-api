@@ -12,6 +12,7 @@ import type {
   SyncOptions,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
+import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { GtfsConfigSchema, type GtfsConfig } from "./config"
@@ -69,7 +70,7 @@ export class GtfsService implements FeedProvider {
     }
   }
 
-  async getAgencyBounds(): Promise<BBox> {
+  async getAgencyBounds(): Promise<DeepReadonly<BBox>> {
     return this.cache.cached(
       "agencyBounds",
       async () => {
@@ -170,7 +171,7 @@ export class GtfsService implements FeedProvider {
     routeId: string,
     stopId: string,
     dayOffset: number,
-  ): Promise<IGetScheduleForRouteAtStopResult[]> {
+  ): Promise<ReadonlyArray<DeepReadonly<IGetScheduleForRouteAtStopResult>>> {
     const now = Date.now()
 
     const dateKey = new Date(now)
@@ -198,7 +199,7 @@ export class GtfsService implements FeedProvider {
     )
   }
 
-  async listStops(): Promise<Stop[]> {
+  async listStops(): Promise<ReadonlyArray<DeepReadonly<Stop>>> {
     return this.cache.cached(
       "stops",
       async () => {
@@ -255,7 +256,9 @@ export class GtfsService implements FeedProvider {
     )
   }
 
-  async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
+  async getRoutesForStop(
+    stopId: string,
+  ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>> {
     return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {
@@ -295,7 +298,7 @@ export class GtfsService implements FeedProvider {
 
     const uniqueRouteIds = Array.from(new Set(routes.map((r) => r.routeId)))
 
-    let tripUpdates: ITripUpdate[] = []
+    let tripUpdates: ReadonlyArray<DeepReadonly<ITripUpdate>> = []
     try {
       tripUpdates = await this.realtimeService.getTripUpdates(uniqueRouteIds)
     } catch (e: any) {

@@ -5,6 +5,7 @@ import { SentryTraced } from "@sentry/nestjs"
 import * as Sentry from "@sentry/node"
 import { Cacheable } from "cacheable"
 import { MetricService } from "nestjs-otel"
+import { DeepReadonly } from "ts-essentials"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 
 @Injectable({ scope: Scope.REQUEST })
@@ -51,7 +52,7 @@ export class FeedCacheService {
     key: string,
     fn: () => Promise<T | { value: T; ttl: number }>,
     ttl?: number,
-  ): Promise<T> {
+  ): Promise<DeepReadonly<T>> {
     const span = Sentry.getActiveSpan()
     if (span) {
       Sentry.updateSpanName(span, `cached ${key}`)
@@ -105,7 +106,7 @@ export class FeedCacheService {
     this.pendingCache.set(key, promise)
 
     try {
-      return await promise
+      return promise as Promise<DeepReadonly<T>>
     } finally {
       this.pendingCache.delete(key)
     }

@@ -48,7 +48,7 @@ export class SmokeTestCommand extends CommandRunner {
       let schedule: TripStop[] = []
       while (schedule.length === 0) {
         let randomStop = stops[Math.floor(Math.random() * stops.length)]
-        let routesAtStop: StopRoute[] = []
+        let routesAtStop: ReadonlyArray<StopRoute> = []
         while (routesAtStop.length === 0) {
           randomStop = stops[Math.floor(Math.random() * stops.length)]
           routesAtStop = await provider.getRoutesForStop(randomStop.stopId)

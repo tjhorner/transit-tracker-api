@@ -15,6 +15,7 @@ import type {
   StopRoute,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
+import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { MvgConfig, MvgConfigSchema } from "./config"
@@ -114,7 +115,9 @@ export class MvgService implements FeedProvider {
     )
   }
 
-  async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
+  async getRoutesForStop(
+    stopId: string,
+  ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>> {
     return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {

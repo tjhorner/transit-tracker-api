@@ -8,6 +8,7 @@ import {
   HafasClient,
 } from "hafas-client"
 import ms from "ms"
+import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import type {
   FeedContext,
@@ -86,7 +87,9 @@ export class HafasService implements FeedProvider {
     return tripStops
   }
 
-  private async getUpcomingTripsForStop(stopId: string): Promise<TripStop[]> {
+  private async getUpcomingTripsForStop(
+    stopId: string,
+  ): Promise<ReadonlyArray<DeepReadonly<TripStop>>> {
     return this.cache.cached(`upcomingTripsForStop-${stopId}`, async () => {
       const opts: DeparturesArrivalsOptions = {
         duration: 60,
@@ -163,7 +166,9 @@ export class HafasService implements FeedProvider {
     throw new Error("Method not implemented.")
   }
 
-  getRoutesForStop(stopId: string): Promise<StopRoute[]> {
+  getRoutesForStop(
+    stopId: string,
+  ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>> {
     return this.cache.cached(`routesForStop-${stopId}`, async () => {
       const stop = await this.hafasClient.stop(stopId, {
         subStops: false,

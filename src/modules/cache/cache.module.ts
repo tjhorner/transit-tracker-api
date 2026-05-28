@@ -21,6 +21,7 @@ export const REDIS_CLIENT = Symbol("REDIS_CLIENT")
       useFactory: () =>
         new Cacheable({
           primary: createKeyvMemory({
+            useClone: false,
             lruSize: process.env.LRU_CACHE_SIZE
               ? parseInt(process.env.LRU_CACHE_SIZE)
               : 1000,

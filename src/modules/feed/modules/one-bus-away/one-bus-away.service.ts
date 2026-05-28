@@ -17,6 +17,7 @@ import type {
   StopRoute,
   TripStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
+import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { OneBusAwayConfig, OneBusAwayConfigSchema } from "./config"
@@ -122,7 +123,7 @@ export class OneBusAwayService implements FeedProvider {
     )
   }
 
-  async getAgencyBounds(): Promise<BBox> {
+  async getAgencyBounds(): Promise<DeepReadonly<BBox>> {
     return this.cache.cached(
       "agencyBounds",
       async () => {
@@ -150,7 +151,7 @@ export class OneBusAwayService implements FeedProvider {
   private async getPossibleHeadsignsForRouteAtStop(
     routeId: string,
     stopId: string,
-  ): Promise<string[]> {
+  ): Promise<DeepReadonly<string[]>> {
     return this.cache.cached(
       `headsigns-${routeId}-${stopId}`,
       async () => {
@@ -174,7 +175,9 @@ export class OneBusAwayService implements FeedProvider {
     )
   }
 
-  async getRoutesForStop(stopId: string): Promise<StopRoute[]> {
+  async getRoutesForStop(
+    stopId: string,
+  ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>> {
     return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {
@@ -239,7 +242,7 @@ export class OneBusAwayService implements FeedProvider {
     }))
   }
 
-  async listStops(): Promise<Stop[]> {
+  async listStops(): Promise<ReadonlyArray<DeepReadonly<Stop>>> {
     return this.cache.cached(
       "allStops",
       async () => {
@@ -299,7 +302,7 @@ export class OneBusAwayService implements FeedProvider {
 
   async getArrivalsAndDeparturesForStop(
     stopId: string,
-  ): Promise<ArrivalsAndDeparturesResponse | null> {
+  ): Promise<DeepReadonly<ArrivalsAndDeparturesResponse> | null> {
     return this.cache.cached(`arrivalsAndDepartures-${stopId}`, async () => {
       let resp!: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
       try {

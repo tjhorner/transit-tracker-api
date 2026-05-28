@@ -5,6 +5,7 @@ import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms, { StringValue } from "ms"
 import { MetricService } from "nestjs-otel"
+import { DeepReadonly } from "ts-essentials"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import type { FetchConfig, GtfsConfig } from "./config"
@@ -14,7 +15,10 @@ import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-ro
 type ITripUpdate = GtfsRt.ITripUpdate
 type IStopTimeUpdate = GtfsRt.TripUpdate.IStopTimeUpdate
 
-export type TripUpdateIndex = Map<string, ITripUpdate[]>
+export type TripUpdateIndex = Map<
+  string,
+  ReadonlyArray<DeepReadonly<ITripUpdate>>
+>
 
 @Injectable({ scope: Scope.REQUEST })
 export class GtfsRealtimeService {
@@ -44,7 +48,9 @@ export class GtfsRealtimeService {
     })
   }
 
-  async getTripUpdates(routeIds?: string[]): Promise<ITripUpdate[]> {
+  async getTripUpdates(
+    routeIds?: string[],
+  ): Promise<ReadonlyArray<DeepReadonly<ITripUpdate>>> {
     if (!this.config.rtTripUpdates) {
       return []
     }
@@ -148,8 +154,8 @@ export class GtfsRealtimeService {
   }
 
   resolveTripTimes(
-    trip: IGetScheduleForRouteAtStopResult,
-    stopTimeUpdate?: IStopTimeUpdate,
+    trip: DeepReadonly<IGetScheduleForRouteAtStopResult>,
+    stopTimeUpdate?: DeepReadonly<IStopTimeUpdate>,
   ) {
     const scheduledArrivalTime = new Date(trip.arrival_time)
     const scheduledDepartureTime = new Date(trip.departure_time)
@@ -221,7 +227,9 @@ export class GtfsRealtimeService {
     }
   }
 
-  buildTripUpdateIndex(tripUpdates: ITripUpdate[]): TripUpdateIndex {
+  buildTripUpdateIndex(
+    tripUpdates: ReadonlyArray<DeepReadonly<ITripUpdate>>,
+  ): TripUpdateIndex {
     return Map.groupBy(
       tripUpdates.filter((u) => u.trip?.tripId),
       (u) => u.trip!.tripId!,
@@ -229,14 +237,14 @@ export class GtfsRealtimeService {
   }
 
   matchTripToTripUpdate(
-    trip: IGetScheduleForRouteAtStopResult,
+    trip: DeepReadonly<IGetScheduleForRouteAtStopResult>,
     tripUpdateIndex: TripUpdateIndex,
   ): {
-    tripUpdate: ITripUpdate | undefined
-    stopTimeUpdate: IStopTimeUpdate | undefined
+    tripUpdate: DeepReadonly<ITripUpdate> | undefined
+    stopTimeUpdate: DeepReadonly<IStopTimeUpdate> | undefined
   } {
     // Look up candidates from the index by exact trip ID
-    let tripUpdate: ITripUpdate | undefined
+    let tripUpdate: DeepReadonly<ITripUpdate> | undefined
     const exactCandidates = tripUpdateIndex.get(trip.trip_id)
     if (exactCandidates) {
       tripUpdate = exactCandidates.find(

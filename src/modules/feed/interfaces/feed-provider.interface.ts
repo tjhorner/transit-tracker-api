@@ -1,4 +1,5 @@
 import { BBox } from "geojson"
+import { DeepReadonly } from "ts-essentials"
 
 export interface RouteAtStop {
   routeId: string
@@ -31,7 +32,7 @@ export interface StopRoute {
   routeId: string
   name: string
   color: string | null
-  headsigns: string[]
+  headsigns: readonly string[]
 }
 
 export interface FeedContext<TConfig = unknown> {
@@ -52,10 +53,12 @@ export interface FeedProvider {
 
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>
 
-  listStops?(): Promise<Stop[]>
+  listStops?(): Promise<ReadonlyArray<DeepReadonly<Stop>>>
   getStop(stopId: string): Promise<Stop>
-  getRoutesForStop(stopId: string): Promise<StopRoute[]>
+  getRoutesForStop(
+    stopId: string,
+  ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>>
   getStopsInArea(bbox: BBox): Promise<Stop[]>
 
-  getAgencyBounds?(): Promise<BBox>
+  getAgencyBounds?(): Promise<DeepReadonly<BBox>>
 }
