@@ -54,11 +54,11 @@ export interface FeedProvider {
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>
 
   listStops?(): Promise<ReadonlyArray<DeepReadonly<Stop>>>
-  getStop(stopId: string): Promise<Stop>
+  getStop(stopId: string): Promise<DeepReadonly<Stop>>
   getRoutesForStop(
     stopId: string,
   ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>>
-  getStopsInArea(bbox: BBox): Promise<Stop[]>
+  getStopsInArea(bbox: BBox): Promise<ReadonlyArray<DeepReadonly<Stop>>>
 
   getAgencyBounds?(): Promise<DeepReadonly<BBox>>
 }

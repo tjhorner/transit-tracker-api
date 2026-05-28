@@ -132,7 +132,7 @@ export class StopsController {
     }
 
     const stops = await provider.getStopsInArea(bbox)
-    return stops
+    return stops as StopDto[]
   }
 
   @Get(":stopId/routes")
