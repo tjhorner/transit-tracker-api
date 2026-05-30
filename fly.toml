@@ -8,7 +8,7 @@ kill_timeout = "1m"
   BUILD_FOR_FLY = "true"
 
 [deploy]
-  strategy = "bluegreen"
+  strategy = "rolling"
   release_command = '"pnpm sentry:sourcemaps ; pnpm gtfs:db:migrate"'
 
 [env]

@@ -10,11 +10,16 @@ primary_region = "sjc"
 
   FAS_PROMETHEUS_ADDRESS = "https://api.fly.io/prometheus/tj-horner"
   FAS_PROMETHEUS_METRIC_NAME = "cpu_jps"
-  FAS_PROMETHEUS_QUERY = 'sum(rate(fly_instance_cpu{app="transit-tracker-api",mode!~"idle|iowait"}[10m]))'
+
+  # Exclude the sync machine from the load metric, or it inflates cpu_jps and over-scales the app pool.
+  # fly_instance_cpu has no process-group label, but fly_instance_cpu_baseline == 1 only for dedicated
+  # (performance) machines; shared app machines are < 1. `unless on(instance)` drops
+  # those instances (and keeps app machines even if the baseline series has a gap).
+  FAS_PROMETHEUS_QUERY = 'sum(rate(fly_instance_cpu{app="transit-tracker-api",mode!~"idle|iowait"}[10m]) unless on(instance) (fly_instance_cpu_baseline{app="transit-tracker-api"} == 1))'
 
   # Divisor = non-idle jiffies/s one pool machine produces at its CPU target:
   #   0.05   (~5% headroom)  x 2 vCPU x 99.75 = 9.98   -> 10
-  FAS_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 10)))"
+  FAS_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 12)))"
 
 [metrics]
   port = 9090
