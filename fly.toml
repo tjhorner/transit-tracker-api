@@ -12,12 +12,16 @@ kill_timeout = "1m"
   release_command = '"pnpm sentry:sourcemaps ; pnpm gtfs:db:migrate"'
 
 [env]
+  NODE_OPTIONS = "--max-old-space-size=768"
   GTFS_RT_MIN_CACHE_AGE = "30s"
   LOG_COMPACT = "true"
 
   # Connection shedding
   SHED_ENABLED = "true"
-  SHED_CPU_HIGH_WATER = "0.0625"  # Fly.io baseline for shared cpu
+  SHED_CPU_HIGH_WATER = "0.0575"  # approaching Fly.io baseline for shared cpu
+  SHED_SHARE_MARGIN = "0.1"
+  SHED_COOLDOWN = "30s"
+  SHED_BATCH_SIZE = "25"
 
 [http_service]
   internal_port = 3000
@@ -46,3 +50,4 @@ kill_timeout = "1m"
 
 [[vm]]
   size = "shared-cpu-2x"
+  memory = "1gb"

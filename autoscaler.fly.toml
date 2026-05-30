@@ -7,6 +7,7 @@ primary_region = "sjc"
 [env]
   FAS_APP_NAME = "transit-tracker-api"
   FAS_PROCESS_GROUP = "app"
+  FAS_INTERVAL = "30s"
 
   FAS_PROMETHEUS_ADDRESS = "https://api.fly.io/prometheus/tj-horner"
   FAS_PROMETHEUS_METRIC_NAME = "cpu_jps"
