@@ -18,6 +18,15 @@ const REDIS_KEY_PREFIX = "schedule_subscriptions"
 const HEARTBEAT_INTERVAL_MS = 30_000
 const KEY_TTL_SECONDS = 60
 
+export interface FleetConnectionStats {
+  /** Number of live instances currently reporting */
+  instanceCount: number
+  /** Total subscriptions across the fleet */
+  fleetTotal: number
+  /** This instance's subscription count */
+  myCount: number
+}
+
 @Injectable()
 export class ScheduleMetricsService
   implements OnApplicationBootstrap, OnApplicationShutdown
@@ -122,6 +131,52 @@ export class ScheduleMetricsService
     }
 
     return subscriptions
+  }
+
+  async getFleetConnectionStats(): Promise<FleetConnectionStats | null> {
+    if (!this.redis) {
+      return null
+    }
+
+    const keys: string[] = []
+    let cursor = "0"
+    do {
+      const [nextCursor, matchedKeys] = await this.redis.scan(
+        cursor,
+        "MATCH",
+        `${REDIS_KEY_PREFIX}:*`,
+        "COUNT",
+        100,
+      )
+      cursor = nextCursor
+      keys.push(...matchedKeys)
+    } while (cursor !== "0")
+
+    if (keys.length === 0) {
+      return null
+    }
+
+    const pipeline = this.redis.pipeline()
+    for (const key of keys) {
+      pipeline.hlen(key)
+    }
+    const results = await pipeline.exec()
+    if (!results) {
+      return null
+    }
+
+    let fleetTotal = 0
+    let myCount = 0
+    keys.forEach((key, index) => {
+      const [err, count] = results[index]
+      const value = err ? 0 : Number(count ?? 0)
+      fleetTotal += value
+      if (key === this.instanceKey) {
+        myCount = value
+      }
+    })
+
+    return { instanceCount: keys.length, fleetTotal, myCount }
   }
 
   private syncToRedis(

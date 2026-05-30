@@ -12,6 +12,8 @@ import { HealthController } from "./health/health.controller"
 import { CacheModule } from "./modules/cache/cache.module"
 import { FeedModule } from "./modules/feed/feed.module"
 import { NotificationsModule } from "./modules/notifications/notifications.module"
+import { ConnectionSheddingService } from "./schedule/connection-shedding.service"
+import { CpuMonitorService } from "./schedule/cpu-monitor.service"
 import { ScheduleMetricsController } from "./schedule/schedule-metrics.controller"
 import { ScheduleMetricsService } from "./schedule/schedule-metrics.service"
 import { ScheduleController } from "./schedule/schedule.controller"
@@ -62,6 +64,8 @@ import otelSDK from "./tracing"
     SystemAlertListener,
     ScheduleService,
     ScheduleGateway,
+    CpuMonitorService,
+    ConnectionSheddingService,
     {
       provide: APP_GUARD,
       useClass: ThrottlerGuard,

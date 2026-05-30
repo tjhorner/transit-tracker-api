@@ -12,6 +12,7 @@ import {
   OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
+  WebSocketServer,
   WsResponse,
 } from "@nestjs/websockets"
 import * as Sentry from "@sentry/nestjs"
@@ -42,7 +43,7 @@ import {
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
 } from "src/filters/ws-exception.filter"
-import { WebSocket as BaseWebSocket } from "ws"
+import { WebSocket as BaseWebSocket, Server as WsServer } from "ws"
 import {
   ScheduleOptions,
   ScheduleService,
@@ -86,7 +87,43 @@ export class ScheduleGateway
   private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Set<UUID> = new Set()
 
+  @WebSocketServer()
+  private readonly server!: WsServer
+
   constructor(private readonly scheduleService: ScheduleService) {}
+
+  get connectionCount(): number {
+    if (!this.server) {
+      return 0
+    }
+
+    let count = 0
+    for (const client of this.server.clients) {
+      if (client.readyState === BaseWebSocket.OPEN) {
+        count++
+      }
+    }
+    return count
+  }
+
+  shedConnections(target: number, code: number): number {
+    if (!this.server || target <= 0) {
+      return 0
+    }
+
+    let closed = 0
+    for (const client of this.server.clients) {
+      if (closed >= target) {
+        break
+      }
+      if (client.readyState !== BaseWebSocket.OPEN) {
+        continue
+      }
+      client.close(code)
+      closed++
+    }
+    return closed
+  }
 
   handleConnection(client: WebSocket, request: IncomingMessage) {
     client.connectedAt = new Date()

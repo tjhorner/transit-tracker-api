@@ -103,6 +103,87 @@ describe("ScheduleGateway", () => {
     })
   })
 
+  describe("connectionCount / shedConnections", () => {
+    const openClient = () => ({ readyState: WebSocket.OPEN, close: vi.fn() })
+    const closingClient = () => ({
+      readyState: WebSocket.CLOSING,
+      close: vi.fn(),
+    })
+    const closedClient = () => ({
+      readyState: WebSocket.CLOSED,
+      close: vi.fn(),
+    })
+
+    function setClients(clients: unknown[]) {
+      Object.defineProperty(gateway, "server", {
+        value: { clients: new Set(clients) },
+        writable: true,
+        configurable: true,
+      })
+    }
+
+    it("counts only open clients", () => {
+      // Arrange
+      setClients([openClient(), openClient(), closingClient()])
+
+      // Act
+      const count = gateway.connectionCount
+
+      // Assert
+      expect(count).toBe(2)
+    })
+
+    it("returns 0 when no server is attached", () => {
+      // Arrange (no server set)
+
+      // Act & Assert
+      expect(gateway.connectionCount).toBe(0)
+    })
+
+    it("closes up to the target number of open clients and returns the count", () => {
+      // Arrange
+      const clients = [openClient(), openClient(), openClient()]
+      setClients(clients)
+
+      // Act
+      const closed = gateway.shedConnections(2, 1001)
+
+      // Assert
+      expect(closed).toBe(2)
+      expect(clients[0].close).toHaveBeenCalledWith(1001)
+      expect(clients[1].close).toHaveBeenCalledWith(1001)
+      expect(clients[2].close).not.toHaveBeenCalled()
+    })
+
+    it("skips clients that are not open", () => {
+      // Arrange
+      const closed = closedClient()
+      const open = openClient()
+      setClients([closed, open])
+
+      // Act
+      const count = gateway.shedConnections(5, 1001)
+
+      // Assert
+      expect(count).toBe(1)
+      expect(closed.close).not.toHaveBeenCalled()
+      expect(open.close).toHaveBeenCalledWith(1001)
+    })
+
+    it("closes nothing when the target is not positive", () => {
+      // Arrange
+      const client = openClient()
+      setClients([client])
+
+      // Act
+      const count = gateway.shedConnections(0, 1001)
+
+      // Assert
+      expect(count).toBe(0)
+      expect(client.close).not.toHaveBeenCalled()
+    })
+  })
+
   describe("subscribeToSchedule", () => {
     beforeEach(() => {
       vi.useFakeTimers()
