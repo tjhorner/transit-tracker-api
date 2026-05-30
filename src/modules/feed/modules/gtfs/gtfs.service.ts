@@ -271,7 +271,7 @@ export class GtfsService implements FeedProvider {
 
         return routes.map<StopRoute>((route) => ({
           routeId: route.route_id,
-          color: route.route_color?.replaceAll("#", "") ?? null,
+          color: route.route_color?.replaceAll("#", "").trim() || null,
           name:
             (!route.route_short_name || route.route_short_name.trim() === ""
               ? route.route_long_name
@@ -378,7 +378,8 @@ export class GtfsService implements FeedProvider {
           routeId: staticTrip.route_id,
           stopId: staticTrip.stop_id,
           routeName: staticTrip.route_name ?? "Unnamed Route",
-          routeColor: staticTrip.route_color?.replaceAll("#", "") ?? null,
+          routeColor:
+            staticTrip.route_color?.replaceAll("#", "").trim() || null,
           directionId: staticTrip.direction_id,
           headsign: staticTrip.stop_headsign
             ? this.removeRouteNameFromHeadsign(
