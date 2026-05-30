@@ -17,6 +17,9 @@ primary_region = "sjc"
   # those instances (and keeps app machines even if the baseline series has a gap).
   FAS_PROMETHEUS_QUERY = 'sum(rate(fly_instance_cpu{app="transit-tracker-api",mode!~"idle|iowait"}[10m]) unless on(instance) (fly_instance_cpu_baseline{app="transit-tracker-api"} == 1))'
 
+  # Stop machines with fewest connections first
+  FAS_STOP_METRIC_PROMETHEUS_QUERY = 'sum by (instance) (fly_app_concurrency{app="transit-tracker-api"})'
+
   # Divisor = non-idle jiffies/s one pool machine produces at its CPU target:
   #   0.05   (~5% headroom)  x 2 vCPU x 99.75 = 9.98   -> 10
   FAS_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 12)))"
