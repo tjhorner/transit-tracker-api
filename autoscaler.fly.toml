@@ -1,0 +1,25 @@
+app = "transit-tracker-api-autoscaler"
+primary_region = "sjc"
+
+[build]
+  image = "ghcr.io/tjhorner/fly-autoscaler:main"
+
+[env]
+  FAS_APP_NAME = "transit-tracker-api"
+  FAS_PROCESS_GROUP = "app"
+
+  FAS_PROMETHEUS_ADDRESS = "https://api.fly.io/prometheus/tj-horner"
+  FAS_PROMETHEUS_METRIC_NAME = "cpu_jps"
+  FAS_PROMETHEUS_QUERY = 'sum(rate(fly_instance_cpu{app="transit-tracker-api",mode!~"idle|iowait"}[10m]))'
+
+  # Divisor = non-idle jiffies/s one pool machine produces at its CPU target:
+  #   0.05   (~5% headroom)  x 2 vCPU x 99.75 = 9.98   -> 10
+  FAS_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 10)))"
+
+[metrics]
+  port = 9090
+  path = "/metrics"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "256mb"
