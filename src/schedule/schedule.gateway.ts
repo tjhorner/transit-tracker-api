@@ -28,7 +28,7 @@ import {
 } from "class-validator"
 import { randomUUID, UUID } from "crypto"
 import { IncomingMessage } from "http"
-import ms from "ms"
+import ms, { StringValue } from "ms"
 import proxyAddr from "proxy-addr"
 import {
   catchError,
@@ -38,6 +38,9 @@ import {
   merge,
   Observable,
   retry,
+  startWith,
+  switchMap,
+  timer,
 } from "rxjs"
 import {
   WebSocketExceptionFilter,
@@ -86,6 +89,14 @@ export class ScheduleGateway
 {
   private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Set<UUID> = new Set()
+
+  // Delay before a subscription begins fetching schedule data and registering
+  // metrics. Connections that drop within this window cost nothing, which
+  // protects against clients that rapidly connect and disconnect in a loop
+  private readonly subscribeGracePeriodMs = process.env
+    .SCHEDULE_SUBSCRIBE_GRACE_PERIOD
+    ? ms(process.env.SCHEDULE_SUBSCRIBE_GRACE_PERIOD as StringValue)
+    : ms("1s")
 
   @WebSocketServer()
   private readonly server!: WsServer
@@ -136,7 +147,13 @@ export class ScheduleGateway
       )
     })
 
-    this.logger.debug(`Client connected: ${client.id} - ${client.ipAddress}`)
+    const headersString = Object.entries(request.headers)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join("; ")
+
+    this.logger.debug(
+      `Client connected: ${client.id} - ${client.ipAddress} (${headersString})`,
+    )
   }
 
   handleDisconnect(client: WebSocket) {
@@ -185,37 +202,42 @@ export class ScheduleGateway
       listMode: subscriptionDto.listMode,
     }
 
-    const scheduleUpdates$ = this.scheduleService
-      .subscribeToSchedule(subscription)
-      .pipe(
-        map((update) => ({ event: "schedule", data: update })),
-        catchError((err) => {
-          this.logger.warn(
-            {
-              message: "Error in schedule subscription",
-              error: err.message,
-              subscription,
-            },
-            err.stack,
-          )
+    const schedule$ = this.scheduleService.subscribeToSchedule(subscription)
 
-          Sentry.captureException(err, {
-            extra: {
-              subscription: JSON.stringify(subscription),
-            },
-          })
+    const scheduleUpdates$ = timer(this.subscribeGracePeriodMs).pipe(
+      switchMap(() =>
+        schedule$.pipe(
+          catchError((err) => {
+            this.logger.warn(
+              {
+                message: "Error in schedule subscription",
+                error: err.message,
+                subscription,
+              },
+              err.stack,
+            )
 
-          throw err
-        }),
-        retry({
-          delay: ms("10s"),
-        }),
-        finalize(() => {
-          this.subscribers.delete(socket.id)
-        }),
-      )
+            Sentry.captureException(err, {
+              extra: {
+                subscription: JSON.stringify(subscription),
+              },
+            })
+
+            throw err
+          }),
+          retry({
+            delay: ms("10s"),
+          }),
+        ),
+      ),
+      map((update) => ({ event: "schedule", data: update })),
+      finalize(() => {
+        this.subscribers.delete(socket.id)
+      }),
+    )
 
     const heartbeat$ = interval(ms("30s")).pipe(
+      startWith(0),
       map(() => ({ event: "heartbeat", data: null })),
     )
 

@@ -4,7 +4,7 @@ import { randomUUID } from "crypto"
 import { IncomingMessage } from "http"
 import ms from "ms"
 import { Socket } from "net"
-import { firstValueFrom, Observable, of } from "rxjs"
+import { Observable, of } from "rxjs"
 import {
   ScheduleGateway,
   ScheduleSubscriptionDto,
@@ -56,6 +56,10 @@ describe("ScheduleGateway", () => {
     const clientId = randomUUID()
     const mockClient = { id: clientId } as any
     return { mockClient, clientId }
+  }
+
+  function waitForGracePeriod() {
+    return vi.advanceTimersByTimeAsync(1000)
   }
 
   describe("handleConnection", () => {
@@ -331,17 +335,20 @@ describe("ScheduleGateway", () => {
 
       // Act
       const result$ = gateway.subscribeToSchedule(dto, mockClient)
+      const subscription = result$.subscribe()
 
-      // Trigger subscription and wait for it to complete
-      await firstValueFrom(result$)
+      // The schedule observable completes once the grace period passes, which
+      // finalizes the schedule branch and removes the client.
+      await waitForGracePeriod()
 
       // Assert
-      // Check that client was removed from subscribers after observable completes
       const subscribers = gateway["subscribers"] as Set<string>
       expect(subscribers.has(clientId)).toBe(false)
+
+      subscription.unsubscribe()
     })
 
-    it("should emit schedule updates and then heartbeat signals at 30 second intervals", async () => {
+    it("should emit an immediate heartbeat, then the schedule update, then heartbeats every 30 seconds", async () => {
       // Arrange
       const { mockClient } = makeMockClient()
       const dto = new ScheduleSubscriptionDto()
@@ -366,9 +373,18 @@ describe("ScheduleGateway", () => {
         emittedEvents.push(event)
       })
 
-      // Initial schedule event
+      // Immediate heartbeat on connect
       expect(emittedEvents.length).toBe(1)
       expect(emittedEvents[0]).toEqual({
+        event: "heartbeat",
+        data: null,
+      })
+
+      // Schedule event after the grace period
+      await waitForGracePeriod()
+
+      expect(emittedEvents.length).toBe(2)
+      expect(emittedEvents[1]).toEqual({
         event: "schedule",
         data: mockScheduleUpdate,
       })
@@ -377,8 +393,8 @@ describe("ScheduleGateway", () => {
       await vi.advanceTimersByTimeAsync(30000)
 
       // Should have heartbeat event
-      expect(emittedEvents.length).toBe(2)
-      expect(emittedEvents[1]).toEqual({
+      expect(emittedEvents.length).toBe(3)
+      expect(emittedEvents[2]).toEqual({
         event: "heartbeat",
         data: null,
       })
@@ -387,8 +403,8 @@ describe("ScheduleGateway", () => {
       await vi.advanceTimersByTimeAsync(30000)
 
       // Should have another heartbeat
-      expect(emittedEvents.length).toBe(3)
-      expect(emittedEvents[2]).toEqual({
+      expect(emittedEvents.length).toBe(4)
+      expect(emittedEvents[3]).toEqual({
         event: "heartbeat",
         data: null,
       })
@@ -472,9 +488,18 @@ describe("ScheduleGateway", () => {
         emittedEvents.push(event)
       })
 
-      // Initial schedule event should be emitted immediately
+      // Immediate heartbeat on connect
       expect(emittedEvents.length).toBe(1)
       expect(emittedEvents[0]).toEqual({
+        event: "heartbeat",
+        data: null,
+      })
+
+      // First schedule event after the grace period
+      await waitForGracePeriod()
+
+      expect(emittedEvents.length).toBe(2)
+      expect(emittedEvents[1]).toEqual({
         event: "schedule",
         data: mockScheduleUpdate1,
       })
@@ -483,8 +508,8 @@ describe("ScheduleGateway", () => {
       await vi.advanceTimersByTimeAsync(ms("15s"))
 
       // Should have a new schedule event
-      expect(emittedEvents.length).toBe(2)
-      expect(emittedEvents[1]).toEqual({
+      expect(emittedEvents.length).toBe(3)
+      expect(emittedEvents[2]).toEqual({
         event: "schedule",
         data: mockScheduleUpdate2,
       })
@@ -493,8 +518,8 @@ describe("ScheduleGateway", () => {
       await vi.advanceTimersByTimeAsync(ms("15s"))
 
       // Should have heartbeat event
-      expect(emittedEvents.length).toBe(3)
-      expect(emittedEvents[2]).toEqual({
+      expect(emittedEvents.length).toBe(4)
+      expect(emittedEvents[3]).toEqual({
         event: "heartbeat",
         data: null,
       })
@@ -520,16 +545,21 @@ describe("ScheduleGateway", () => {
       )
 
       // Act
+      const emittedEvents: any[] = []
       const result$ = gateway.subscribeToSchedule(dto, mockClient)
-
-      // Get the first emitted value
-      const firstEvent = await firstValueFrom(result$)
-
-      // Assert
-      expect(firstEvent).toEqual({
-        event: "schedule",
-        data: mockScheduleUpdate,
+      const subscription = result$.subscribe((event) => {
+        emittedEvents.push(event)
       })
+
+      await waitForGracePeriod()
+
+      // Assert: an immediate heartbeat followed by the schedule update
+      expect(emittedEvents).toEqual([
+        { event: "heartbeat", data: null },
+        { event: "schedule", data: mockScheduleUpdate },
+      ])
+
+      subscription.unsubscribe()
     })
   })
 })

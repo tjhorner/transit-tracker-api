@@ -43,6 +43,12 @@
 |---|---|---|---|
 | `TRUST_PROXY` | No | — | Configures Express's `trust proxy` setting. Set to `true` to trust all proxies, or a string value for a specific configuration. |
 
+## Schedule Subscriptions
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `SCHEDULE_SUBSCRIBE_GRACE_PERIOD` | No | `1s` | Delay before a schedule subscription starts tracking metrics and fetching trips (e.g. `1s`, `500ms`). Connections that drop within this window do no work, which protects against clients that rapidly connect and disconnect. Parsed with the `ms` library. |
+
 ## Rate Limiting
 
 | Variable | Required | Default | Description |
