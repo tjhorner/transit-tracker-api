@@ -283,8 +283,8 @@ importers:
         specifier: ^3.0.0
         version: 3.0.0(@types/supertest@7.2.0)(supertest@7.2.2)
       ts-essentials:
-        specifier: ^10.2.0
-        version: 10.2.0(typescript@5.9.3)
+        specifier: ^10.2.1
+        version: 10.2.1(typescript@5.9.3)
       ts-loader:
         specifier: ^9.5.7
         version: 9.5.7(typescript@5.9.3)(webpack@5.106.0(@swc/core@1.15.40))
@@ -5234,16 +5234,8 @@ packages:
     peerDependencies:
       typescript: '>=4.8.4'
 
-  ts-essentials@10.1.1:
-    resolution: {integrity: sha512-4aTB7KLHKmUvkjNj8V+EdnmuVTiECzn3K+zIbRthumvHu+j44x3w63xpfs0JL3NGIzGXqoQ7AV591xHO+XrOTw==}
-    peerDependencies:
-      typescript: '>=4.5.0'
-    peerDependenciesMeta:
-      typescript:
-        optional: true
-
-  ts-essentials@10.2.0:
-    resolution: {integrity: sha512-z9FlLywg0XEV46Ws1FwYN4NZDMr9qAe38lTTtgVBqzhhyEgwrnCUkFe4MEqnvar1kY1kFEnlkp56bxn2g0V+UA==}
+  ts-essentials@10.2.1:
+    resolution: {integrity: sha512-+Id1fRkuir+CsgK2x04/icS2b4V1hQmq7ObzIrDjhN0ozfRYivnP7aaKMVJfLApQm0trjR39A6NIMVchiB9Erw==}
     peerDependencies:
       typescript: '>=4.5.0'
     peerDependenciesMeta:
@@ -11598,11 +11590,7 @@ snapshots:
     dependencies:
       typescript: 5.9.3
 
-  ts-essentials@10.1.1(typescript@5.9.3):
-    optionalDependencies:
-      typescript: 5.9.3
-
-  ts-essentials@10.2.0(typescript@5.9.3):
+  ts-essentials@10.2.1(typescript@5.9.3):
     optionalDependencies:
       typescript: 5.9.3
 
@@ -11787,7 +11775,7 @@ snapshots:
 
   vitest-mock-extended@4.0.0(typescript@5.9.3)(vitest@4.1.6):
     dependencies:
-      ts-essentials: 10.1.1(typescript@5.9.3)
+      ts-essentials: 10.2.1(typescript@5.9.3)
       typescript: 5.9.3
       vitest: 4.1.6(@opentelemetry/api@1.9.1)(@types/node@24.12.2)(@vitest/coverage-v8@4.1.6)(msw@2.14.6(@types/node@24.12.2)(typescript@5.9.3))(vite@7.3.1(@types/node@24.12.2)(terser@5.46.2)(yaml@2.9.0))
 
