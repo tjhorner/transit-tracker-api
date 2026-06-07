@@ -85,8 +85,8 @@
     "@pgtyped/cli": "^2.4.3",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.40",
-    "@testcontainers/postgresql": "^11.14.0",
-    "@testcontainers/redis": "^11.14.0",
+    "@testcontainers/postgresql": "^12.0.1",
+    "@testcontainers/redis": "^12.0.1",
     "@tsconfig/node24": "^24.0.4",
     "@types/archiver": "^7.0.0",
     "@types/express": "^5.0.6",
@@ -103,7 +103,7 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.60.1",
     "@typescript-eslint/parser": "^8.60.1",
-    "@vitest/coverage-v8": "^4.1.6",
+    "@vitest/coverage-v8": "^4.1.8",
     "archiver": "^7.0.1",
     "eslint": "^10.4.1",
     "eslint-config-prettier": "^10.1.8",
@@ -124,7 +124,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^4.1.6",
+    "vitest": "^4.1.8",
     "vitest-mock-extended": "^4.0.0"
   }
 }
