@@ -23,7 +23,15 @@ primary_region = "sjc"
 
   # Divisor = non-idle jiffies/s one pool machine produces at its CPU target:
   #   0.05   (~5% headroom)  x 2 vCPU x 99.75 = 9.98   -> 10
-  FAS_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 12)))"
+  # Baseline (6.25%/vCPU) is ~12.47 jps, so divisor 12 keeps a machine just under baseline.
+  #
+  # Split min/max creates a hysteresis band to stop 2<->1 flapping: when a machine
+  # stops, the survivor absorbs its load and the rate[10m] sum briefly double-counts
+  # the stopped machine's decaying tail, bumping cpu_jps to ~12.4 and bouncing back up.
+  # Scale UP only above 14 (clears the observed ~12.36 transient peak with margin, 7%/vCPU);
+  # scale DOWN still at 12. Between 12 and 14 the count is left alone.
+  FAS_MIN_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 14)))"
+  FAS_MAX_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 12)))"
 
 [metrics]
   port = 9090

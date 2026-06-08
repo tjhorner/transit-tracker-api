@@ -6,6 +6,6 @@ swap_size_mb = 64
   dockerfile = "redis.Dockerfile"
 
 [[vm]]
-  memory = "256mb"
+  memory = "512mb"
   cpu_kind = "shared"
   cpus = 1

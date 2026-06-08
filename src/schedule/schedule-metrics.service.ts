@@ -15,7 +15,7 @@ import { FeedService } from "src/modules/feed/feed.service"
 import { ScheduleOptions } from "./schedule.service"
 
 const REDIS_KEY_PREFIX = "schedule_subscriptions"
-const HEARTBEAT_INTERVAL_MS = 30_000
+const HEARTBEAT_INTERVAL_MS = 10_000
 const KEY_TTL_SECONDS = 60
 
 export interface FleetConnectionStats {
