@@ -5,21 +5,11 @@ import {
   OnApplicationBootstrap,
 } from "@nestjs/common"
 import { Counter } from "@opentelemetry/api"
-import ms from "ms"
 import { MetricService } from "nestjs-otel"
+import { env } from "../env"
 import { CpuMonitorService } from "./cpu-monitor.service"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
 import { ScheduleGateway } from "./schedule.gateway"
-
-const duration = (key: string, fallbackMs: number): number => {
-  const value = process.env[key]
-  return value ? ms(value as ms.StringValue) : fallbackMs
-}
-
-const number = (key: string, fallback: number): number => {
-  const value = process.env[key]
-  return value === undefined ? fallback : Number(value)
-}
 
 @Injectable()
 export class ConnectionSheddingService
@@ -28,18 +18,21 @@ export class ConnectionSheddingService
   private readonly logger = new Logger(ConnectionSheddingService.name)
 
   private readonly enabled = process.env.SHED_ENABLED === "true"
-  private readonly highWaterUtilization = number("SHED_CPU_HIGH_WATER", 0.0625)
-  private readonly batchSize = number("SHED_BATCH_SIZE", 10)
-  private readonly minConnections = number("SHED_MIN_CONNECTIONS", 50)
-  private readonly shareMargin = number("SHED_SHARE_MARGIN", 0.2)
-  private readonly evalIntervalMs = duration("SHED_EVAL_INTERVAL", 10_000)
-  private readonly cooldownMs = duration("SHED_COOLDOWN", 60_000)
-  private readonly closeCode = number("SHED_CLOSE_CODE", 1001)
-  private readonly drainBatchIntervalMs = duration(
+  private readonly highWaterUtilization = env.number(
+    "SHED_CPU_HIGH_WATER",
+    0.0625,
+  )
+  private readonly batchSize = env.number("SHED_BATCH_SIZE", 10)
+  private readonly minConnections = env.number("SHED_MIN_CONNECTIONS", 50)
+  private readonly shareMargin = env.number("SHED_SHARE_MARGIN", 0.2)
+  private readonly evalIntervalMs = env.duration("SHED_EVAL_INTERVAL", 10_000)
+  private readonly cooldownMs = env.duration("SHED_COOLDOWN", 60_000)
+  private readonly closeCode = env.number("SHED_CLOSE_CODE", 1001)
+  private readonly drainBatchIntervalMs = env.duration(
     "SHED_DRAIN_BATCH_INTERVAL",
     1_000,
   )
-  private readonly drainTimeoutMs = duration("SHED_DRAIN_TIMEOUT", 30_000)
+  private readonly drainTimeoutMs = env.duration("SHED_DRAIN_TIMEOUT", 30_000)
 
   private readonly shedCounter: Counter
 

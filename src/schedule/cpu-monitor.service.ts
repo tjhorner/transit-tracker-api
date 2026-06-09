@@ -6,11 +6,7 @@ import {
 } from "@nestjs/common"
 import { MetricService } from "nestjs-otel"
 import { availableParallelism, cpus } from "os"
-
-const SAMPLE_INTERVAL_MS = Number(
-  process.env.SHED_CPU_SAMPLE_INTERVAL_MS ?? 5_000,
-)
-const WINDOW_MS = Number(process.env.SHED_CPU_WINDOW_MS ?? 60_000)
+import { env } from "../env"
 
 interface UtilizationSample {
   at: number
@@ -31,6 +27,12 @@ export class CpuMonitorService
   private lastSampleAt = Date.now()
   private timer: ReturnType<typeof setInterval> | null = null
 
+  private readonly sampleIntervalMs = env.duration(
+    "SHED_CPU_SAMPLE_INTERVAL",
+    5_000,
+  )
+  private readonly windowMs = env.duration("SHED_CPU_WINDOW", 60_000)
+
   constructor(metricService: MetricService) {
     metricService
       .getObservableGauge("process_cpu_utilization", {
@@ -44,10 +46,10 @@ export class CpuMonitorService
   onApplicationBootstrap() {
     this.lastCpuUsage = process.cpuUsage()
     this.lastSampleAt = Date.now()
-    this.timer = setInterval(() => this.sample(), SAMPLE_INTERVAL_MS)
+    this.timer = setInterval(() => this.sample(), this.sampleIntervalMs)
     this.timer.unref?.()
     this.logger.log(
-      `CPU monitor started: ${this.vcpuCount} vCPU, ${SAMPLE_INTERVAL_MS}ms sample, ${WINDOW_MS}ms window`,
+      `CPU monitor started: ${this.vcpuCount} vCPU, ${this.sampleIntervalMs}ms sample, ${this.windowMs}ms window`,
     )
   }
 
@@ -75,7 +77,7 @@ export class CpuMonitorService
     const utilization = cpuMicros / 1000 / (elapsedMs * this.vcpuCount)
     this.samples.push({ at: now, utilization })
 
-    const cutoff = now - WINDOW_MS
+    const cutoff = now - this.windowMs
     while (this.samples.length > 0 && this.samples[0].at < cutoff) {
       this.samples.shift()
     }
@@ -90,6 +92,6 @@ export class CpuMonitorService
   }
 
   get windowReady(): boolean {
-    return this.samples.length * SAMPLE_INTERVAL_MS >= WINDOW_MS * 0.8
+    return this.samples.length * this.sampleIntervalMs >= this.windowMs * 0.8
   }
 }

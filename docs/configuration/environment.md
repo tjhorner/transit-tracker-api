@@ -42,6 +42,7 @@
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `TRUST_PROXY` | No | — | Configures Express's `trust proxy` setting. Set to `true` to trust all proxies, or a string value for a specific configuration. |
+| `INTERNAL_API_KEY` | No | — | Bearer token required to access internal API endpoints. If not set, all requests to internal endpoints are allowed (suitable for local development). |
 
 ## Schedule Subscriptions
 
@@ -61,10 +62,30 @@
 |---|---|---|---|
 | `APPRISE_URLS` | No | — | Space-separated list of [Apprise](https://github.com/caronc/apprise) notification target URLs. |
 
+## Connection Shedding
+
+Connection shedding gradually disconnects WebSocket clients when CPU utilization is high, allowing the load balancer to route new connections to less-loaded instances.
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `SHED_ENABLED` | No | `false` | Set to `true` to enable connection shedding. |
+| `SHED_CPU_HIGH_WATER` | No | `0.0625` | CPU utilization fraction (0–1) above which shedding is triggered. |
+| `SHED_CPU_SAMPLE_INTERVAL` | No | `5s` | How often to sample CPU utilization (e.g. `5s`, `500ms`). Parsed with the `ms` library. |
+| `SHED_CPU_WINDOW` | No | `60s` | Rolling window over which CPU utilization is averaged (e.g. `60s`, `1m`). Parsed with the `ms` library. |
+| `SHED_EVAL_INTERVAL` | No | `10s` | How often to evaluate whether shedding should occur (e.g. `10s`, `500ms`). Parsed with the `ms` library. |
+| `SHED_COOLDOWN` | No | `60s` | Minimum time between shedding events (e.g. `60s`, `1m`). Parsed with the `ms` library. |
+| `SHED_BATCH_SIZE` | No | `10` | Number of connections to close per shedding event. |
+| `SHED_MIN_CONNECTIONS` | No | `50` | Minimum number of connections to retain; shedding stops when at or below this count. |
+| `SHED_SHARE_MARGIN` | No | `0.2` | Fraction of margin allowed above the fair connection share before shedding triggers. |
+| `SHED_CLOSE_CODE` | No | `1001` | WebSocket close code sent to disconnected clients. |
+| `SHED_DRAIN_BATCH_INTERVAL` | No | `1s` | Delay between batches during a graceful drain (e.g. `1s`). Parsed with the `ms` library. |
+| `SHED_DRAIN_TIMEOUT` | No | `30s` | Maximum time to wait for connections to drain on shutdown (e.g. `30s`). Parsed with the `ms` library. |
+
 ## Sentry
 
 | Variable | Required | Default | Description |
 |---|---|---|---|
 | `SENTRY_DSN` | No | — | Sentry DSN for error reporting. |
+| `SENTRY_DEBUG` | No | `false` | Set to `true` to enable Sentry's `debug` option. |
 | `SENTRY_TRACES_SAMPLE_RATE` | No | `0.15` | Float between 0 and 1 controlling the Sentry transaction sampling rate. |
 | `SENTRY_PROFILE_SESSION_SAMPLE_RATE` | No | `1` | Float between 0 and 1 controlling the Sentry profile session sampling rate. |
