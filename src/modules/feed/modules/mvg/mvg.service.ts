@@ -1,9 +1,4 @@
-import {
-  Inject,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from "@nestjs/common"
+import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import ms from "ms"
@@ -18,58 +13,19 @@ import type {
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
+import { MvgApiClient } from "./api-client"
 import { MvgConfig, MvgConfigSchema } from "./config"
-
-interface MvgDeparture {
-  plannedDepartureTime: number
-  realtime: boolean
-  delayInMinutes: number | null
-  realtimeDepartureTime: number
-  transportType: string
-  label: string
-  divaId: string
-  network: string
-  trainType: string
-  destination: string
-  cancelled: boolean
-  sev: boolean
-  platform: number | null
-  platformChanged: boolean
-  messages: any[]
-  infos: any[]
-  bannerHash: string
-  occupancy: string
-  stationGlobalId: string
-  stopPointGlobalId: string
-  lineId: string
-  tripCode: number
-}
-
-interface MvgStation {
-  globalId: string
-  name: string
-  place: string
-  latitude: number
-  longitude: number
-  type: string
-  products: string[]
-  tariffZones: string
-  transportTypes: string[]
-}
 
 @RegisterFeedProvider("mvg")
 export class MvgService implements FeedProvider {
   private logger: Logger
-  private config: Readonly<MvgConfig>
-  private baseUrl: string
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<MvgConfig>,
+    @Inject(REQUEST) { feedCode }: FeedContext<MvgConfig>,
     private readonly cache: FeedCacheService,
+    private readonly apiClient: MvgApiClient,
   ) {
     this.logger = new Logger(`${MvgService.name}[${feedCode}]`)
-    this.config = config
-    this.baseUrl = this.config.baseUrl
   }
 
   static validateConfig(config: unknown): MvgConfig {
@@ -77,31 +33,14 @@ export class MvgService implements FeedProvider {
   }
 
   async healthCheck(): Promise<void> {
-    await this.fetchJson(
-      `/stations/nearby?latitude=48.137154&longitude=11.576124`,
-    )
-  }
-
-  private async fetchJson<T>(url: string): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${url}`)
-    if (!response.ok) {
-      if (response.status === 404) {
-        throw new NotFoundException(`Resource not found: ${url}`)
-      }
-      throw new InternalServerErrorException(
-        `MVG API request failed: ${response.status} ${response.statusText}`,
-      )
-    }
-    return response.json() as Promise<T>
+    await this.apiClient.getNearbyStations(48.137154, 11.576124)
   }
 
   async getStop(stopId: string): Promise<Stop> {
     return this.cache.cached(
       `stop-${stopId}`,
       async () => {
-        const station = await this.fetchJson<MvgStation>(
-          `/stations/${encodeURIComponent(stopId)}`,
-        )
+        const station = await this.apiClient.getStation(stopId)
 
         return {
           stopId: station.globalId,
@@ -121,9 +60,9 @@ export class MvgService implements FeedProvider {
     return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {
-        const departures = await this.fetchJson<MvgDeparture[]>(
-          `/departures?globalId=${encodeURIComponent(stopId)}&limit=100`,
-        )
+        const departures = await this.apiClient.getDepartures(stopId, {
+          limit: 100,
+        })
 
         const routeMap = new Map<
           string,
@@ -164,8 +103,9 @@ export class MvgService implements FeedProvider {
     const centerLat = (bbox[1] + bbox[3]) / 2
     const centerLon = (bbox[0] + bbox[2]) / 2
 
-    const stations = await this.fetchJson<MvgStation[]>(
-      `/stations/nearby?latitude=${centerLat}&longitude=${centerLon}`,
+    const stations = await this.apiClient.getNearbyStations(
+      centerLat,
+      centerLon,
     )
 
     return stations
@@ -215,9 +155,10 @@ export class MvgService implements FeedProvider {
             "REGIONAL_BUS",
             "BAHN",
           ]
-          const deps = await this.fetchJson<MvgDeparture[]>(
-            `/departures?globalId=${encodeURIComponent(stopId)}&limit=100&transportTypes=${transportTypes.join(",")}`,
-          )
+          const deps = await this.apiClient.getDepartures(stopId, {
+            limit: 100,
+            transportTypes,
+          })
 
           const now = Date.now()
           const validDeps = deps.filter((d) => d.realtimeDepartureTime > now)

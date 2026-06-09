@@ -2,12 +2,9 @@ import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
-import {
-  createClient,
-  DeparturesArrivalsOptions,
-  HafasClient,
-} from "hafas-client"
+import type { DeparturesArrivalsOptions, HafasClient } from "hafas-client"
 import ms from "ms"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import type {
@@ -19,23 +16,20 @@ import type {
   TripStop,
 } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
+import { HAFAS_CLIENT } from "./client.provider"
 import { HafasConfig, HafasConfigSchema } from "./config"
 
 @RegisterFeedProvider("hafas")
 export class HafasService implements FeedProvider {
   private readonly logger: Logger
-  private readonly hafasClient: HafasClient
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<HafasConfig>,
+    @Inject(REQUEST) { feedCode }: FeedContext<HafasConfig>,
     private readonly cache: FeedCacheService,
+    @Inject(HAFAS_CLIENT) private readonly hafasClient: HafasClient,
+    private readonly dateTime: DateTimeService,
   ) {
     this.logger = new Logger(`${HafasService.name}[${feedCode}]`)
-
-    this.logger.log(`Initializing with HAFAS profile: ${config.profile}`)
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { profile } = require(`hafas-client/p/${config.profile}`)
-    this.hafasClient = createClient(profile, config.userAgent)
   }
 
   static validateConfig(config: any): HafasConfig {
@@ -74,7 +68,7 @@ export class HafasService implements FeedProvider {
       const trips = await this.getUpcomingTripsForStop(stopId)
 
       for (const trip of trips) {
-        if (trip.departureTime < new Date()) {
+        if (trip.departureTime < this.dateTime.now()) {
           continue
         }
 
