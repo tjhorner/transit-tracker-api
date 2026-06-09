@@ -3,6 +3,7 @@ import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import type {
   FeedContext,
   FeedProvider,
@@ -52,6 +53,7 @@ export class GtfsService implements FeedProvider {
     private readonly syncService: GtfsSyncService,
     private readonly realtimeService: GtfsRealtimeService,
     private readonly metricsService: GtfsMetricsService,
+    private readonly dateTime: DateTimeService,
   ) {
     this.feedCode = feedCode
     this.config = config
@@ -172,7 +174,7 @@ export class GtfsService implements FeedProvider {
     stopId: string,
     dayOffset: number,
   ): Promise<ReadonlyArray<DeepReadonly<IGetScheduleForRouteAtStopResult>>> {
-    const now = Date.now()
+    const now = this.dateTime.now().getTime()
 
     const dateKey = new Date(now)
     dateKey.setDate(dateKey.getDate() + dayOffset)
@@ -185,7 +187,7 @@ export class GtfsService implements FeedProvider {
         const interval = `${dayOffset} days`
         const result = await getScheduleForRouteAtStop.run(
           {
-            nowUnixTime: Date.now() / 1000,
+            nowUnixTime: this.dateTime.now().getTime() / 1000,
             routeId,
             stopId,
             offset: interval,
@@ -294,7 +296,7 @@ export class GtfsService implements FeedProvider {
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
     const scheduleDates = [-1, 0, 1]
-    const now = Date.now()
+    const now = this.dateTime.now().getTime()
 
     const uniqueRouteIds = Array.from(new Set(routes.map((r) => r.routeId)))
 

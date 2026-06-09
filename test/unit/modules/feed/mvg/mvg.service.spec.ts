@@ -1,4 +1,5 @@
 import ms from "ms"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import {
   FeedContext,
   RouteAtStop,
@@ -11,7 +12,6 @@ import {
 } from "src/modules/feed/modules/mvg/api-client"
 import { MvgConfig } from "src/modules/feed/modules/mvg/config"
 import { MvgService } from "src/modules/feed/modules/mvg/mvg.service"
-import { MockInstance } from "vitest"
 import { mock, MockProxy } from "vitest-mock-extended"
 
 const feedContext: FeedContext<MvgConfig> = {
@@ -70,11 +70,13 @@ describe("MvgService", () => {
   let mvgService: MvgService
   let mockCacheService: MockProxy<FeedCacheService>
   let mockApiClient: MockProxy<MvgApiClient>
+  let mockDateTimeService: MockProxy<DateTimeService>
   let rawCacheResults: Map<string, any>
 
   beforeEach(() => {
     mockCacheService = mock<FeedCacheService>()
     mockApiClient = mock<MvgApiClient>()
+    mockDateTimeService = mock<DateTimeService>()
     rawCacheResults = new Map()
 
     mockCacheService.cached.mockImplementation(async (key, fn) => {
@@ -87,7 +89,12 @@ describe("MvgService", () => {
       return result
     })
 
-    mvgService = new MvgService(feedContext, mockCacheService, mockApiClient)
+    mvgService = new MvgService(
+      feedContext,
+      mockCacheService,
+      mockApiClient,
+      mockDateTimeService,
+    )
   })
 
   it("performs a health check by fetching nearby stations", async () => {
@@ -213,15 +220,8 @@ describe("MvgService", () => {
   })
 
   describe("getUpcomingTripsForRoutesAtStops", () => {
-    let dateSpy: MockInstance<() => any>
-
     beforeEach(() => {
-      dateSpy = vi.spyOn(Date, "now")
-      dateSpy.mockImplementation(() => NOW)
-    })
-
-    afterEach(() => {
-      dateSpy.mockRestore()
+      mockDateTimeService.now.mockReturnValue(new Date(NOW))
     })
 
     const testRoutesAtStops: RouteAtStop[] = [

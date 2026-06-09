@@ -9,6 +9,7 @@ import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import ms from "ms"
 import OnebusawaySDK from "onebusaway-sdk"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import type {
   FeedContext,
   FeedProvider,
@@ -80,6 +81,7 @@ export class OneBusAwayService implements FeedProvider {
     @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
     private readonly cache: FeedCacheService,
     private readonly obaSdk: OnebusawaySDK,
+    private readonly dateTime: DateTimeService,
   ) {
     this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
     this.config = config
@@ -354,7 +356,8 @@ export class OneBusAwayService implements FeedProvider {
         ? firstArrival.predictedArrivalTime
         : firstArrival.scheduledArrivalTime
 
-      const timeUntilFirstArrival = firstArrivalTime - Date.now()
+      const timeUntilFirstArrival =
+        firstArrivalTime - this.dateTime.now().getTime()
       if (timeUntilFirstArrival > ms("5m")) {
         ttl = ms("1m")
       }
@@ -468,7 +471,7 @@ export class OneBusAwayService implements FeedProvider {
             ? new Date(ad.predictedDepartureTime)
             : new Date(ad.scheduledDepartureTime)
 
-        if (departureTime.getTime() < Date.now()) {
+        if (departureTime.getTime() < this.dateTime.now().getTime()) {
           continue
         }
 

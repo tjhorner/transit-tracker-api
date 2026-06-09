@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto"
 import { firstValueFrom, Observable } from "rxjs"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { FeedService } from "src/modules/feed/feed.service"
 import {
   FeedProvider,
@@ -16,6 +17,7 @@ describe("ScheduleService", () => {
   let mockFeedProvider: MockProxy<FeedProvider>
   let mockFeedService: MockProxy<FeedService>
   let mockMetricsService: MockProxy<ScheduleMetricsService>
+  let mockDateTimeService: MockProxy<DateTimeService>
 
   beforeEach(() => {
     mockFeedProvider = mock<FeedProvider>()
@@ -26,7 +28,14 @@ describe("ScheduleService", () => {
     mockFeedService = mock<FeedService>()
     mockFeedService.getFeedProvider.mockReturnValue(mockFeedProvider)
 
-    scheduleService = new ScheduleService(mockFeedService, mockMetricsService)
+    mockDateTimeService = mock<DateTimeService>()
+    mockDateTimeService.now.mockReturnValue(new Date())
+
+    scheduleService = new ScheduleService(
+      mockFeedService,
+      mockMetricsService,
+      mockDateTimeService,
+    )
   })
 
   describe("getSchedule", () => {
@@ -212,12 +221,20 @@ describe("ScheduleService", () => {
         const mockTripStops = makeMockTripStops("route1", "stop1", 2)
 
         // First trip arrives in the past but departs in the future
-        mockTripStops[0].arrivalTime = new Date(Date.now() - 60000)
-        mockTripStops[0].departureTime = new Date(Date.now() + 30000)
+        mockTripStops[0].arrivalTime = new Date(
+          mockDateTimeService.now().getTime() - 60000,
+        )
+        mockTripStops[0].departureTime = new Date(
+          mockDateTimeService.now().getTime() + 30000,
+        )
 
         // Second trip both arrives *and* departs in the future
-        mockTripStops[1].arrivalTime = new Date(Date.now() + 60000)
-        mockTripStops[1].departureTime = new Date(Date.now() + 120000)
+        mockTripStops[1].arrivalTime = new Date(
+          mockDateTimeService.now().getTime() + 60000,
+        )
+        mockTripStops[1].departureTime = new Date(
+          mockDateTimeService.now().getTime() + 120000,
+        )
 
         mockFeedProvider.getUpcomingTripsForRoutesAtStops.mockResolvedValue(
           mockTripStops,

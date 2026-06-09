@@ -2,6 +2,7 @@ import { NotFoundException } from "@nestjs/common"
 import OnebusawaySDK, { APIError } from "onebusaway-sdk"
 import { AgenciesWithCoverageListResponse } from "onebusaway-sdk/resources/agencies-with-coverage.mjs"
 import { ArrivalAndDepartureListResponse } from "onebusaway-sdk/resources/arrival-and-departure.mjs"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import {
   FeedContext,
   RouteAtStop,
@@ -12,7 +13,6 @@ import {
   OneBusAwayConfigSchema,
 } from "src/modules/feed/modules/one-bus-away/config"
 import { OneBusAwayService } from "src/modules/feed/modules/one-bus-away/one-bus-away.service"
-import { MockInstance } from "vitest"
 import { DeepMockProxy, mock, mockDeep, MockProxy } from "vitest-mock-extended"
 import fixture_arrivals_and_departures_1_71971 from "./__fixtures__/arrivals_and_departures_1_71971.json"
 import fixture_arrivals_and_departures_1_72476 from "./__fixtures__/arrivals_and_departures_1_72476.json"
@@ -33,10 +33,12 @@ describe("OneBusAwayService", () => {
   let oneBusAwayService: OneBusAwayService
   let mockCacheService: MockProxy<FeedCacheService>
   let mockObaSdk: DeepMockProxy<OnebusawaySDK>
+  let mockDateTimeService: MockProxy<DateTimeService>
 
   beforeEach(() => {
     mockCacheService = mock<FeedCacheService>()
     mockObaSdk = mockDeep<OnebusawaySDK>()
+    mockDateTimeService = mock<DateTimeService>()
 
     mockCacheService.cached.mockImplementation(async (_, fn) => {
       const result = await fn()
@@ -51,6 +53,7 @@ describe("OneBusAwayService", () => {
       feedContext,
       mockCacheService,
       mockObaSdk,
+      mockDateTimeService,
     )
   })
 
@@ -241,17 +244,8 @@ describe("OneBusAwayService", () => {
   })
 
   describe("getUpcomingTripsForRoutesAtStops", () => {
-    let dateSpy: MockInstance<() => any>
-
     beforeEach(() => {
-      dateSpy = vi.spyOn(Date, "now")
-      dateSpy.mockImplementation(() =>
-        new Date("2025-12-17T04:00:00Z").getTime(),
-      )
-    })
-
-    afterEach(() => {
-      dateSpy.mockRestore()
+      mockDateTimeService.now.mockReturnValue(new Date("2025-12-17T04:00:00Z"))
     })
 
     const testRoutesAtStops: RouteAtStop[] = [

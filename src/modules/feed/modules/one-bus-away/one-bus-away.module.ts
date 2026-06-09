@@ -1,11 +1,12 @@
 import { Module } from "@nestjs/common"
+import { DateTimeModule } from "src/modules/datetime/datetime.module"
 import { FeedCacheModule } from "../feed-cache/feed-cache.module"
 import { OneBusAwayInstrumentationService } from "./instrumentation.service"
 import { OneBusAwayService } from "./one-bus-away.service"
 import { oneBusAwaySdkProvider } from "./sdk.provider"
 
 @Module({
-  imports: [FeedCacheModule],
+  imports: [FeedCacheModule, DateTimeModule],
   providers: [
     OneBusAwayInstrumentationService,
     oneBusAwaySdkProvider,

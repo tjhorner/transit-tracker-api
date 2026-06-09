@@ -2,6 +2,7 @@ import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import ms from "ms"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import type {
   FeedContext,
   FeedProvider,
@@ -24,6 +25,7 @@ export class MvgService implements FeedProvider {
     @Inject(REQUEST) { feedCode }: FeedContext<MvgConfig>,
     private readonly cache: FeedCacheService,
     private readonly apiClient: MvgApiClient,
+    private readonly dateTime: DateTimeService,
   ) {
     this.logger = new Logger(`${MvgService.name}[${feedCode}]`)
   }
@@ -160,7 +162,7 @@ export class MvgService implements FeedProvider {
             transportTypes,
           })
 
-          const now = Date.now()
+          const now = this.dateTime.now().getTime()
           const validDeps = deps.filter((d) => d.realtimeDepartureTime > now)
 
           let ttl = ms("30s")
@@ -183,7 +185,7 @@ export class MvgService implements FeedProvider {
       for (const departure of filteredDepartures) {
         const departureTime = new Date(departure.realtimeDepartureTime)
 
-        if (departureTime.getTime() < Date.now()) {
+        if (departureTime.getTime() < this.dateTime.now().getTime()) {
           continue
         }
 

@@ -10,6 +10,7 @@ import { SmokeTestCommand } from "./commands/smoke-test.command"
 import { SyncCommand } from "./commands/sync.command"
 import { HealthController } from "./health/health.controller"
 import { CacheModule } from "./modules/cache/cache.module"
+import { DateTimeModule } from "./modules/datetime/datetime.module"
 import { FeedModule } from "./modules/feed/feed.module"
 import { NotificationsModule } from "./modules/notifications/notifications.module"
 import { ConnectionSheddingService } from "./schedule/connection-shedding.service"
@@ -26,6 +27,7 @@ import otelSDK from "./tracing"
 @Module({
   imports: [
     CacheModule,
+    DateTimeModule,
     EventEmitterModule.forRoot({
       global: true,
     }),

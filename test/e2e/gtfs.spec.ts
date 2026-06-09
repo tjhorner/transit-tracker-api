@@ -9,11 +9,12 @@ import ms from "ms"
 import path from "path"
 import { AppModule } from "src/app.module"
 import { SyncCommand } from "src/commands/sync.command"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { FeedService } from "src/modules/feed/feed.service"
 import { TripDto } from "src/schedule/schedule.controller"
 import request from "supertest"
 import { promisify } from "util"
-import { MockInstance, vi } from "vitest"
+import { vi } from "vitest"
 import { setupFakeGtfsServer } from "./helpers/gtfs-server"
 import { setupTestDatabase } from "./helpers/postgres"
 
@@ -27,6 +28,8 @@ describe("GTFS E2E test", () => {
   let redisContainer: StartedRedisContainer
   let fakeGtfs: Awaited<ReturnType<typeof setupFakeGtfsServer>>
   let app: INestApplication
+
+  const mockDateTimeNow = vi.fn()
 
   beforeAll(async () => {
     await fs.mkdir(testTmpDir, { recursive: true })
@@ -59,7 +62,10 @@ describe("GTFS E2E test", () => {
 
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile()
+    })
+      .overrideProvider(DateTimeService)
+      .useValue({ now: mockDateTimeNow })
+      .compile()
 
     app = moduleRef.createNestApplication()
     app.useWebSocketAdapter(new WsAdapter(app))
@@ -160,17 +166,12 @@ describe("GTFS E2E test", () => {
   })
 
   describe("GET /schedule/:routeStopPairs", () => {
-    let dateSpy: MockInstance<() => any>
-
     beforeEach(() => {
-      dateSpy = vi.spyOn(Date, "now")
-      dateSpy.mockImplementation(() =>
-        new Date("2008-01-04T13:30:00Z").getTime(),
-      )
+      mockDateTimeNow.mockReturnValue(new Date("2008-01-04T13:30:00Z"))
     })
 
     afterEach(() => {
-      dateSpy.mockRestore()
+      mockDateTimeNow.mockReset()
     })
 
     async function getTripSchedule(
@@ -191,9 +192,7 @@ describe("GTFS E2E test", () => {
     })
 
     test("with service exception in static schedule", async () => {
-      dateSpy.mockImplementation(() =>
-        new Date("2007-06-04T13:30:00Z").getTime(),
-      )
+      mockDateTimeNow.mockReturnValue(new Date("2007-06-04T13:30:00Z"))
 
       const trips = await getTripSchedule()
       expect(trips).toMatchSnapshot()
@@ -205,15 +204,11 @@ describe("GTFS E2E test", () => {
     test("with daylight saving time ending on service day", async () => {
       const targetSchedule = "testfeed:STBA,testfeed:STAGECOACH"
 
-      dateSpy.mockImplementation(() =>
-        new Date("2007-11-03T12:30:00Z").getTime(),
-      )
+      mockDateTimeNow.mockReturnValue(new Date("2007-11-03T12:30:00Z"))
 
       const tripsBeforeDstEnds = await getTripSchedule(targetSchedule)
 
-      dateSpy.mockImplementation(() =>
-        new Date("2007-11-04T13:30:00Z").getTime(),
-      )
+      mockDateTimeNow.mockReturnValue(new Date("2007-11-04T13:30:00Z"))
 
       const tripsAfterDstEnds = await getTripSchedule(targetSchedule)
 
@@ -584,9 +579,7 @@ describe("GTFS E2E test", () => {
       })
 
       test("with update to overnight trip (crossing midnight)", async () => {
-        dateSpy.mockImplementation(() =>
-          new Date("2008-01-05T08:25:00.000Z").getTime(),
-        )
+        mockDateTimeNow.mockReturnValue(new Date("2008-01-05T08:25:00.000Z"))
 
         fakeGtfs.setTripUpdates([
           {

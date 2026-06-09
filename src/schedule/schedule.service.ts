@@ -13,6 +13,7 @@ import {
   share,
   timer,
 } from "rxjs"
+import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { FeedService } from "src/modules/feed/feed.service"
 import type {
   FeedProvider,
@@ -55,6 +56,7 @@ export class ScheduleService {
   constructor(
     private readonly feedService: FeedService,
     private readonly metricsService: ScheduleMetricsService,
+    private readonly dateTime: DateTimeService,
   ) {}
 
   @SentryTraced()
@@ -88,7 +90,7 @@ export class ScheduleService {
             new Date(trip.departureTime).getTime() / 1000 + (offset ?? 0),
         }
       })
-      .filter((trip) => trip[sortKey] > Date.now() / 1000)
+      .filter((trip) => trip[sortKey] > this.dateTime.now().getTime() / 1000)
       .sort((a, b) => a[sortKey] - b[sortKey])
 
     if (listMode === "nextPerRoute") {
