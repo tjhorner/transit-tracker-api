@@ -3,7 +3,6 @@ import fs from "fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { Readable } from "node:stream"
-import { rimraf } from "rimraf"
 import * as unzipper from "unzipper"
 import { FetchConfig } from "../config"
 
@@ -42,7 +41,7 @@ export class ZipFileService {
       const archive = await unzipper.Open.file(subZipFilePath)
       await archive.extract({ path: destinationPath })
 
-      await rimraf(parentZipTempPath)
+      await fs.rm(parentZipTempPath, { recursive: true, force: true })
 
       return
     }

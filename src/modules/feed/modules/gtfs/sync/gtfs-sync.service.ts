@@ -7,7 +7,6 @@ import { pipeline } from "node:stream/promises"
 import * as path from "path"
 import { PoolClient } from "pg"
 import { from as copyFrom } from "pg-copy-streams"
-import { rimraf } from "rimraf"
 import type {
   FeedContext,
   SyncOptions,
@@ -141,7 +140,7 @@ export class GtfsSyncService {
       }
 
       if (fs.existsSync(directory)) {
-        await rimraf(directory)
+        await fs.promises.rm(directory, { recursive: true, force: true })
       }
 
       fs.mkdirSync(directory)
@@ -185,7 +184,7 @@ export class GtfsSyncService {
       await this.releaseSyncLock()
 
       this.logger.log("Cleaning up")
-      await rimraf(directory)
+      await fs.promises.rm(directory, { recursive: true, force: true })
     }
   }
 
