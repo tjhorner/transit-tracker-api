@@ -122,7 +122,7 @@ export class ConnectionSheddingService
         return
       }
 
-      if (performance.now() - this.lastShedAt < this.cooldownMs) {
+      if (Date.now() - this.lastShedAt < this.cooldownMs) {
         return
       }
 
@@ -134,7 +134,7 @@ export class ConnectionSheddingService
       }
 
       const closed = this.gateway.shedConnections(target, this.closeCode)
-      this.lastShedAt = performance.now()
+      this.lastShedAt = Date.now()
       this.shedCounter.add(closed, { reason: "rebalance" })
       this.logger.log(
         `Shed ${closed}: hot (${hot}) and over fair share (mine=${stats.myCount} > ` +
@@ -167,8 +167,8 @@ export class ConnectionSheddingService
     this.draining = true
     this.logger.log(`Draining ${total} connection(s) before shutdown`)
 
-    const deadline = performance.now() + this.drainTimeoutMs
-    while (this.gateway.connectionCount > 0 && performance.now() < deadline) {
+    const deadline = Date.now() + this.drainTimeoutMs
+    while (this.gateway.connectionCount > 0 && Date.now() < deadline) {
       const closed = this.gateway.shedConnections(
         this.batchSize,
         this.closeCode,
