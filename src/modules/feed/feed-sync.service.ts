@@ -11,8 +11,26 @@ export interface SyncFeedOptions {
   feedCodes?: string[]
 }
 
+export interface FeedSyncErrorEvent {
+  message: string
+  stack: string
+  sentryId: string
+}
+
+export interface FeedSyncWarnEvent {
+  feedCode: string
+  message: string
+  stack: string
+  sentryId: string
+}
+
 @Injectable()
 export class FeedSyncService implements OnModuleInit {
+  public static readonly StartEvent = "feed.sync.start"
+  public static readonly ErrorEvent = "feed.sync.error"
+  public static readonly WarnEvent = "feed.sync.warn"
+  public static readonly CompletedEvent = "feed.sync.completed"
+
   private readonly logger = new Logger(FeedSyncService.name)
 
   constructor(
@@ -58,7 +76,7 @@ export class FeedSyncService implements OnModuleInit {
   }
 
   async syncAllFeeds(options: SyncFeedOptions = {}) {
-    this.eventEmitter.emit("feed.sync.start")
+    this.eventEmitter.emit(FeedSyncService.StartEvent)
 
     this.logger.log("Running sync of all feeds")
 
@@ -68,7 +86,7 @@ export class FeedSyncService implements OnModuleInit {
       try {
         await this.runScript(process.env.PRE_IMPORT_HOOK)
       } catch (e: any) {
-        Sentry.captureException(e, {
+        const sentryId = Sentry.captureException(e, {
           level: "fatal",
           tags: {
             module: "feed-sync",
@@ -76,10 +94,11 @@ export class FeedSyncService implements OnModuleInit {
           },
         })
 
-        this.eventEmitter.emit("feed.sync.error", {
+        this.eventEmitter.emit(FeedSyncService.ErrorEvent, {
           message: `Pre-import hook failed: ${e.message}`,
           stack: e.stack,
-        })
+          sentryId,
+        } satisfies FeedSyncErrorEvent)
 
         this.logger.error(`Pre-import hook failed: ${e.message}`, e.stack)
         return
@@ -105,7 +124,7 @@ export class FeedSyncService implements OnModuleInit {
       try {
         await provider.sync({ force: options.force })
       } catch (e: any) {
-        Sentry.captureException(e, {
+        const sentryId = Sentry.captureException(e, {
           level: "warning",
           tags: {
             module: "feed-sync",
@@ -114,11 +133,12 @@ export class FeedSyncService implements OnModuleInit {
           },
         })
 
-        this.eventEmitter.emit("feed.sync.warn", {
+        this.eventEmitter.emit(FeedSyncService.WarnEvent, {
           feedCode,
           message: e.message,
           stack: e.stack,
-        })
+          sentryId,
+        } satisfies FeedSyncWarnEvent)
 
         this.logger.warn(
           `Sync of feed "${feedCode}" failed: ${e.message}\n${e.stack}`,
@@ -134,7 +154,7 @@ export class FeedSyncService implements OnModuleInit {
       try {
         await this.runScript(process.env.POST_IMPORT_HOOK)
       } catch (e: any) {
-        Sentry.captureException(e, {
+        const sentryId = Sentry.captureException(e, {
           level: "fatal",
           tags: {
             module: "feed-sync",
@@ -142,10 +162,11 @@ export class FeedSyncService implements OnModuleInit {
           },
         })
 
-        this.eventEmitter.emit("feed.sync.error", {
+        this.eventEmitter.emit(FeedSyncService.ErrorEvent, {
           message: `Post-import hook failed: ${e.message}`,
           stack: e.stack,
-        })
+          sentryId,
+        } satisfies FeedSyncErrorEvent)
 
         this.logger.error(`Post-import hook failed: ${e.message}`, e.stack)
         return
@@ -154,7 +175,7 @@ export class FeedSyncService implements OnModuleInit {
 
     this.logger.log("Sync of all feeds completed")
 
-    this.eventEmitter.emit("feed.sync.completed")
+    this.eventEmitter.emit(FeedSyncService.CompletedEvent)
   }
 
   private async runScript(script: string) {
