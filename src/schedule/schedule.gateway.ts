@@ -79,7 +79,7 @@ export class ScheduleSubscriptionDto {
 type WebSocket = BaseWebSocket & {
   id: UUID
   ipAddress: string
-  connectedAt: Date
+  connectedAt: number
 }
 
 @WebSocketGateway()
@@ -137,7 +137,7 @@ export class ScheduleGateway
   }
 
   handleConnection(client: WebSocket, request: IncomingMessage) {
-    client.connectedAt = new Date()
+    client.connectedAt = performance.now()
     client.id = randomUUID()
     client.ipAddress = proxyAddr(request, (_, i) => i < 2)
 
@@ -158,7 +158,7 @@ export class ScheduleGateway
 
   handleDisconnect(client: WebSocket) {
     this.logger.debug(
-      `Client disconnected: ${client.id} - ${client.ipAddress} (code: ${(client as any)._closeCode}, session duration: ${(Date.now() - client.connectedAt.getTime()) / 1000}s)`,
+      `Client disconnected: ${client.id} - ${client.ipAddress} (code: ${(client as any)._closeCode}, session duration: ${(performance.now() - client.connectedAt) / 1000}s)`,
     )
 
     if ((client as any)._closeCode === 1006) {
