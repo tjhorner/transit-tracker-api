@@ -7,7 +7,10 @@ import {
   RouteAtStop,
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { FeedCacheService } from "src/modules/feed/modules/feed-cache/feed-cache.service"
-import { OneBusAwayConfig } from "src/modules/feed/modules/one-bus-away/config"
+import {
+  OneBusAwayConfig,
+  OneBusAwayConfigSchema,
+} from "src/modules/feed/modules/one-bus-away/config"
 import { OneBusAwayService } from "src/modules/feed/modules/one-bus-away/one-bus-away.service"
 import { MockInstance } from "vitest"
 import { DeepMockProxy, mock, mockDeep, MockProxy } from "vitest-mock-extended"
@@ -20,10 +23,10 @@ import fixture_stops_for_route_1_102753 from "./__fixtures__/stops_for_route_1_1
 
 const feedContext: FeedContext<OneBusAwayConfig> = {
   feedCode: "test-feed",
-  config: {
+  config: OneBusAwayConfigSchema.parse({
     baseUrl: "https://api.example.com",
     apiKey: "testApiKey",
-  },
+  }),
 }
 
 describe("OneBusAwayService", () => {
