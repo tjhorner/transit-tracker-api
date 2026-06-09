@@ -75,9 +75,9 @@ export class OneBusAwayInstrumentationService {
       method: methodName,
     })
 
-    const start = Date.now()
+    const start = performance.now()
     const resp = await fetch(url, init)
-    const duration = Date.now() - start
+    const duration = performance.now() - start
 
     this.obaResponseCounter.add(1, {
       feed_code: this.feedCode,

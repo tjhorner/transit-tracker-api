@@ -315,14 +315,15 @@ export class GtfsSyncService {
 
     let importedRows = 0
     let lastLoggedCount = 0
-    let lastLoggedAt = Date.now()
+    let lastLoggedAt = performance.now()
     const logStatus = () => {
       if (importedRows === lastLoggedCount) {
         return
       }
 
       const rate = Math.floor(
-        (importedRows - lastLoggedCount) / ((Date.now() - lastLoggedAt) / 1000),
+        (importedRows - lastLoggedCount) /
+          ((performance.now() - lastLoggedAt) / 1000),
       )
 
       this.logger.log(
@@ -330,7 +331,7 @@ export class GtfsSyncService {
       )
 
       lastLoggedCount = importedRows
-      lastLoggedAt = Date.now()
+      lastLoggedAt = performance.now()
     }
 
     const statusUpdateInterval: NodeJS.Timeout = setInterval(

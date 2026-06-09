@@ -89,10 +89,10 @@ export class GtfsDbService
 
     this.queryCounter.add(1, { feed_code: this.feedCode })
 
-    const start = Date.now()
+    const start = performance.now()
     const result = await (this.pool.query(query, bindings) as Promise<any>)
 
-    const duration = Date.now() - start
+    const duration = performance.now() - start
     this.queryDuration.record(duration, { feed_code: this.feedCode })
 
     return result

@@ -24,7 +24,7 @@ export class CpuMonitorService
       : cpus().length) || 1
   private readonly samples: UtilizationSample[] = []
   private lastCpuUsage = process.cpuUsage()
-  private lastSampleAt = Date.now()
+  private lastSampleAt = performance.now()
   private timer: ReturnType<typeof setInterval> | null = null
 
   private readonly sampleIntervalMs = env.duration(
@@ -45,7 +45,7 @@ export class CpuMonitorService
 
   onApplicationBootstrap() {
     this.lastCpuUsage = process.cpuUsage()
-    this.lastSampleAt = Date.now()
+    this.lastSampleAt = performance.now()
     this.timer = setInterval(() => this.sample(), this.sampleIntervalMs)
     this.timer.unref?.()
     this.logger.log(
@@ -60,7 +60,7 @@ export class CpuMonitorService
   }
 
   private sample() {
-    const now = Date.now()
+    const now = performance.now()
     const current = process.cpuUsage()
     const elapsedMs = now - this.lastSampleAt
     if (elapsedMs <= 0) {
