@@ -69,7 +69,7 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "unzipper": "^0.12.3",
-    "ws": "^8.20.0",
+    "ws": "^8.21.0",
     "zod": "^3.25.76",
     "zod-validation-error": "^5.0.0"
   },
