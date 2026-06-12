@@ -22,6 +22,7 @@ import { WebSocket } from "ws"
 vi.mock("src/filters/ws-exception.filter", () => ({
   WebSocketExceptionFilter: vi.fn(),
   WebSocketHttpExceptionFilter: vi.fn(),
+  WebSocketDomainExceptionFilter: vi.fn(),
 }))
 
 describe("ScheduleGateway", () => {

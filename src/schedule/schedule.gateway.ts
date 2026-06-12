@@ -31,7 +31,6 @@ import { IncomingMessage } from "http"
 import ms, { StringValue } from "ms"
 import proxyAddr from "proxy-addr"
 import {
-  catchError,
   finalize,
   interval,
   map,
@@ -42,10 +41,13 @@ import {
   switchMap,
   timer,
 } from "rxjs"
+import { DomainError } from "src/errors/domain-error"
+import { WebSocketDomainExceptionFilter } from "src/filters/domain-exception.filter"
 import {
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
 } from "src/filters/ws-exception.filter"
+import { captureWsException, ConnectedClient } from "src/sentry/websocket"
 import { WebSocket as BaseWebSocket, Server as WsServer } from "ws"
 import {
   ScheduleOptions,
@@ -76,14 +78,14 @@ export class ScheduleSubscriptionDto {
   listMode?: "sequential" | "nextPerRoute"
 }
 
-type WebSocket = BaseWebSocket & {
-  id: UUID
-  ipAddress: string
-  connectedAt: number
-}
+type WebSocket = ConnectedClient
 
 @WebSocketGateway()
-@UseFilters(WebSocketExceptionFilter, WebSocketHttpExceptionFilter)
+@UseFilters(
+  WebSocketExceptionFilter,
+  WebSocketHttpExceptionFilter,
+  WebSocketDomainExceptionFilter,
+)
 export class ScheduleGateway
   implements OnGatewayConnection<WebSocket>, OnGatewayDisconnect<WebSocket>
 {
@@ -140,6 +142,8 @@ export class ScheduleGateway
     client.connectedAt = performance.now()
     client.id = randomUUID()
     client.ipAddress = proxyAddr(request, (_, i) => i < 2)
+    client.headers = request.headers
+    client.requestUrl = request.url
 
     client.on("error", (err) => {
       this.logger.warn(
@@ -207,26 +211,36 @@ export class ScheduleGateway
     const scheduleUpdates$ = timer(this.subscribeGracePeriodMs).pipe(
       switchMap(() =>
         schedule$.pipe(
-          catchError((err) => {
-            this.logger.warn(
-              {
-                message: "Error in schedule subscription",
-                error: err.message,
-                subscription,
-              },
-              err.stack,
-            )
-
-            Sentry.captureException(err, {
-              extra: {
-                subscription: JSON.stringify(subscription),
-              },
-            })
-
-            throw err
-          }),
           retry({
-            delay: ms("10s"),
+            delay: (err, retryCount) => {
+              this.logger.warn(
+                {
+                  message: "Error in schedule subscription",
+                  error: err.message,
+                  subscription,
+                },
+                err.stack,
+              )
+
+              let level: Sentry.SeverityLevel = "error"
+              if (
+                err instanceof DomainError &&
+                ["notFound", "invalidInput"].includes(err.kind)
+              ) {
+                // not fatal, but log for troubleshooting and visibility into bad client behavior
+                level = "warning"
+              }
+
+              captureWsException(socket, err, {
+                level,
+                extra: {
+                  subscription: JSON.stringify(subscription),
+                  retryCount,
+                },
+              })
+
+              return timer(ms("10s"))
+            },
           }),
         ),
       ),

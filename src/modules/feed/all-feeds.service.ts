@@ -1,7 +1,11 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common"
 import * as Sentry from "@sentry/node"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
+import {
+  FeedProviderNotFoundError,
+  InvalidGlobalIdError,
+  MismatchedFeedCodeError,
+} from "./feed.errors"
 import { FeedService } from "./feed.service"
 import {
   FeedProvider,
@@ -25,6 +29,10 @@ export class AllFeedsService implements FeedProvider {
     )
   }
 
+  /**
+   * @throws {InvalidGlobalIdError} When the ID is not a `feedCode:id` pair.
+   * @throws {FeedProviderNotFoundError} When no provider is registered for the feed code.
+   */
   private fromGlobalId(id: string): {
     feedProvider: FeedProvider
     feedCode: string
@@ -33,12 +41,12 @@ export class AllFeedsService implements FeedProvider {
     const [feedCode, ...rest] = id.split(":")
     const idWithoutFeed = rest.join(":")
     if (!feedCode || !idWithoutFeed) {
-      throw new BadRequestException(`Invalid global ID: ${id}`)
+      throw new InvalidGlobalIdError(id)
     }
 
     const provider = this.feedService.getFeedProvider(feedCode)
     if (!provider) {
-      throw new NotFoundException(`No provider found for feed code ${feedCode}`)
+      throw new FeedProviderNotFoundError(feedCode)
     }
 
     return { feedCode, feedProvider: provider, id: idWithoutFeed }
@@ -52,6 +60,7 @@ export class AllFeedsService implements FeedProvider {
     return Promise.resolve()
   }
 
+  /** @throws {MismatchedFeedCodeError} When a route and its stop come from different feeds. */
   async getUpcomingTripsForRoutesAtStops(
     routeStops: RouteAtStop[],
   ): Promise<TripStop[]> {
@@ -66,9 +75,7 @@ export class AllFeedsService implements FeedProvider {
         )
 
         if (stopIdFeedCode !== routeIdFeedCode) {
-          throw new BadRequestException(
-            `Route and stop IDs must have the same feed code: ${routeStop.routeId} and ${routeStop.stopId}`,
-          )
+          throw new MismatchedFeedCodeError(routeStop.routeId, routeStop.stopId)
         }
 
         const feedCode = stopIdFeedCode
@@ -90,9 +97,7 @@ export class AllFeedsService implements FeedProvider {
       Object.entries(routeStopsByFeed).map(async ([feedCode, routeStops]) => {
         const provider = this.feedService.getFeedProvider(feedCode)
         if (!provider) {
-          throw new NotFoundException(
-            `No provider found for feed code ${feedCode}`,
-          )
+          throw new FeedProviderNotFoundError(feedCode)
         }
 
         const result = await Sentry.startSpan(

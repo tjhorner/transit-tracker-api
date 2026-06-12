@@ -12,6 +12,7 @@ import z from "zod"
 import { fromError } from "zod-validation-error"
 import { AllFeedsService } from "./all-feeds.service"
 import { ProviderKey } from "./decorators/feed-provider.decorator"
+import { FeedNotFoundError, FeedProviderNotFoundError } from "./feed.errors"
 
 export const FeedConfigSchema = z
   .object({
@@ -173,10 +174,14 @@ export class FeedService implements OnModuleInit {
     ) as T[]
   }
 
+  /**
+   * @throws {FeedNotFoundError} When no feed is configured with that name.
+   * @throws {FeedProviderNotFoundError} When the feed has no provider to derive bounds from.
+   */
   async getServiceArea(feedName: string): Promise<Feature<Polygon>> {
     const config = this.feeds[feedName]
     if (!config) {
-      throw new Error(`Feed "${feedName}" not found`)
+      throw new FeedNotFoundError(feedName)
     }
 
     if (config.serviceArea) {
@@ -185,7 +190,7 @@ export class FeedService implements OnModuleInit {
 
     const provider = this.getFeedProvider(feedName)
     if (!provider) {
-      throw new Error(`Feed provider for "${feedName}" not found`)
+      throw new FeedProviderNotFoundError(feedName)
     }
 
     if (!provider.getAgencyBounds) {

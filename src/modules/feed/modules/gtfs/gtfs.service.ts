@@ -15,6 +15,7 @@ import type {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { StopNotFoundError } from "../../feed.errors"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { GtfsConfigSchema, type GtfsConfig } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
@@ -245,13 +246,17 @@ export class GtfsService implements FeedProvider {
     return this.cache.cached(
       `stop-${stopId}`,
       async () => {
-        const stop = await getStop.run({ stopId }, this.db)
+        const [stop] = await getStop.run({ stopId }, this.db)
+        if (!stop) {
+          throw new StopNotFoundError(stopId)
+        }
+
         return {
-          stopId: stop[0].stop_id,
-          stopCode: stop[0].stop_code,
-          name: stop[0].stop_name ?? "Unnamed Stop",
-          lat: stop[0].stop_lat ?? 0,
-          lon: stop[0].stop_lon ?? 0,
+          stopId: stop.stop_id,
+          stopCode: stop.stop_code,
+          name: stop.stop_name ?? "Unnamed Stop",
+          lat: stop.stop_lat ?? 0,
+          lon: stop.stop_lon ?? 0,
         }
       },
       ms("24h"),

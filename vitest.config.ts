@@ -1,6 +1,6 @@
+import { resolve } from "path"
 import swc from "unplugin-swc"
 import { defineConfig } from "vitest/config"
-import { resolve } from "path"
 
 export default defineConfig({
   test: {
@@ -16,16 +16,16 @@ export default defineConfig({
           name: "unit",
           include: ["test/unit/**/*.spec.ts"],
           setupFiles: ["./test/unit/setup.ts"],
-        }
+        },
       },
       {
         extends: true,
         test: {
           name: "e2e",
           include: ["test/e2e/**/*.spec.ts"],
-        }
-      }
-    ]
+        },
+      },
+    ],
   },
   plugins: [
     // This is required to build the test files with SWC

@@ -1,9 +1,4 @@
-import {
-  Inject,
-  InternalServerErrorException,
-  Logger,
-  NotFoundException,
-} from "@nestjs/common"
+import { Inject, Logger } from "@nestjs/common"
 import { REQUEST } from "@nestjs/core"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
@@ -20,6 +15,7 @@ import type {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { StopNotFoundError } from "../../feed.errors"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { OneBusAwayConfig, OneBusAwayConfigSchema } from "./config"
 
@@ -188,14 +184,14 @@ export class OneBusAwayService implements FeedProvider {
           stop = await this.obaSdk.stop.retrieve(stopId)
         } catch (e: any) {
           if (e.status === 404) {
-            throw new NotFoundException(`Stop ${stopId} not found`)
+            throw new StopNotFoundError(stopId)
           }
 
-          throw new InternalServerErrorException(e)
+          throw e
         }
 
         if (stop === null) {
-          throw new NotFoundException(`Stop ${stopId} not found`)
+          throw new StopNotFoundError(stopId)
         }
 
         const stopRoutes: StopRoute[] = await Promise.all(
@@ -284,10 +280,10 @@ export class OneBusAwayService implements FeedProvider {
           stop = await this.obaSdk.stop.retrieve(stopId)
         } catch (e: any) {
           if (e.status === 404) {
-            throw new NotFoundException(`Stop ${stopId} not found`)
+            throw new StopNotFoundError(stopId)
           }
 
-          throw new InternalServerErrorException(e)
+          throw e
         }
 
         return {
@@ -330,7 +326,7 @@ export class OneBusAwayService implements FeedProvider {
           return { value: null, ttl: ms("1h") }
         }
 
-        throw new InternalServerErrorException(e)
+        throw e
       }
 
       if (resp === null) {

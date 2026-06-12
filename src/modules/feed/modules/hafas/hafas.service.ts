@@ -18,6 +18,7 @@ import type {
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { HAFAS_CLIENT } from "./client.provider"
 import { HafasConfig, HafasConfigSchema } from "./config"
+import { toStopDomainError } from "./hafas.errors"
 
 @RegisterFeedProvider("hafas")
 export class HafasService implements FeedProvider {
@@ -81,6 +82,15 @@ export class HafasService implements FeedProvider {
     return tripStops
   }
 
+  // Call `fn` and translate into domain errors if necessary
+  private async forStop<T>(stopId: string, fn: () => Promise<T>): Promise<T> {
+    try {
+      return await fn()
+    } catch (error) {
+      throw toStopDomainError(error, stopId) ?? error
+    }
+  }
+
   private async getUpcomingTripsForStop(
     stopId: string,
   ): Promise<ReadonlyArray<DeepReadonly<TripStop>>> {
@@ -94,10 +104,12 @@ export class HafasService implements FeedProvider {
         remarks: false,
       }
 
-      const [{ arrivals }, { departures }] = await Promise.all([
-        this.hafasClient.arrivals(stopId, opts),
-        this.hafasClient.departures(stopId, opts),
-      ])
+      const [{ arrivals }, { departures }] = await this.forStop(stopId, () =>
+        Promise.all([
+          this.hafasClient.arrivals(stopId, opts),
+          this.hafasClient.departures(stopId, opts),
+        ]),
+      )
 
       const tripStops: TripStop[] = []
 
@@ -164,11 +176,13 @@ export class HafasService implements FeedProvider {
     stopId: string,
   ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>> {
     return this.cache.cached(`routesForStop-${stopId}`, async () => {
-      const stop = await this.hafasClient.stop(stopId, {
-        subStops: false,
-        entrances: false,
-        linesOfStops: true,
-      })
+      const stop = await this.forStop(stopId, () =>
+        this.hafasClient.stop(stopId, {
+          subStops: false,
+          entrances: false,
+          linesOfStops: true,
+        }),
+      )
 
       if (stop.type === "location") {
         return []

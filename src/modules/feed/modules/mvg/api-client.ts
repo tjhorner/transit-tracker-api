@@ -1,4 +1,5 @@
-import { InternalServerErrorException, NotFoundException } from "@nestjs/common"
+import { DomainError } from "../../../../errors/domain-error"
+import { StopNotFoundError } from "../../feed.errors"
 
 export interface MvgDeparture {
   plannedDepartureTime: number
@@ -42,11 +43,21 @@ export interface MvgDeparturesOptions {
   transportTypes?: string[]
 }
 
+export class MvgApiError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = new.target.name
+  }
+}
+
 export class MvgApiClient {
   constructor(readonly baseUrl: string) {}
 
   async getStation(globalId: string): Promise<MvgStation> {
-    return this.fetchJson(`/stations/${encodeURIComponent(globalId)}`)
+    return this.fetchJson(
+      `/stations/${encodeURIComponent(globalId)}`,
+      () => new StopNotFoundError(globalId),
+    )
   }
 
   async getNearbyStations(
@@ -69,16 +80,19 @@ export class MvgApiClient {
     if (options.transportTypes !== undefined) {
       url += `&transportTypes=${options.transportTypes.join(",")}`
     }
-    return this.fetchJson(url)
+    return this.fetchJson(url, () => new StopNotFoundError(globalId))
   }
 
-  private async fetchJson<T>(url: string): Promise<T> {
+  private async fetchJson<T>(
+    url: string,
+    notFound?: () => DomainError,
+  ): Promise<T> {
     const response = await fetch(`${this.baseUrl}${url}`)
     if (!response.ok) {
-      if (response.status === 404) {
-        throw new NotFoundException(`Resource not found: ${url}`)
+      if (response.status === 404 && notFound) {
+        throw notFound()
       }
-      throw new InternalServerErrorException(
+      throw new MvgApiError(
         `MVG API request failed: ${response.status} ${response.statusText}`,
       )
     }

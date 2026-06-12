@@ -54,6 +54,8 @@ export interface FeedProvider {
   getUpcomingTripsForRoutesAtStops(routes: RouteAtStop[]): Promise<TripStop[]>
 
   listStops?(): Promise<ReadonlyArray<DeepReadonly<Stop>>>
+
+  /** @throws {StopNotFoundError} When no stop with that ID exists in the feed. */
   getStop(stopId: string): Promise<DeepReadonly<Stop>>
   getRoutesForStop(
     stopId: string,

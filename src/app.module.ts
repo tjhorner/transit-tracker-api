@@ -8,6 +8,7 @@ import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { OpenTelemetryModule } from "nestjs-otel"
 import { SmokeTestCommand } from "./commands/smoke-test.command"
 import { SyncCommand } from "./commands/sync.command"
+import { DomainExceptionFilter } from "./filters/domain-exception.filter"
 import { HealthController } from "./health/health.controller"
 import { CacheModule } from "./modules/cache/cache.module"
 import { DateTimeModule } from "./modules/datetime/datetime.module"
@@ -75,6 +76,10 @@ import otelSDK from "./tracing"
     {
       provide: APP_FILTER,
       useClass: SentryGlobalFilter,
+    },
+    {
+      provide: APP_FILTER,
+      useClass: DomainExceptionFilter,
     },
   ],
 })

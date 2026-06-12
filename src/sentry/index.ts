@@ -1,8 +1,10 @@
 import * as Sentry from "@sentry/node"
 import { nodeProfilingIntegration } from "@sentry/profiling-node"
+import { annotateDomainErrorKind } from "./before-send"
 
 Sentry.init({
   integrations: [nodeProfilingIntegration() as any],
+  beforeSend: annotateDomainErrorKind,
   debug: process.env.SENTRY_DEBUG === "true",
   profileLifecycle: "trace",
   profileSessionSampleRate: process.env.SENTRY_PROFILE_SESSION_SAMPLE_RATE

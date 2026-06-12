@@ -1,8 +1,8 @@
-import { NotFoundException } from "@nestjs/common"
 import OnebusawaySDK, { APIError } from "onebusaway-sdk"
 import { AgenciesWithCoverageListResponse } from "onebusaway-sdk/resources/agencies-with-coverage.mjs"
 import { ArrivalAndDepartureListResponse } from "onebusaway-sdk/resources/arrival-and-departure.mjs"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
+import { StopNotFoundError } from "src/modules/feed/feed.errors"
 import {
   FeedContext,
   RouteAtStop,
@@ -146,7 +146,7 @@ describe("OneBusAwayService", () => {
       ])
     })
 
-    it("handles 404 errors by throwing a NotFoundException", async () => {
+    it("handles 404 errors by throwing a StopNotFoundError", async () => {
       // Arrange
       const stopId = "1_99999"
       mockObaSdk.stop.retrieve.mockRejectedValueOnce(
@@ -157,12 +157,10 @@ describe("OneBusAwayService", () => {
       const act = () => oneBusAwayService.getRoutesForStop(stopId)
 
       // Assert
-      await expect(act).rejects.toThrowError(
-        new NotFoundException("Stop 1_99999 not found"),
-      )
+      await expect(act).rejects.toThrow(new StopNotFoundError("1_99999"))
     })
 
-    it("handles null responses by throwing a NotFoundException", async () => {
+    it("handles null responses by throwing a StopNotFoundError", async () => {
       // Arrange
       const stopId = "1_99999"
       mockObaSdk.stop.retrieve.mockResolvedValueOnce(null as any)
@@ -171,12 +169,10 @@ describe("OneBusAwayService", () => {
       const act = () => oneBusAwayService.getRoutesForStop(stopId)
 
       // Assert
-      await expect(act).rejects.toThrowError(
-        new NotFoundException("Stop 1_99999 not found"),
-      )
+      await expect(act).rejects.toThrow(new StopNotFoundError("1_99999"))
     })
 
-    it("handles other errors by throwing InternalServerErrorException", async () => {
+    it("rethrows unexpected SDK errors unchanged", async () => {
       // Arrange
       const stopId = "1_88888"
       mockObaSdk.stop.retrieve.mockRejectedValueOnce(
@@ -187,7 +183,7 @@ describe("OneBusAwayService", () => {
       const act = () => oneBusAwayService.getRoutesForStop(stopId)
 
       // Assert
-      await expect(act).rejects.toThrowError(/Internal Server Error/)
+      await expect(act).rejects.toBeInstanceOf(APIError)
     })
   })
 
@@ -212,7 +208,7 @@ describe("OneBusAwayService", () => {
       })
     })
 
-    it("handles 404 errors by throwing a NotFoundException", async () => {
+    it("handles 404 errors by throwing a StopNotFoundError", async () => {
       // Arrange
       const stopId = "1_99999"
       mockObaSdk.stop.retrieve.mockRejectedValueOnce(
@@ -223,12 +219,10 @@ describe("OneBusAwayService", () => {
       const act = () => oneBusAwayService.getStop(stopId)
 
       // Assert
-      await expect(act).rejects.toThrowError(
-        new NotFoundException("Stop 1_99999 not found"),
-      )
+      await expect(act).rejects.toThrow(new StopNotFoundError("1_99999"))
     })
 
-    it("handles other errors by throwing InternalServerErrorException", async () => {
+    it("rethrows unexpected SDK errors unchanged", async () => {
       // Arrange
       const stopId = "1_88888"
       mockObaSdk.stop.retrieve.mockRejectedValueOnce(
@@ -239,7 +233,7 @@ describe("OneBusAwayService", () => {
       const act = () => oneBusAwayService.getStop(stopId)
 
       // Assert
-      await expect(act).rejects.toThrowError(/Internal Server Error/)
+      await expect(act).rejects.toBeInstanceOf(APIError)
     })
   })
 

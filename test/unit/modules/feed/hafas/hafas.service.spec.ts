@@ -1,6 +1,7 @@
 import type { Alternative, HafasClient } from "hafas-client"
 import ms from "ms"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
+import { StopNotFoundError } from "src/modules/feed/feed.errors"
 import {
   FeedContext,
   RouteAtStop,
@@ -428,6 +429,23 @@ describe("HafasService", () => {
           headsigns: [],
         },
       ])
+    })
+
+    it("translates a hafas NOT_FOUND into a StopNotFoundError", async () => {
+      // Arrange
+      mockHafasClient.stop.mockRejectedValueOnce(
+        Object.assign(new Error("NOT_FOUND"), {
+          isHafasError: true,
+          code: "NOT_FOUND",
+        }),
+      )
+
+      // Act
+      const act = hafasService.getRoutesForStop("stop-1")
+
+      // Assert
+      await expect(act).rejects.toBeInstanceOf(StopNotFoundError)
+      await expect(act).rejects.toMatchObject({ stopId: "stop-1" })
     })
   })
 
