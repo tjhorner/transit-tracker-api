@@ -1,5 +1,4 @@
 import { Inject, Logger } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import ms from "ms"
@@ -15,6 +14,7 @@ import type {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { FEED_CONTEXT } from "../../feed-context"
 import { StopNotFoundError } from "../../feed.errors"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { OneBusAwayConfig, OneBusAwayConfigSchema } from "./config"
@@ -74,7 +74,7 @@ export class OneBusAwayService implements FeedProvider {
   private config: Readonly<OneBusAwayConfig>
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
+    @Inject(FEED_CONTEXT) { feedCode, config }: FeedContext<OneBusAwayConfig>,
     private readonly cache: FeedCacheService,
     private readonly obaSdk: OnebusawaySDK,
     private readonly dateTime: DateTimeService,

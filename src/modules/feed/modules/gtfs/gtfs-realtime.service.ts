@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger, Scope } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import { Counter } from "@opentelemetry/api"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
@@ -7,6 +6,7 @@ import ms from "ms"
 import { MetricService } from "nestjs-otel"
 import { env } from "src/env"
 import { DeepReadonly } from "ts-essentials"
+import { FEED_CONTEXT } from "../../feed-context"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import type { FetchConfig, GtfsConfig } from "./config"
@@ -31,7 +31,7 @@ export class GtfsRealtimeService {
   private readonly failuresCounter: Counter
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    @Inject(FEED_CONTEXT) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly cache: FeedCacheService,
     metricService: MetricService,
   ) {

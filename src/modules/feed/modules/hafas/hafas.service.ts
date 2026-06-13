@@ -1,5 +1,4 @@
 import { Inject, Logger } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import type { DeparturesArrivalsOptions, HafasClient } from "hafas-client"
@@ -7,6 +6,7 @@ import ms from "ms"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { FEED_CONTEXT } from "../../feed-context"
 import type {
   FeedContext,
   FeedProvider,
@@ -25,7 +25,7 @@ export class HafasService implements FeedProvider {
   private readonly logger: Logger
 
   constructor(
-    @Inject(REQUEST) { feedCode }: FeedContext<HafasConfig>,
+    @Inject(FEED_CONTEXT) { feedCode }: FeedContext<HafasConfig>,
     private readonly cache: FeedCacheService,
     @Inject(HAFAS_CLIENT) private readonly hafasClient: HafasClient,
     private readonly dateTime: DateTimeService,

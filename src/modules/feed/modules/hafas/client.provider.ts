@@ -1,6 +1,6 @@
 import { FactoryProvider, Logger } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import { createClient, HafasClient } from "hafas-client"
+import { FEED_CONTEXT } from "../../feed-context"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { HafasConfig } from "./config"
 
@@ -8,7 +8,7 @@ export const HAFAS_CLIENT = Symbol("HafasClient")
 
 export const hafasClientProvider: FactoryProvider<HafasClient> = {
   provide: HAFAS_CLIENT,
-  inject: [REQUEST],
+  inject: [FEED_CONTEXT],
   useFactory: ({ feedCode, config }: FeedContext<HafasConfig>) => {
     new Logger(`HafasClientProvider[${feedCode}]`).log(
       `Initializing with HAFAS profile: ${config.profile}`,

@@ -1,9 +1,9 @@
 import { Inject, Injectable } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import * as Sentry from "@sentry/node"
 import { RateLimiter } from "limiter"
 import { MetricService } from "nestjs-otel"
+import { FEED_CONTEXT } from "../../feed-context"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { OneBusAwayConfig } from "./config"
 
@@ -16,7 +16,7 @@ export class OneBusAwayInstrumentationService {
   private obaRateLimiter?: RateLimiter
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<OneBusAwayConfig>,
+    @Inject(FEED_CONTEXT) { feedCode, config }: FeedContext<OneBusAwayConfig>,
     metricService: MetricService,
   ) {
     this.feedCode = feedCode

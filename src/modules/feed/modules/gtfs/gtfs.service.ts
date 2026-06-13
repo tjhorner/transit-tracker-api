@@ -1,5 +1,4 @@
 import { Inject, Logger } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
@@ -15,6 +14,7 @@ import type {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { FEED_CONTEXT } from "../../feed-context"
 import { StopNotFoundError } from "../../feed.errors"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { GtfsConfigSchema, type GtfsConfig } from "./config"
@@ -49,7 +49,7 @@ export class GtfsService implements FeedProvider {
   private config: GtfsConfig
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    @Inject(FEED_CONTEXT) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly cache: FeedCacheService,
     private readonly db: GtfsDbService,
     private readonly syncService: GtfsSyncService,

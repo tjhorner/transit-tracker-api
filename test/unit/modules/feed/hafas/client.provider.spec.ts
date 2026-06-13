@@ -1,6 +1,6 @@
-import { REQUEST } from "@nestjs/core"
 import { Test } from "@nestjs/testing"
 import { HafasClient } from "hafas-client"
+import { FEED_CONTEXT } from "src/modules/feed/feed-context"
 import { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface"
 import {
   HAFAS_CLIENT,
@@ -20,7 +20,7 @@ describe("hafasClientProvider", () => {
   it("creates a HafasClient for the configured profile", async () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
-        { provide: REQUEST, useValue: feedContext },
+        { provide: FEED_CONTEXT, useValue: feedContext },
         hafasClientProvider,
       ],
     }).compile()
@@ -43,7 +43,7 @@ describe("hafasClientProvider", () => {
       Test.createTestingModule({
         providers: [
           {
-            provide: REQUEST,
+            provide: FEED_CONTEXT,
             useValue: {
               feedCode: "testfeed",
               config: {

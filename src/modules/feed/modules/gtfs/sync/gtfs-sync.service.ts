@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import * as csv from "fast-csv"
 import * as fs from "fs"
 import { tmpdir } from "node:os"
@@ -8,6 +7,7 @@ import * as path from "path"
 import { PoolClient } from "pg"
 import { from as copyFrom } from "pg-copy-streams"
 import { env } from "src/env"
+import { FEED_CONTEXT } from "../../../feed-context"
 import type {
   FeedContext,
   SyncOptions,
@@ -33,7 +33,7 @@ export class GtfsSyncService {
   private readonly config: GtfsConfig
 
   constructor(
-    @Inject(REQUEST) { feedCode, config }: FeedContext<GtfsConfig>,
+    @Inject(FEED_CONTEXT) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly webResourceService: WebResourceService,
     private readonly gtfsValidatorService: GtfsValidatorService,
     private readonly zipFileService: ZipFileService,

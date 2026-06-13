@@ -129,20 +129,13 @@ export class FeedService implements OnModuleInit {
             }
           }
 
-          const contextId = ContextIdFactory.create()
-          this.moduleRef.registerRequestByContextId<FeedContext>(
-            {
-              feedCode: feedName,
-              config: feedConfig,
-            },
-            contextId,
-          )
-
           let provider: FeedProvider
           try {
-            provider = await this.moduleRef.resolve(providerType, contextId, {
-              strict: false,
-            })
+            provider = await this.instantiateFeedProvider(
+              providerType,
+              feedName,
+              feedConfig,
+            )
           } catch (e: any) {
             this.logger.error(
               `Error initializing feed "${feedName}" with provider ${providerType.name}: ${e.message}`,
@@ -156,6 +149,25 @@ export class FeedService implements OnModuleInit {
         }
       }
     }
+  }
+
+  /**
+   * Resolves a feed provider in its own durable DI context, seeded with the
+   * feed's config. Each feed gets an isolated singleton dependency tree; the
+   * seeded context is read back through the FEED_CONTEXT token.
+   */
+  private async instantiateFeedProvider(
+    providerType: FeedProviderConstructor,
+    feedCode: string,
+    config: unknown,
+  ): Promise<FeedProvider> {
+    const contextId = ContextIdFactory.create()
+    this.moduleRef.registerRequestByContextId<FeedContext>(
+      { feedCode, config },
+      contextId,
+    )
+
+    return this.moduleRef.resolve(providerType, contextId, { strict: false })
   }
 
   getAllFeeds(): { [key: string]: FeedConfig } {

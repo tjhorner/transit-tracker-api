@@ -1,6 +1,6 @@
-import { REQUEST } from "@nestjs/core"
 import { Test } from "@nestjs/testing"
 import OnebusawaySDK from "onebusaway-sdk"
+import { FEED_CONTEXT } from "src/modules/feed/feed-context"
 import { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface"
 import { OneBusAwayConfig } from "src/modules/feed/modules/one-bus-away/config"
 import { OneBusAwayInstrumentationService } from "src/modules/feed/modules/one-bus-away/instrumentation.service"
@@ -20,7 +20,7 @@ describe("oneBusAwaySdkProvider", () => {
     // Arrange
     const moduleRef = await Test.createTestingModule({
       providers: [
-        { provide: REQUEST, useValue: feedContext },
+        { provide: FEED_CONTEXT, useValue: feedContext },
         oneBusAwaySdkProvider,
       ],
     }).compile()
@@ -43,7 +43,7 @@ describe("oneBusAwaySdkProvider", () => {
 
     const moduleRef = await Test.createTestingModule({
       providers: [
-        { provide: REQUEST, useValue: feedContext },
+        { provide: FEED_CONTEXT, useValue: feedContext },
         {
           provide: OneBusAwayInstrumentationService,
           useValue: mockInstrumentationService,

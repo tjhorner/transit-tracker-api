@@ -1,5 +1,4 @@
 import { Inject, Logger } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import { BBox } from "geojson"
 import ms from "ms"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
@@ -13,6 +12,7 @@ import type {
 } from "src/modules/feed/interfaces/feed-provider.interface"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
+import { FEED_CONTEXT } from "../../feed-context"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import { MvgApiClient } from "./api-client"
 import { MvgConfig, MvgConfigSchema } from "./config"
@@ -22,7 +22,7 @@ export class MvgService implements FeedProvider {
   private logger: Logger
 
   constructor(
-    @Inject(REQUEST) { feedCode }: FeedContext<MvgConfig>,
+    @Inject(FEED_CONTEXT) { feedCode }: FeedContext<MvgConfig>,
     private readonly cache: FeedCacheService,
     private readonly apiClient: MvgApiClient,
     private readonly dateTime: DateTimeService,

@@ -4,11 +4,11 @@ import {
   OnApplicationShutdown,
   Scope,
 } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram } from "@opentelemetry/api"
 import { IDatabaseConnection } from "@pgtyped/runtime"
 import { MetricService } from "nestjs-otel"
 import { Pool, PoolClient } from "pg"
+import { FEED_CONTEXT } from "../../feed-context"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { PG_POOL } from "./const"
 
@@ -34,7 +34,7 @@ export class GtfsDbService
 
   constructor(
     @Inject(PG_POOL) private readonly pool: Pool,
-    @Inject(REQUEST) { feedCode }: FeedContext,
+    @Inject(FEED_CONTEXT) { feedCode }: FeedContext,
     private readonly metricService: MetricService,
   ) {
     this.feedCode = feedCode

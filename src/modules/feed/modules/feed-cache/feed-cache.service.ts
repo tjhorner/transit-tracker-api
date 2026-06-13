@@ -1,11 +1,11 @@
 import { Inject, Injectable, Optional, Scope } from "@nestjs/common"
-import { REQUEST } from "@nestjs/core"
 import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import { SentryTraced } from "@sentry/nestjs"
 import * as Sentry from "@sentry/node"
 import { Cacheable } from "cacheable"
 import { MetricService } from "nestjs-otel"
 import { DeepReadonly } from "ts-essentials"
+import { FEED_CONTEXT } from "../../feed-context"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 
 @Injectable({ scope: Scope.REQUEST })
@@ -19,7 +19,7 @@ export class FeedCacheService {
 
   constructor(
     private readonly cacheManager: Cacheable,
-    @Inject(REQUEST) { feedCode }: FeedContext,
+    @Inject(FEED_CONTEXT) { feedCode }: FeedContext,
     @Optional() metricService?: MetricService,
   ) {
     this.feedCode = feedCode
