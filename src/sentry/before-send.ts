@@ -8,6 +8,10 @@ export function annotateDomainErrorKind(
   const error = hint.originalException
   if (error instanceof DomainError) {
     event.tags = { ...event.tags, "domain.kind": error.kind }
+    event.contexts = {
+      ...event.contexts,
+      domain: { kind: error.kind, ...error.context },
+    }
   }
 
   return event

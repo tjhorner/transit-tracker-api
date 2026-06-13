@@ -21,6 +21,7 @@ import { GtfsConfigSchema, type GtfsConfig } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsMetricsService } from "./gtfs-metrics.service"
 import { GtfsRealtimeService } from "./gtfs-realtime.service"
+import { FeedNeverSyncedError } from "./gtfs.errors"
 import { getFeedInfo } from "./queries/get-feed-info.queries"
 import { getStopBounds } from "./queries/get-stop-bounds.queries"
 import { getStop } from "./queries/get-stop.queries"
@@ -69,7 +70,7 @@ export class GtfsService implements FeedProvider {
   async healthCheck(): Promise<void> {
     const result = await this.syncService.hasEverSynced()
     if (!result) {
-      throw new Error("GTFS feed has never been synced")
+      throw new FeedNeverSyncedError(this.feedCode)
     }
   }
 

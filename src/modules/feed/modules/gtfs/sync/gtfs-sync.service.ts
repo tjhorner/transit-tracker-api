@@ -7,12 +7,14 @@ import { pipeline } from "node:stream/promises"
 import * as path from "path"
 import { PoolClient } from "pg"
 import { from as copyFrom } from "pg-copy-streams"
+import { env } from "src/env"
 import type {
   FeedContext,
   SyncOptions,
 } from "../../../interfaces/feed-provider.interface"
 import type { GtfsConfig } from "../config"
 import { GTFS_TABLES, GtfsDbService } from "../gtfs-db.service"
+import { FeedValidationError, SyncLockError } from "../gtfs.errors"
 import { CSV_PARSE_OPTIONS } from "./const"
 import { GtfsValidatorService } from "./gtfs-validator.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
@@ -160,9 +162,7 @@ export class GtfsSyncService {
         await this.gtfsValidatorService.validateFeed(zipDirectory)
 
       if (!validationResult.isValid) {
-        throw new Error(
-          `GTFS feed validation failed with errors: ${validationResult.errors.join(", ").trim()}`,
-        )
+        throw new FeedValidationError(validationResult.errors)
       }
 
       this.logger.log("Importing GTFS feed")
@@ -194,9 +194,7 @@ export class GtfsSyncService {
         this.feedCode,
       ])
     } catch (e: any) {
-      throw new Error(
-        `Could not obtain sync lock for feed ${this.feedCode}: ${e.message}`,
-      )
+      throw new SyncLockError(this.feedCode, e.message)
     }
   }
 
@@ -364,13 +362,7 @@ export class GtfsSyncService {
     filePath: string,
     mapRow: (row: any) => any,
   ) {
-    const batchSize = process.env.GTFS_IMPORT_BATCH_SIZE
-      ? parseInt(process.env.GTFS_IMPORT_BATCH_SIZE)
-      : 5000
-
-    if (isNaN(batchSize)) {
-      throw new Error("GTFS_IMPORT_BATCH_SIZE must be a number")
-    }
+    const batchSize = env.number("GTFS_IMPORT_BATCH_SIZE", 5000)
 
     let completedRows = 0
     const insertRows = async (rows: any[]) => {

@@ -1,9 +1,13 @@
 import {
   type ArgumentsHost,
+  BadGatewayException,
   BadRequestException,
   Catch,
   HttpException,
+  InternalServerErrorException,
   NotFoundException,
+  NotImplementedException,
+  ServiceUnavailableException,
 } from "@nestjs/common"
 import { BaseExceptionFilter } from "@nestjs/core"
 import { BaseWsExceptionFilter } from "@nestjs/websockets"
@@ -16,6 +20,10 @@ const httpExceptionForKind: Record<
 > = {
   notFound: (message) => new NotFoundException(message),
   invalidInput: (message) => new BadRequestException(message),
+  upstream: (message) => new BadGatewayException(message),
+  unavailable: (message) => new ServiceUnavailableException(message),
+  configuration: (message) => new InternalServerErrorException(message),
+  notImplemented: (message) => new NotImplementedException(message),
 }
 
 export function toHttpException(error: DomainError): HttpException {

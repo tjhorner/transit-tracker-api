@@ -10,6 +10,7 @@ import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
 import type { FetchConfig, GtfsConfig } from "./config"
 import { decodeTripUpdatesOnly } from "./decode-trip-updates"
+import { UpstreamHttpError } from "./gtfs.errors"
 import { IGetScheduleForRouteAtStopResult } from "./queries/list-schedule-for-route.queries"
 
 type ITripUpdate = GtfsRt.ITripUpdate
@@ -105,7 +106,12 @@ export class GtfsRealtimeService {
             clearTimeout(timeoutId)
 
             if (!resp.ok) {
-              throw new Error(`HTTP ${resp.status}: ${resp.statusText}`)
+              throw new UpstreamHttpError(
+                "GET",
+                resp.url,
+                resp.status,
+                resp.statusText,
+              )
             }
 
             const cacheControl = resp.headers.get("cache-control")

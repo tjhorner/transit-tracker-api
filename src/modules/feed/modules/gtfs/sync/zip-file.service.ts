@@ -5,6 +5,7 @@ import path from "node:path"
 import { Readable } from "node:stream"
 import * as unzipper from "unzipper"
 import { FetchConfig } from "../config"
+import { EmptyResponseBodyError, UpstreamHttpError } from "../gtfs.errors"
 
 @Injectable()
 export class ZipFileService {
@@ -52,11 +53,16 @@ export class ZipFileService {
     })
 
     if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      throw new UpstreamHttpError(
+        "GET",
+        response.url,
+        response.status,
+        response.statusText,
+      )
     }
 
     if (!response.body) {
-      throw new Error("Response body is null")
+      throw new EmptyResponseBodyError()
     }
 
     const nodeStream = Readable.fromWeb(response.body as any)
