@@ -14,6 +14,10 @@ WORKDIR /app
 COPY . .
 COPY --from=dependencies /app/node_modules ./node_modules
 RUN pnpm build
+
+ARG INJECT_SENTRY_SOURCEMAPS
+RUN if [[ -n "${INJECT_SENTRY_SOURCEMAPS}" ]] ; then pnpm sentry:sourcemaps:inject ; fi
+
 RUN pnpm prune --prod
 
 FROM base AS deploy
@@ -21,7 +25,6 @@ FROM base AS deploy
 RUN apk add --no-cache apprise
 
 ARG BUILD_FOR_FLY
-
 RUN if [[ -n "${BUILD_FOR_FLY}" ]] ; then apk add curl jq && \ 
   curl -L https://fly.io/install.sh | sh && \ 
   ln -s /root/.fly/bin/fly /usr/local/bin/fly ; fi
