@@ -47,7 +47,11 @@ import {
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
 } from "src/filters/ws-exception.filter"
-import { captureWsException, ConnectedClient } from "src/sentry/websocket"
+import {
+  captureWsException,
+  ConnectedClient,
+  createConnectionScope,
+} from "src/sentry/websocket"
 import { WebSocket as BaseWebSocket, Server as WsServer } from "ws"
 import {
   ScheduleOptions,
@@ -144,6 +148,7 @@ export class ScheduleGateway
     client.ipAddress = proxyAddr(request, (_, i) => i < 2)
     client.headers = request.headers
     client.requestUrl = request.url
+    client.sentryScope = createConnectionScope(client)
 
     client.on("error", (err) => {
       this.logger.warn(
@@ -206,7 +211,10 @@ export class ScheduleGateway
       listMode: subscriptionDto.listMode,
     }
 
-    const schedule$ = this.scheduleService.subscribeToSchedule(subscription)
+    const schedule$ = this.scheduleService.subscribeToSchedule(
+      subscription,
+      socket.sentryScope,
+    )
 
     const scheduleUpdates$ = timer(this.subscribeGracePeriodMs).pipe(
       switchMap(() =>

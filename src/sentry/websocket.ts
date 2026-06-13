@@ -9,46 +9,49 @@ export type ConnectedClient = BaseWebSocket & {
   connectedAt: number
   headers: IncomingHttpHeaders
   requestUrl?: string
+  sentryScope: Sentry.Scope
 }
+
+type WsConnectionDetails = Pick<
+  ConnectedClient,
+  "ipAddress" | "headers" | "requestUrl"
+>
 
 interface CaptureOptions {
   level?: Sentry.SeverityLevel
   extra?: Record<string, unknown>
 }
 
-// WebSocket events have no HTTP request context, so Sentry can't attach the
-// client info it normally would. This adds it from the connection's upgrade
-// request, mirroring what the HTTP integration provides.
+export function createConnectionScope(
+  connection: WsConnectionDetails,
+): Sentry.Scope {
+  const scope = new Sentry.Scope()
+  scope.setTag("transport", "websocket")
+  scope.setUser({ ip_address: connection.ipAddress })
+  scope.addEventProcessor((event) => {
+    const host = connection.headers.host
+    event.request = {
+      ...event.request,
+      method: "GET",
+      url: host
+        ? `wss://${host}${connection.requestUrl ?? ""}`
+        : connection.requestUrl,
+      headers: normalizeHeaders(connection.headers),
+    }
+    return event
+  })
+  return scope
+}
+
 export function captureWsException(
   client: ConnectedClient,
   error: unknown,
   options: CaptureOptions = {},
 ): void {
-  Sentry.withScope((scope) => {
-    if (options.level) {
-      scope.setLevel(options.level)
-    }
-
-    if (options.extra) {
-      scope.setExtras(options.extra)
-    }
-
-    scope.setTag("transport", "websocket")
-    scope.setUser({ ip_address: client.ipAddress })
-    scope.addEventProcessor((event) => {
-      const host = client.headers.host
-      event.request = {
-        ...event.request,
-        method: "GET",
-        url: host
-          ? `wss://${host}${client.requestUrl ?? ""}`
-          : client.requestUrl,
-        headers: normalizeHeaders(client.headers),
-      }
-      return event
-    })
-
-    Sentry.captureException(error)
+  // Re-enter the connection's isolation scope so the event carries that
+  // connection's breadcrumbs, trace, and client/request context.
+  Sentry.withIsolationScope(client.sentryScope, () => {
+    Sentry.captureException(error, options)
   })
 }
 

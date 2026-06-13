@@ -1,61 +1,70 @@
 import type { ErrorEvent } from "@sentry/node"
-import { captureWsException, ConnectedClient } from "src/sentry/websocket"
+import * as Sentry from "@sentry/node"
+import {
+  captureWsException,
+  ConnectedClient,
+  createConnectionScope,
+} from "src/sentry/websocket"
 
-const { mockScope, mockCaptureException } = vi.hoisted(() => ({
-  mockScope: {
-    setLevel: vi.fn(),
-    setExtras: vi.fn(),
-    setTag: vi.fn(),
-    setUser: vi.fn(),
-    addEventProcessor: vi.fn(),
-  },
+const { mockWithIsolationScope, mockCaptureException } = vi.hoisted(() => ({
+  mockWithIsolationScope: vi.fn((_scope: unknown, callback: () => void) =>
+    callback(),
+  ),
   mockCaptureException: vi.fn(),
 }))
 
-vi.mock("@sentry/node", () => ({
-  withScope: (callback: (scope: typeof mockScope) => void) =>
-    callback(mockScope),
-  captureException: mockCaptureException,
-}))
-
-function makeClient(overrides: Partial<ConnectedClient> = {}): ConnectedClient {
+// Keep the real Scope (and its setUser/setTag/addEventProcessor), but stub the
+// capture entry points so we can assert how they're invoked.
+vi.mock("@sentry/node", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@sentry/node")>()
   return {
-    id: "client-1",
+    ...actual,
+    withIsolationScope: mockWithIsolationScope,
+    captureException: mockCaptureException,
+  }
+})
+
+function connectionDetails(
+  overrides: Partial<ConnectedClient> = {},
+): Pick<ConnectedClient, "ipAddress" | "headers" | "requestUrl"> {
+  return {
     ipAddress: "1.2.3.4",
-    connectedAt: 0,
     requestUrl: "/?foo=bar",
     headers: {
       host: "api.example.com",
       "user-agent": "test-agent",
+      // @ts-expect-error bleh
       "accept-language": ["en", "de"],
     },
     ...overrides,
-  } as unknown as ConnectedClient
+  }
 }
 
-describe("captureWsException", () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
+describe("createConnectionScope", () => {
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
-  it("captures the error with the client's IP and a websocket tag", () => {
-    const error = new Error("boom")
+  it("tags the scope as a websocket connection with the client IP", () => {
+    const setUser = vi.spyOn(Sentry.Scope.prototype, "setUser")
+    const setTag = vi.spyOn(Sentry.Scope.prototype, "setTag")
 
-    captureWsException(makeClient(), error)
+    createConnectionScope(connectionDetails())
 
-    expect(mockScope.setUser).toHaveBeenCalledWith({
-      ip_address: "1.2.3.4",
-    })
-    expect(mockScope.setTag).toHaveBeenCalledWith("transport", "websocket")
-    expect(mockCaptureException).toHaveBeenCalledWith(error)
+    expect(setUser).toHaveBeenCalledWith({ ip_address: "1.2.3.4" })
+    expect(setTag).toHaveBeenCalledWith("transport", "websocket")
   })
 
   it("populates the request context from the upgrade request", () => {
-    captureWsException(makeClient(), new Error("boom"))
+    const addEventProcessor = vi.spyOn(
+      Sentry.Scope.prototype,
+      "addEventProcessor",
+    )
 
-    const processor = mockScope.addEventProcessor.mock.calls[0][0]
-    const event = processor({} as ErrorEvent)
+    createConnectionScope(connectionDetails())
 
+    const processor = addEventProcessor.mock.calls[0][0]
+    const event = processor({} as ErrorEvent, {}) as ErrorEvent
     expect(event.request).toEqual({
       method: "GET",
       url: "wss://api.example.com/?foo=bar",
@@ -67,13 +76,48 @@ describe("captureWsException", () => {
     })
   })
 
-  it("applies the level and extra when provided", () => {
-    captureWsException(makeClient(), new Error("boom"), {
+  it("gives each connection its own trace", () => {
+    const first = createConnectionScope(connectionDetails())
+    const second = createConnectionScope(connectionDetails())
+
+    expect(first.getPropagationContext().traceId).not.toEqual(
+      second.getPropagationContext().traceId,
+    )
+  })
+})
+
+describe("captureWsException", () => {
+  const client = {
+    sentryScope: { id: "connection-scope" },
+  } as unknown as ConnectedClient
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it("captures within the connection's isolation scope", () => {
+    const error = new Error("boom")
+
+    captureWsException(client, error)
+
+    expect(mockWithIsolationScope).toHaveBeenCalledWith(
+      client.sentryScope,
+      expect.any(Function),
+    )
+    expect(mockCaptureException).toHaveBeenCalledWith(error, {})
+  })
+
+  it("passes through level and extra", () => {
+    const error = new Error("boom")
+
+    captureWsException(client, error, {
       level: "warning",
       extra: { retryCount: 3 },
     })
 
-    expect(mockScope.setLevel).toHaveBeenCalledWith("warning")
-    expect(mockScope.setExtras).toHaveBeenCalledWith({ retryCount: 3 })
+    expect(mockCaptureException).toHaveBeenCalledWith(error, {
+      level: "warning",
+      extra: { retryCount: 3 },
+    })
   })
 })

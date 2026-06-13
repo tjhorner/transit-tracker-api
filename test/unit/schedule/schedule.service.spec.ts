@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node"
 import { randomUUID } from "crypto"
 import { firstValueFrom, Observable } from "rxjs"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
@@ -10,6 +11,11 @@ import { ScheduleMetricsService } from "src/schedule/schedule-metrics.service"
 import { ScheduleOptions, ScheduleService } from "src/schedule/schedule.service"
 import { vi } from "vitest"
 import { mock, MockProxy } from "vitest-mock-extended"
+
+vi.mock("@sentry/node", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@sentry/node")>()
+  return { ...actual, withIsolationScope: vi.fn(actual.withIsolationScope) }
+})
 
 describe("ScheduleService", () => {
   let scheduleService: ScheduleService
@@ -280,6 +286,29 @@ describe("ScheduleService", () => {
 
       // Assert
       expect(act).toThrow()
+    })
+
+    it("runs each poll within the provided isolation scope", () => {
+      // Arrange
+      const scheduleOptions: ScheduleOptions = {
+        feedCode: "testFeed",
+        routes: [{ routeId: "route1", stopId: "stop1", offset: 0 }],
+        limit: 5,
+      }
+      const isolationScope = new Sentry.Scope()
+
+      // Act
+      const subscription = scheduleService
+        .subscribeToSchedule(scheduleOptions, isolationScope)
+        .subscribe()
+
+      // Assert
+      expect(Sentry.withIsolationScope).toHaveBeenCalledWith(
+        isolationScope,
+        expect.any(Function),
+      )
+
+      subscription.unsubscribe()
     })
 
     it("emits an error if schedule retrieval fails", async () => {

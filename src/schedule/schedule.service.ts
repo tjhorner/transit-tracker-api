@@ -161,6 +161,7 @@ export class ScheduleService {
 
   subscribeToSchedule(
     subscription: ScheduleOptions,
+    isolationScope?: Sentry.Scope,
   ): Observable<ScheduleUpdate> {
     const feedProvider = this.getFeedProvider(subscription)
 
@@ -175,8 +176,12 @@ export class ScheduleService {
       const jitter = Math.floor(Math.random() * 5000)
       const period = ms("30s") + jitter
 
+      // Run each poll within the connection's isolation scope so the HTTP-call
+      // breadcrumbs and trace belong to that connection, not the shared scope.
       const getTrips$ = defer(() =>
-        from(this.getUpcomingTrips(feedProvider, subscription)),
+        Sentry.withIsolationScope(isolationScope, () =>
+          from(this.getUpcomingTrips(feedProvider, subscription)),
+        ),
       )
 
       return concat(

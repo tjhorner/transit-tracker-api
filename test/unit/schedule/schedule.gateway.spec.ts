@@ -1,5 +1,6 @@
 import { BadRequestException } from "@nestjs/common"
 import { Test, TestingModule } from "@nestjs/testing"
+import { Scope } from "@sentry/node"
 import { randomUUID } from "crypto"
 import { IncomingMessage } from "http"
 import ms from "ms"
@@ -55,7 +56,7 @@ describe("ScheduleGateway", () => {
 
   function makeMockClient() {
     const clientId = randomUUID()
-    const mockClient = { id: clientId } as any
+    const mockClient = { id: clientId, sentryScope: {} } as any
     return { mockClient, clientId }
   }
 
@@ -74,6 +75,17 @@ describe("ScheduleGateway", () => {
       // Assert
       expect(mockClient.id).toBeDefined()
       expect(typeof mockClient.id).toBe("string")
+    })
+
+    it("should assign a Sentry isolation scope to the client", () => {
+      // Arrange
+      const mockClient = mock<WebSocket>() as any
+
+      // Act
+      gateway.handleConnection(mockClient, mock<IncomingMessage>())
+
+      // Assert
+      expect(mockClient.sentryScope).toBeInstanceOf(Scope)
     })
 
     it("should add the ipAddress based on socket IP if not proxied", () => {
@@ -273,6 +285,7 @@ describe("ScheduleGateway", () => {
         expect.objectContaining({
           feedCode: undefined,
         }),
+        mockClient.sentryScope,
       )
     })
 
@@ -303,16 +316,19 @@ describe("ScheduleGateway", () => {
         "route1,stop1;route2,stop2",
       )
 
-      expect(mockScheduleService.subscribeToSchedule).toHaveBeenCalledWith({
-        feedCode: undefined,
-        routes: [
-          { routeId: "route1", stopId: "stop1", offset: 0 },
-          { routeId: "route2", stopId: "stop2", offset: 0 },
-        ],
-        limit: 5,
-        sortByDeparture: true,
-        listMode: "sequential",
-      })
+      expect(mockScheduleService.subscribeToSchedule).toHaveBeenCalledWith(
+        {
+          feedCode: undefined,
+          routes: [
+            { routeId: "route1", stopId: "stop1", offset: 0 },
+            { routeId: "route2", stopId: "stop2", offset: 0 },
+          ],
+          limit: 5,
+          sortByDeparture: true,
+          listMode: "sequential",
+        },
+        mockClient.sentryScope,
+      )
 
       // Check that client is added to subscribers
       const subscribers = gateway["subscribers"] as Set<string>
