@@ -3,8 +3,9 @@ import { REQUEST } from "@nestjs/core"
 import { Counter } from "@opentelemetry/api"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
-import ms, { StringValue } from "ms"
+import ms from "ms"
 import { MetricService } from "nestjs-otel"
+import { env } from "src/env"
 import { DeepReadonly } from "ts-essentials"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
 import { FeedCacheService } from "../feed-cache/feed-cache.service"
@@ -77,9 +78,7 @@ export class GtfsRealtimeService {
       return []
     }
 
-    const minCacheAge = process.env.GTFS_RT_MIN_CACHE_AGE
-      ? ms(process.env.GTFS_RT_MIN_CACHE_AGE as StringValue) / 1000
-      : -1
+    const minCacheAgeMs = env.duration("GTFS_RT_MIN_CACHE_AGE", -1)
 
     const responses = await Promise.allSettled(
       fetchConfigs.map((config) =>
@@ -88,7 +87,7 @@ export class GtfsRealtimeService {
             feed_code: this.feedCode,
           })
 
-          let maxAge = isNaN(minCacheAge) ? -1 : minCacheAge
+          let maxAgeMs = isNaN(minCacheAgeMs) ? -1 : minCacheAgeMs
 
           const controller = new AbortController()
           const timeoutId = setTimeout(() => controller.abort(), 5000)
@@ -118,9 +117,9 @@ export class GtfsRealtimeService {
             if (cacheControl) {
               const directives = parseCacheControl(cacheControl)
               if (typeof directives["max-age"] === "number") {
-                maxAge = Math.max(maxAge, directives["max-age"])
+                maxAgeMs = Math.max(maxAgeMs, directives["max-age"] * 1000)
               } else if (directives["no-cache"]) {
-                maxAge = Math.max(maxAge, 0)
+                maxAgeMs = Math.max(maxAgeMs, 0)
               }
             }
 
@@ -131,7 +130,7 @@ export class GtfsRealtimeService {
 
             return {
               value: tripUpdates,
-              ttl: maxAge >= 0 ? maxAge * 1000 : ms("15s"),
+              ttl: maxAgeMs >= 0 ? maxAgeMs : ms("15s"),
             }
           } finally {
             clearTimeout(timeoutId)

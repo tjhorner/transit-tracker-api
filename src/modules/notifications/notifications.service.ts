@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common"
 import { execFile } from "node:child_process"
+import { env } from "src/env"
 
 @Injectable()
 export class NotificationsService {
@@ -8,9 +9,7 @@ export class NotificationsService {
   async sendNotification(title: string, message: string) {
     this.logger.log(`System notification: ${title} - ${message}`)
 
-    const targets = process.env.APPRISE_URLS
-      ? process.env.APPRISE_URLS.split(" ")
-      : []
+    const targets = env.list("APPRISE_URLS")
 
     if (targets.length === 0) return
     return this.sendToTargets(targets, title, message)

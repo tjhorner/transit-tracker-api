@@ -4,6 +4,7 @@ import { SchedulerRegistry } from "@nestjs/schedule"
 import * as Sentry from "@sentry/node"
 import { CronJob, validateCronExpression } from "cron"
 import { exec } from "node:child_process"
+import { env } from "src/env"
 import { FeedService } from "./feed.service"
 
 export interface SyncFeedOptions {
@@ -44,14 +45,13 @@ export class FeedSyncService implements OnModuleInit {
   }
 
   private scheduleSyncJob() {
-    if (!process.env.FEED_SYNC_SCHEDULE) {
+    const scheduleCron = env.string("FEED_SYNC_SCHEDULE")
+    if (!scheduleCron) {
       this.logger.log(
         "No FEED_SYNC_SCHEDULE environment variable provided; feeds will not automatically sync",
       )
       return
     }
-
-    const scheduleCron = process.env.FEED_SYNC_SCHEDULE
 
     const validation = validateCronExpression(scheduleCron)
     if (!validation.valid) {
@@ -80,11 +80,12 @@ export class FeedSyncService implements OnModuleInit {
 
     this.logger.log("Running sync of all feeds")
 
-    if (process.env.PRE_IMPORT_HOOK) {
-      this.logger.log(`Running pre-import hook: ${process.env.PRE_IMPORT_HOOK}`)
+    const preImportHook = env.string("PRE_IMPORT_HOOK")
+    if (preImportHook) {
+      this.logger.log(`Running pre-import hook: ${preImportHook}`)
 
       try {
-        await this.runScript(process.env.PRE_IMPORT_HOOK)
+        await this.runScript(preImportHook)
       } catch (e: any) {
         const sentryId = Sentry.captureException(e, {
           level: "fatal",
@@ -146,13 +147,12 @@ export class FeedSyncService implements OnModuleInit {
       }
     }
 
-    if (process.env.POST_IMPORT_HOOK) {
-      this.logger.log(
-        `Running post-import hook: ${process.env.POST_IMPORT_HOOK}`,
-      )
+    const postImportHook = env.string("POST_IMPORT_HOOK")
+    if (postImportHook) {
+      this.logger.log(`Running post-import hook: ${postImportHook}`)
 
       try {
-        await this.runScript(process.env.POST_IMPORT_HOOK)
+        await this.runScript(postImportHook)
       } catch (e: any) {
         const sentryId = Sentry.captureException(e, {
           level: "fatal",

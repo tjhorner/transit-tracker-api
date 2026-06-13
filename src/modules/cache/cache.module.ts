@@ -10,6 +10,7 @@ import { Cacheable, createKeyv as createKeyvMemory } from "cacheable"
 import Redis from "ioredis"
 import Keyv from "keyv"
 import ms from "ms"
+import { env } from "src/env"
 
 export const REDIS_CLIENT = Symbol("REDIS_CLIENT")
 
@@ -22,16 +23,14 @@ export const REDIS_CLIENT = Symbol("REDIS_CLIENT")
         new Cacheable({
           primary: createKeyvMemory({
             useClone: false,
-            lruSize: process.env.LRU_CACHE_SIZE
-              ? parseInt(process.env.LRU_CACHE_SIZE)
-              : 1000,
+            lruSize: env.int("LRU_CACHE_SIZE", 1000),
             checkInterval: ms("15m"),
           }),
-          secondary: process.env.REDIS_URL
+          secondary: env.string("REDIS_URL")
             ? new Keyv({
                 serialize: JSON.stringify,
                 deserialize: JSON.parse,
-                store: new KeyvRedis(process.env.REDIS_URL, {
+                store: new KeyvRedis(env.string("REDIS_URL"), {
                   namespace: "cache",
                 }),
               })
@@ -40,8 +39,10 @@ export const REDIS_CLIENT = Symbol("REDIS_CLIENT")
     },
     {
       provide: REDIS_CLIENT,
-      useFactory: () =>
-        process.env.REDIS_URL ? new Redis(process.env.REDIS_URL) : undefined,
+      useFactory: () => {
+        const redisUrl = env.string("REDIS_URL")
+        return redisUrl ? new Redis(redisUrl) : undefined
+      },
     },
   ],
   exports: [Cacheable, REDIS_CLIENT],

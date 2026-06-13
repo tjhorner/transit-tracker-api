@@ -1,5 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common"
 import type { Observable } from "rxjs"
+import { env } from "../env"
 
 @Injectable()
 export class InternalApiGuard implements CanActivate {
@@ -7,7 +8,7 @@ export class InternalApiGuard implements CanActivate {
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {
     const request = context.switchToHttp().getRequest()
-    const internalApiKey = process.env.INTERNAL_API_KEY
+    const internalApiKey = env.string("INTERNAL_API_KEY")
 
     if (!internalApiKey) {
       // If no internal API key is set, allow all requests (e.g., in development)

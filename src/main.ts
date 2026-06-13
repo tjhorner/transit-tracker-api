@@ -6,10 +6,11 @@ import { WsAdapter } from "@nestjs/platform-ws"
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger"
 import { AppModule } from "./app.module"
 import { ConsoleLogger } from "@nestjs/common"
+import { env } from "./env"
 import otelSDK from "./tracing"
 
 function configureForFly(app: NestExpressApplication) {
-  if (!process.env.FLY_MACHINE_ID) {
+  if (!env.string("FLY_MACHINE_ID")) {
     return
   }
 
@@ -22,17 +23,16 @@ export async function bootstrap() {
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: new ConsoleLogger({
-      json: process.env.LOG_JSON === "true",
-      compact: process.env.LOG_COMPACT === "true",
+      json: env.boolean("LOG_JSON"),
+      compact: env.boolean("LOG_COMPACT"),
     }),
   })
 
   configureForFly(app)
 
-  if (process.env.TRUST_PROXY) {
-    const trustProxy =
-      process.env.TRUST_PROXY === "true" ? true : process.env.TRUST_PROXY
-    app.set("trust proxy", trustProxy)
+  const trustProxy = env.string("TRUST_PROXY")
+  if (trustProxy) {
+    app.set("trust proxy", env.boolean("TRUST_PROXY") ? true : trustProxy)
   }
 
   app.enableShutdownHooks()

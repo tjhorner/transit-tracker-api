@@ -4,6 +4,7 @@ import * as turf from "@turf/turf"
 import fs from "fs/promises"
 import { BBox, Feature, Polygon } from "geojson"
 import * as yaml from "js-yaml"
+import { env } from "src/env"
 import {
   FeedContext,
   FeedProvider,
@@ -50,12 +51,13 @@ export class FeedService implements OnModuleInit {
   }
 
   private async loadConfig(): Promise<{ [key: string]: FeedConfig }> {
-    if (process.env.FEEDS_CONFIG) {
+    const feedsConfig = env.string("FEEDS_CONFIG")
+    if (feedsConfig) {
       this.logger.verbose(
         "Loading feeds from FEEDS_CONFIG environment variable",
       )
 
-      const parsedYaml = yaml.load(process.env.FEEDS_CONFIG) as any
+      const parsedYaml = yaml.load(feedsConfig) as any
       return parsedYaml["feeds"]
     }
 

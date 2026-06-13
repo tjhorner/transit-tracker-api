@@ -28,7 +28,7 @@ import {
 } from "class-validator"
 import { randomUUID, UUID } from "crypto"
 import { IncomingMessage } from "http"
-import ms, { StringValue } from "ms"
+import ms from "ms"
 import proxyAddr from "proxy-addr"
 import {
   finalize,
@@ -41,6 +41,7 @@ import {
   switchMap,
   timer,
 } from "rxjs"
+import { env } from "src/env"
 import { DomainError } from "src/errors/domain-error"
 import { WebSocketDomainExceptionFilter } from "src/filters/domain-exception.filter"
 import {
@@ -99,10 +100,10 @@ export class ScheduleGateway
   // Delay before a subscription begins fetching schedule data and registering
   // metrics. Connections that drop within this window cost nothing, which
   // protects against clients that rapidly connect and disconnect in a loop
-  private readonly subscribeGracePeriodMs = process.env
-    .SCHEDULE_SUBSCRIBE_GRACE_PERIOD
-    ? ms(process.env.SCHEDULE_SUBSCRIBE_GRACE_PERIOD as StringValue)
-    : ms("1s")
+  private readonly subscribeGracePeriodMs = env.duration(
+    "SCHEDULE_SUBSCRIBE_GRACE_PERIOD",
+    ms("1s"),
+  )
 
   @WebSocketServer()
   private readonly server!: WsServer

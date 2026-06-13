@@ -281,7 +281,7 @@ export class GtfsSyncService {
         ...mapRow(row),
       })
 
-    if (process.env.GTFS_IMPORT_METHOD === "insert") {
+    if (env.string("GTFS_IMPORT_METHOD") === "insert") {
       await this.importGtfsWithInsert(client, tableName, filePath, outputRow)
     } else {
       await this.importGtfsWithCopy(client, tableName, filePath, outputRow)
@@ -362,7 +362,7 @@ export class GtfsSyncService {
     filePath: string,
     mapRow: (row: any) => any,
   ) {
-    const batchSize = env.number("GTFS_IMPORT_BATCH_SIZE", 5000)
+    const batchSize = env.int("GTFS_IMPORT_BATCH_SIZE", 5000)
 
     let completedRows = 0
     const insertRows = async (rows: any[]) => {

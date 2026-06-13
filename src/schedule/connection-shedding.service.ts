@@ -17,17 +17,17 @@ export class ConnectionSheddingService
 {
   private readonly logger = new Logger(ConnectionSheddingService.name)
 
-  private readonly enabled = process.env.SHED_ENABLED === "true"
-  private readonly highWaterUtilization = env.number(
+  private readonly enabled = env.boolean("SHED_ENABLED")
+  private readonly highWaterUtilization = env.float(
     "SHED_CPU_HIGH_WATER",
     0.0625,
   )
-  private readonly batchSize = env.number("SHED_BATCH_SIZE", 10)
-  private readonly minConnections = env.number("SHED_MIN_CONNECTIONS", 50)
-  private readonly shareMargin = env.number("SHED_SHARE_MARGIN", 0.2)
+  private readonly batchSize = env.int("SHED_BATCH_SIZE", 10)
+  private readonly minConnections = env.int("SHED_MIN_CONNECTIONS", 50)
+  private readonly shareMargin = env.float("SHED_SHARE_MARGIN", 0.2)
   private readonly evalIntervalMs = env.duration("SHED_EVAL_INTERVAL", 10_000)
   private readonly cooldownMs = env.duration("SHED_COOLDOWN", 60_000)
-  private readonly closeCode = env.number("SHED_CLOSE_CODE", 1001)
+  private readonly closeCode = env.int("SHED_CLOSE_CODE", 1001)
   private readonly drainBatchIntervalMs = env.duration(
     "SHED_DRAIN_BATCH_INTERVAL",
     1_000,

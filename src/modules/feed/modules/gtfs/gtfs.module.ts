@@ -1,5 +1,6 @@
 import { Logger, Module } from "@nestjs/common"
 import { Pool } from "pg"
+import { env } from "src/env"
 import { DateTimeModule } from "src/modules/datetime/datetime.module"
 import { FeedCacheModule } from "../feed-cache/feed-cache.module"
 import { PG_POOL } from "./const"
@@ -30,7 +31,7 @@ import { ZipFileService } from "./sync/zip-file.service"
 
         const pool = new Pool({
           max: 2,
-          connectionString: process.env.DATABASE_URL,
+          connectionString: env.string("DATABASE_URL"),
         })
 
         pool.on("error", (err) => {
