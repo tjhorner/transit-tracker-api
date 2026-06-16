@@ -27,7 +27,13 @@ export function createConnectionScope(
 ): Sentry.Scope {
   const scope = new Sentry.Scope()
   scope.setTag("transport", "websocket")
-  scope.setUser({ ip_address: connection.ipAddress })
+
+  const deviceId = connection.headers["x-device-id"]
+  scope.setUser({
+    id: Array.isArray(deviceId) ? deviceId[0] : deviceId,
+    ip_address: connection.ipAddress,
+  })
+
   scope.addEventProcessor((event) => {
     const host = connection.headers.host
     event.request = {
