@@ -22,6 +22,33 @@ interface CaptureOptions {
   extra?: Record<string, unknown>
 }
 
+interface UAVersion {
+  name: string
+  version: string
+}
+
+function parseUserAgent(ua: string): UAVersion[] {
+  const pattern = /([\w][\w .-]*?)\/([\w.]+)(?:\s+\([^)]+\))?(?=\s+[\w]|$)/g
+  const results: UAVersion[] = []
+  let match: RegExpExecArray | null
+
+  while ((match = pattern.exec(ua)) !== null) {
+    results.push({ name: match[1].trim(), version: match[2] })
+  }
+
+  return results
+}
+
+function coalesceVersion(version: string): string {
+  return version.startsWith("v") ? version.slice(1) : version
+}
+
+const uaNameToTag = {
+  "Eastside Urbanism.Transit Tracker": "project_version",
+  ESPHome: "esphome_version",
+  "esp-idf": "esp_idf_version",
+} as const
+
 export function createConnectionScope(
   connection: WsConnectionDetails,
 ): Sentry.Scope {
@@ -33,6 +60,16 @@ export function createConnectionScope(
     id: Array.isArray(deviceId) ? deviceId[0] : deviceId,
     ip_address: connection.ipAddress,
   })
+
+  const userAgent = connection.headers["user-agent"]
+  if (userAgent) {
+    const uaVersions = parseUserAgent(userAgent)
+    for (const { name, version } of uaVersions) {
+      const tagName = uaNameToTag[name]
+      if (!tagName) continue
+      scope.setTag(`device.${tagName}`, coalesceVersion(version))
+    }
+  }
 
   scope.addEventProcessor((event) => {
     const host = connection.headers.host

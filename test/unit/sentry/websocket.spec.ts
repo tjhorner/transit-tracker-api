@@ -55,6 +55,34 @@ describe("createConnectionScope", () => {
     expect(setTag).toHaveBeenCalledWith("transport", "websocket")
   })
 
+  it("parses the user agent and sets tags for known components", () => {
+    const setTag = vi.spyOn(Sentry.Scope.prototype, "setTag")
+
+    createConnectionScope(
+      connectionDetails({
+        headers: {
+          "user-agent":
+            "Eastside Urbanism.Transit Tracker/v3.2.1 ESPHome/2026.5.3 (ESP32-S3) esp-idf/5.5.4",
+        },
+      }),
+    )
+
+    expect(setTag).toHaveBeenCalledWith("device.project_version", "3.2.1")
+    expect(setTag).toHaveBeenCalledWith("device.esphome_version", "2026.5.3")
+    expect(setTag).toHaveBeenCalledWith("device.esp_idf_version", "5.5.4")
+  })
+
+  it.each(["TinyWebsockets Client", "ESP32 Websocket Client", "???", ""])(
+    "doesn't fail if the user agent is unknown or malformed",
+    (userAgent) => {
+      expect(() =>
+        createConnectionScope(
+          connectionDetails({ headers: { "user-agent": userAgent } }),
+        ),
+      ).not.toThrow()
+    },
+  )
+
   it("populates the request context from the upgrade request", () => {
     const addEventProcessor = vi.spyOn(
       Sentry.Scope.prototype,
