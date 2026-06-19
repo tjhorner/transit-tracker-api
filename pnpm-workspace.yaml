@@ -3,6 +3,7 @@ allowBuilds:
   '@scarf/scarf': false
   '@sentry-internal/node-cpu-profiler': true
   '@sentry/cli': true
+  '@sentry/node-cpu-profiler': true
   '@swc/core': true
   cpu-features: false
   esbuild: true
