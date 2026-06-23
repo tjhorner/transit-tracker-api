@@ -48,13 +48,11 @@ import {
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
 } from "src/filters/ws-exception.filter"
+import { captureWsException, createConnectionScope } from "src/sentry/websocket"
+import { WebSocket, Server as WsServer } from "ws"
+import { ConnectedClient, parseClientVersions } from "./client"
 import {
-  captureWsException,
-  ConnectedClient,
-  createConnectionScope,
-} from "src/sentry/websocket"
-import { WebSocket as BaseWebSocket, Server as WsServer } from "ws"
-import {
+  RouteAtStopWithOffset,
   ScheduleOptions,
   ScheduleService,
   ScheduleUpdate,
@@ -83,8 +81,6 @@ export class ScheduleSubscriptionDto {
   listMode?: "sequential" | "nextPerRoute"
 }
 
-type WebSocket = ConnectedClient
-
 @WebSocketGateway()
 @UseFilters(
   WebSocketExceptionFilter,
@@ -92,7 +88,9 @@ type WebSocket = ConnectedClient
   WebSocketDomainExceptionFilter,
 )
 export class ScheduleGateway
-  implements OnGatewayConnection<WebSocket>, OnGatewayDisconnect<WebSocket>
+  implements
+    OnGatewayConnection<ConnectedClient>,
+    OnGatewayDisconnect<ConnectedClient>
 {
   private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Set<UUID> = new Set()
@@ -117,7 +115,7 @@ export class ScheduleGateway
 
     let count = 0
     for (const client of this.server.clients) {
-      if (client.readyState === BaseWebSocket.OPEN) {
+      if (client.readyState === WebSocket.OPEN) {
         count++
       }
     }
@@ -134,7 +132,7 @@ export class ScheduleGateway
       if (closed >= target) {
         break
       }
-      if (client.readyState !== BaseWebSocket.OPEN) {
+      if (client.readyState !== WebSocket.OPEN) {
         continue
       }
       client.close(code)
@@ -143,12 +141,13 @@ export class ScheduleGateway
     return closed
   }
 
-  handleConnection(client: WebSocket, request: IncomingMessage) {
+  handleConnection(client: ConnectedClient, request: IncomingMessage) {
     client.connectedAt = performance.now()
     client.id = randomUUID()
     client.ipAddress = proxyAddr(request, (_, i) => i < 2)
     client.headers = request.headers
     client.requestUrl = request.url
+    client.versions = parseClientVersions(request.headers["user-agent"] ?? "")
     client.sentryScope = createConnectionScope(client)
 
     client.on("error", (err) => {
@@ -166,7 +165,7 @@ export class ScheduleGateway
     )
   }
 
-  handleDisconnect(client: WebSocket) {
+  handleDisconnect(client: ConnectedClient) {
     this.logger.debug(
       `Client disconnected: ${client.id} - ${client.ipAddress} (code: ${(client as any)._closeCode}, session duration: ${(performance.now() - client.connectedAt) / 1000}s)`,
     )
@@ -181,8 +180,8 @@ export class ScheduleGateway
   @UsePipes(new ValidationPipe())
   @SubscribeMessage("schedule:subscribe")
   subscribeToSchedule(
-    @MessageBody() subscriptionDto: ScheduleSubscriptionDto,
-    @ConnectedSocket() socket: WebSocket,
+    @MessageBody() dto: ScheduleSubscriptionDto,
+    @ConnectedSocket() socket: ConnectedClient,
   ): Observable<WsResponse<ScheduleUpdate | null>> {
     if (this.subscribers.has(socket.id)) {
       throw new BadRequestException(
@@ -191,27 +190,16 @@ export class ScheduleGateway
     }
 
     const routeStopPairs = this.scheduleService.parseRouteStopPairs(
-      subscriptionDto.routeStopPairs,
+      dto.routeStopPairs,
     )
 
     if (routeStopPairs.length > 25) {
       throw new BadRequestException("Too many route-stop pairs; maximum 25")
     }
 
-    if (subscriptionDto.feedCode === "") {
-      subscriptionDto.feedCode = undefined
-    }
-
     this.subscribers.add(socket.id)
 
-    const subscription: ScheduleOptions = {
-      feedCode: subscriptionDto.feedCode,
-      routes: routeStopPairs,
-      limit: subscriptionDto.limit,
-      sortByDeparture: subscriptionDto.sortByDeparture,
-      listMode: subscriptionDto.listMode,
-    }
-
+    const subscription = this.buildScheduleOptions(dto, routeStopPairs)
     const schedule$ = this.scheduleService.subscribeToSchedule(
       subscription,
       socket.sentryScope,
@@ -221,42 +209,18 @@ export class ScheduleGateway
       switchMap(() =>
         schedule$.pipe(
           retry({
-            delay: (err, retryCount) => {
-              this.logger.warn(
-                {
-                  message: "Error in schedule subscription",
-                  error: err.message,
-                  subscription,
-                },
-                err.stack,
-              )
-
-              let level: Sentry.SeverityLevel = "error"
-              if (
-                err instanceof DomainError &&
-                ["notFound", "invalidInput"].includes(err.kind)
-              ) {
-                // not fatal, but log for troubleshooting and visibility into bad client behavior
-                level = "warning"
-              }
-
-              captureWsException(socket, err, {
-                level,
-                extra: {
-                  subscription: JSON.stringify(subscription),
-                  retryCount,
-                },
-              })
-
-              return timer(ms("10s"))
-            },
+            delay: (err, retryCount) =>
+              this.handleSubscriptionError(
+                socket,
+                subscription,
+                err,
+                retryCount,
+              ),
           }),
         ),
       ),
       map((update) => ({ event: "schedule", data: update })),
-      finalize(() => {
-        this.subscribers.delete(socket.id)
-      }),
+      finalize(() => this.subscribers.delete(socket.id)),
     )
 
     const heartbeat$ = interval(ms("30s")).pipe(
@@ -265,5 +229,48 @@ export class ScheduleGateway
     )
 
     return merge(scheduleUpdates$, heartbeat$)
+  }
+
+  private buildScheduleOptions(
+    dto: ScheduleSubscriptionDto,
+    routes: RouteAtStopWithOffset[],
+  ): ScheduleOptions {
+    return {
+      feedCode: dto.feedCode || undefined,
+      routes,
+      limit: dto.limit,
+      sortByDeparture: dto.sortByDeparture,
+      listMode: dto.listMode,
+    }
+  }
+
+  private handleSubscriptionError(
+    socket: ConnectedClient,
+    subscription: ScheduleOptions,
+    err: Error,
+    retryCount: number,
+  ): Observable<0> {
+    this.logger.warn(
+      {
+        message: "Error in schedule subscription",
+        error: err.message,
+        subscription,
+      },
+      err.stack,
+    )
+
+    // not fatal, but log for troubleshooting and visibility into bad client behavior
+    const level: Sentry.SeverityLevel =
+      err instanceof DomainError &&
+      ["notFound", "invalidInput"].includes(err.kind)
+        ? "warning"
+        : "error"
+
+    captureWsException(socket, err, {
+      level,
+      extra: { subscription: JSON.stringify(subscription), retryCount },
+    })
+
+    return timer(ms("10s")) as Observable<0>
   }
 }

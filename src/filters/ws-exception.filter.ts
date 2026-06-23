@@ -1,7 +1,8 @@
 import { type ArgumentsHost, Catch, HttpException } from "@nestjs/common"
 import { BaseWsExceptionFilter } from "@nestjs/websockets"
 import { DomainErrorKind } from "src/errors/domain-error"
-import { captureWsException, ConnectedClient } from "src/sentry/websocket"
+import { ConnectedClient } from "src/schedule/client"
+import { captureWsException } from "src/sentry/websocket"
 
 @Catch(HttpException)
 export class WebSocketHttpExceptionFilter extends BaseWsExceptionFilter {

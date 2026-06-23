@@ -1,10 +1,7 @@
 import type { ErrorEvent } from "@sentry/node"
 import * as Sentry from "@sentry/node"
-import {
-  captureWsException,
-  ConnectedClient,
-  createConnectionScope,
-} from "src/sentry/websocket"
+import { ConnectedClient } from "src/schedule/client"
+import { captureWsException, createConnectionScope } from "src/sentry/websocket"
 
 const { mockWithIsolationScope, mockCaptureException } = vi.hoisted(() => ({
   mockWithIsolationScope: vi.fn((_scope: unknown, callback: () => void) =>
@@ -26,7 +23,7 @@ vi.mock("@sentry/node", async (importOriginal) => {
 
 function connectionDetails(
   overrides: Partial<ConnectedClient> = {},
-): Pick<ConnectedClient, "ipAddress" | "headers" | "requestUrl"> {
+): Pick<ConnectedClient, "ipAddress" | "headers" | "requestUrl" | "versions"> {
   return {
     ipAddress: "1.2.3.4",
     requestUrl: "/?foo=bar",
@@ -36,6 +33,7 @@ function connectionDetails(
       // @ts-expect-error bleh
       "accept-language": ["en", "de"],
     },
+    versions: {},
     ...overrides,
   }
 }
@@ -55,14 +53,15 @@ describe("createConnectionScope", () => {
     expect(setTag).toHaveBeenCalledWith("transport", "websocket")
   })
 
-  it("parses the user agent and sets tags for known components", () => {
+  it("sets tags for known version components", () => {
     const setTag = vi.spyOn(Sentry.Scope.prototype, "setTag")
 
     createConnectionScope(
       connectionDetails({
-        headers: {
-          "user-agent":
-            "Eastside Urbanism.Transit Tracker/v3.2.1 ESPHome/2026.5.3 (ESP32-S3) esp-idf/5.5.4",
+        versions: {
+          projectVersion: "3.2.1",
+          esphomeVersion: "2026.5.3",
+          espIdfVersion: "5.5.4",
         },
       }),
     )
@@ -72,16 +71,16 @@ describe("createConnectionScope", () => {
     expect(setTag).toHaveBeenCalledWith("device.esp_idf_version", "5.5.4")
   })
 
-  it.each(["TinyWebsockets Client", "ESP32 Websocket Client", "???", ""])(
-    "doesn't fail if the user agent is unknown or malformed",
-    (userAgent) => {
-      expect(() =>
-        createConnectionScope(
-          connectionDetails({ headers: { "user-agent": userAgent } }),
-        ),
-      ).not.toThrow()
-    },
-  )
+  it("omits device tags when versions are absent", () => {
+    const setTag = vi.spyOn(Sentry.Scope.prototype, "setTag")
+
+    createConnectionScope(connectionDetails({ versions: {} }))
+
+    expect(setTag).not.toHaveBeenCalledWith(
+      expect.stringContaining("device."),
+      expect.anything(),
+    )
+  })
 
   it("populates the request context from the upgrade request", () => {
     const addEventProcessor = vi.spyOn(
