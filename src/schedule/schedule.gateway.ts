@@ -143,16 +143,22 @@ export class ScheduleGateway
 
   handleConnection(client: ConnectedClient, request: IncomingMessage) {
     client.connectedAt = performance.now()
-    client.id = randomUUID()
+    client.sessionId = randomUUID()
     client.ipAddress = proxyAddr(request, (_, i) => i < 2)
     client.headers = request.headers
     client.requestUrl = request.url
     client.versions = parseClientVersions(request.headers["user-agent"] ?? "")
+
+    const deviceId = request.headers["x-device-id"]
+    if (deviceId) {
+      client.deviceId = Array.isArray(deviceId) ? deviceId[0] : deviceId
+    }
+
     client.sentryScope = createConnectionScope(client)
 
     client.on("error", (err) => {
       this.logger.warn(
-        `WebSocket error for client ${client.id} - ${client.ipAddress}: ${err.message}`,
+        `WebSocket error for client ${client.sessionId} - ${client.ipAddress}: ${err.message}`,
       )
     })
 
@@ -161,18 +167,18 @@ export class ScheduleGateway
       .join("; ")
 
     this.logger.debug(
-      `Client connected: ${client.id} - ${client.ipAddress} (${headersString})`,
+      `Client connected: ${client.sessionId} - ${client.ipAddress} (${headersString})`,
     )
   }
 
   handleDisconnect(client: ConnectedClient) {
     this.logger.debug(
-      `Client disconnected: ${client.id} - ${client.ipAddress} (code: ${(client as any)._closeCode}, session duration: ${(performance.now() - client.connectedAt) / 1000}s)`,
+      `Client disconnected: ${client.sessionId} - ${client.ipAddress} (code: ${(client as any)._closeCode}, session duration: ${(performance.now() - client.connectedAt) / 1000}s)`,
     )
 
     if ((client as any)._closeCode === 1006) {
       this.logger.warn(
-        `Client ${client.id} - ${client.ipAddress} disconnected unexpectedly (code 1006)`,
+        `Client ${client.sessionId} - ${client.ipAddress} disconnected unexpectedly (code 1006)`,
       )
     }
   }
@@ -183,7 +189,7 @@ export class ScheduleGateway
     @MessageBody() dto: ScheduleSubscriptionDto,
     @ConnectedSocket() socket: ConnectedClient,
   ): Observable<WsResponse<ScheduleUpdate | null>> {
-    if (this.subscribers.has(socket.id)) {
+    if (this.subscribers.has(socket.sessionId)) {
       throw new BadRequestException(
         "Only one schedule subscription per connection allowed",
       )
@@ -197,7 +203,7 @@ export class ScheduleGateway
       throw new BadRequestException("Too many route-stop pairs; maximum 25")
     }
 
-    this.subscribers.add(socket.id)
+    this.subscribers.add(socket.sessionId)
 
     const subscription = this.buildScheduleOptions(dto, routeStopPairs)
     const schedule$ = this.scheduleService.subscribeToSchedule(
@@ -220,7 +226,7 @@ export class ScheduleGateway
         ),
       ),
       map((update) => ({ event: "schedule", data: update })),
-      finalize(() => this.subscribers.delete(socket.id)),
+      finalize(() => this.subscribers.delete(socket.sessionId)),
     )
 
     const heartbeat$ = interval(ms("30s")).pipe(

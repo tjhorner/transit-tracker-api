@@ -2,6 +2,7 @@ import * as Sentry from "@sentry/node"
 import type { IncomingHttpHeaders } from "http"
 
 type WsConnectionDetails = {
+  deviceId?: string
   ipAddress: string
   headers: IncomingHttpHeaders
   requestUrl?: string
@@ -23,9 +24,8 @@ export function createConnectionScope(
   const scope = new Sentry.Scope()
   scope.setTag("transport", "websocket")
 
-  const deviceId = connection.headers["x-device-id"]
   scope.setUser({
-    id: Array.isArray(deviceId) ? deviceId[0] : deviceId,
+    id: connection.deviceId,
     ip_address: connection.ipAddress,
   })
 

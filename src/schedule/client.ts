@@ -10,7 +10,8 @@ export interface ClientVersions {
 }
 
 export type ConnectedClient = WebSocket & {
-  id: UUID
+  sessionId: UUID
+  deviceId?: string
   ipAddress: string
   connectedAt: number
   headers: IncomingHttpHeaders

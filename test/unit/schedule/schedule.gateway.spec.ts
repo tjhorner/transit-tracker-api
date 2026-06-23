@@ -55,9 +55,9 @@ describe("ScheduleGateway", () => {
   })
 
   function makeMockClient() {
-    const clientId = randomUUID()
-    const mockClient = { id: clientId, sentryScope: {} } as any
-    return { mockClient, clientId }
+    const sessionId = randomUUID()
+    const mockClient = { sessionId, sentryScope: {} } as any
+    return { mockClient, sessionId }
   }
 
   function waitForGracePeriod() {
@@ -73,8 +73,8 @@ describe("ScheduleGateway", () => {
       gateway.handleConnection(mockClient, mock<IncomingMessage>())
 
       // Assert
-      expect(mockClient.id).toBeDefined()
-      expect(typeof mockClient.id).toBe("string")
+      expect(mockClient.sessionId).toBeDefined()
+      expect(typeof mockClient.sessionId).toBe("string")
     })
 
     it("should assign a Sentry isolation scope to the client", () => {
@@ -212,11 +212,11 @@ describe("ScheduleGateway", () => {
 
     it("should throw if client already has a subscription", () => {
       // Arrange
-      const { mockClient, clientId } = makeMockClient()
+      const { mockClient, sessionId } = makeMockClient()
       const dto = new ScheduleSubscriptionDto()
 
       // Set up subscriber list to already contain the client ID
-      const subscribersSet = new Set<string>([clientId])
+      const subscribersSet = new Set<string>([sessionId])
       // Use private property access to set the subscribers
       Object.defineProperty(gateway, "subscribers", {
         value: subscribersSet,
@@ -291,7 +291,7 @@ describe("ScheduleGateway", () => {
 
     it("should add client to subscribers and create schedule subscription", () => {
       // Arrange
-      const { mockClient, clientId } = makeMockClient()
+      const { mockClient, sessionId } = makeMockClient()
       const dto = new ScheduleSubscriptionDto()
       dto.routeStopPairs = "route1,stop1;route2,stop2"
       dto.limit = 5
@@ -332,12 +332,12 @@ describe("ScheduleGateway", () => {
 
       // Check that client is added to subscribers
       const subscribers = gateway["subscribers"] as Set<string>
-      expect(subscribers.has(clientId)).toBe(true)
+      expect(subscribers.has(sessionId)).toBe(true)
     })
 
     it("should remove client from subscribers when subscription finalizes", async () => {
       // Arrange
-      const { mockClient, clientId } = makeMockClient()
+      const { mockClient, sessionId } = makeMockClient()
       const dto = new ScheduleSubscriptionDto()
       dto.routeStopPairs = "route1,stop1"
       dto.limit = 5
@@ -360,7 +360,7 @@ describe("ScheduleGateway", () => {
 
       // Assert
       const subscribers = gateway["subscribers"] as Set<string>
-      expect(subscribers.has(clientId)).toBe(false)
+      expect(subscribers.has(sessionId)).toBe(false)
 
       subscription.unsubscribe()
     })
