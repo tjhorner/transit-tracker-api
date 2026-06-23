@@ -6,6 +6,7 @@ import { IncomingMessage } from "http"
 import ms from "ms"
 import { Socket } from "net"
 import { Observable, of } from "rxjs"
+import { ScheduleMetricsService } from "src/schedule/schedule-metrics.service"
 import {
   ScheduleGateway,
   ScheduleSubscriptionDto,
@@ -40,6 +41,10 @@ describe("ScheduleGateway", () => {
         {
           provide: ScheduleService,
           useValue: mockScheduleService,
+        },
+        {
+          provide: ScheduleMetricsService,
+          useValue: mock<ScheduleMetricsService>(),
         },
       ],
     }).compile()

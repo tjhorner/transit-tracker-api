@@ -51,6 +51,7 @@ import {
 import { captureWsException, createConnectionScope } from "src/sentry/websocket"
 import { WebSocket, Server as WsServer } from "ws"
 import { ConnectedClient, parseClientVersions } from "./client"
+import { ScheduleMetricsService } from "./schedule-metrics.service"
 import {
   RouteAtStopWithOffset,
   ScheduleOptions,
@@ -106,7 +107,10 @@ export class ScheduleGateway
   @WebSocketServer()
   private readonly server!: WsServer
 
-  constructor(private readonly scheduleService: ScheduleService) {}
+  constructor(
+    private readonly scheduleService: ScheduleService,
+    private readonly metricsService: ScheduleMetricsService,
+  ) {}
 
   get connectionCount(): number {
     if (!this.server) {
@@ -156,6 +160,8 @@ export class ScheduleGateway
 
     client.sentryScope = createConnectionScope(client)
 
+    this.metricsService.recordDeviceConnection(client.versions, 1)
+
     client.on("error", (err) => {
       this.logger.warn(
         `WebSocket error for client ${client.sessionId} - ${client.ipAddress}: ${err.message}`,
@@ -181,6 +187,8 @@ export class ScheduleGateway
         `Client ${client.sessionId} - ${client.ipAddress} disconnected unexpectedly (code 1006)`,
       )
     }
+
+    this.metricsService.recordDeviceConnection(client.versions, -1)
   }
 
   @UsePipes(new ValidationPipe())

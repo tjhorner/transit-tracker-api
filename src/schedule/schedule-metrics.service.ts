@@ -6,12 +6,14 @@ import {
   OnApplicationShutdown,
   Optional,
 } from "@nestjs/common"
+import { UpDownCounter } from "@opentelemetry/api"
 import { randomUUID } from "crypto"
 import Redis from "ioredis"
 import { MetricService } from "nestjs-otel"
 import { hostname } from "os"
 import { REDIS_CLIENT } from "src/modules/cache/cache.module"
 import { FeedService } from "src/modules/feed/feed.service"
+import { ClientVersions } from "./client"
 import { ScheduleOptions } from "./schedule.service"
 
 const REDIS_KEY_PREFIX = "schedule_subscriptions"
@@ -36,6 +38,7 @@ export class ScheduleMetricsService
   private subscribersByFeedCode: Map<string, number> = new Map()
   private readonly instanceKey = `${REDIS_KEY_PREFIX}:${hostname()}`
   private heartbeatTimer: ReturnType<typeof setInterval> | null = null
+  private readonly connectedDevicesCounter: UpDownCounter
 
   constructor(
     private readonly feedService: FeedService,
@@ -52,6 +55,11 @@ export class ScheduleMetricsService
           observable.observe(count, { feed_code: feedCode })
         }
       })
+
+    this.connectedDevicesCounter = metricService.getUpDownCounter(
+      "connected_devices",
+      { description: "Currently connected devices by firmware version" },
+    )
   }
 
   onApplicationBootstrap() {
@@ -78,6 +86,14 @@ export class ScheduleMetricsService
         this.logger.warn(`Failed to clean up Redis key on shutdown: ${err}`)
       })
     }
+  }
+
+  recordDeviceConnection(versions: ClientVersions, delta: 1 | -1) {
+    this.connectedDevicesCounter.add(delta, {
+      project_version: versions.projectVersion ?? "unknown",
+      esphome_version: versions.esphomeVersion ?? "unknown",
+      esp_idf_version: versions.espIdfVersion ?? "unknown",
+    })
   }
 
   add(subscription: ScheduleOptions) {
