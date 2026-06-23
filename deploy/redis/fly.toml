@@ -3,7 +3,8 @@ primary_region = "sjc"
 swap_size_mb = 64
 
 [build]
-  dockerfile = "redis.Dockerfile"
+  # Assumes you are running this from repo root
+  dockerfile = "deploy/redis/Dockerfile"
 
 [[vm]]
   memory = "512mb"

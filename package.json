@@ -23,7 +23,11 @@
     "gtfs:db:migrate": "dbmate --no-dump-schema up",
     "gtfs:db:rollback": "dbmate --no-dump-schema rollback",
     "gtfs:db:pgtyped": "pgtyped -w -c pgtyped.json",
-    "cli": "nest start --entryFile cli --"
+    "cli": "nest start --entryFile cli --",
+    "fly:deploy": "scripts/fly-deploy.sh",
+    "fly:deploy:redis": "fly deploy -c deploy/redis/fly.toml --flycast --no-public-ips",
+    "fly:deploy:db": "fly deploy -c deploy/db/fly.toml --flycast --no-public-ips",
+    "fly:deploy:autoscaler": "fly deploy -c deploy/autoscaler/fly.toml --flycast --no-public-ips"
   },
   "dependencies": {
     "@keyv/redis": "^5.1.6",

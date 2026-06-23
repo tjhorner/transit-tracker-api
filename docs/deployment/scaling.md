@@ -25,7 +25,7 @@ We instead use [fly-autoscaler](https://fly.io/docs/launch/autoscale-by-metric/)
 - Select candidate machines based on process group
 - Prioritize machines to scale down based on an additional metric
 
-The autoscaler is deployed as its own Fly app and can be found in [`autoscaler.fly.toml`](../../autoscaler.fly.toml). If you are deploying this for yourself, you'll need to change various details to match your own organization and app names.
+The autoscaler is deployed as its own Fly app and can be found in [`deploy/autoscaler/fly.toml`](../../deploy/autoscaler/fly.toml). If you are deploying this for yourself, you'll need to change various details to match your own organization and app names.
 
 It's configured to keep machines under the 6.25% CPU baseline of Fly's `shared-cpu-2x` machines: as a machine nears this limit, the autoscaler will bring another up; if any are underutilized, it will scale down. Machines with the fewest connections are scaled down first to avoid overwhelming other machines when redistributed.
 
