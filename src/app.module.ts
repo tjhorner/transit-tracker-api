@@ -6,6 +6,7 @@ import { ScheduleModule } from "@nestjs/schedule"
 import { seconds, ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler"
 import { SentryGlobalFilter, SentryModule } from "@sentry/nestjs/setup"
 import { OpenTelemetryModule } from "nestjs-otel"
+import { LoggerModule } from "nestjs-pino"
 import { SmokeTestCommand } from "./commands/smoke-test.command"
 import { SyncCommand } from "./commands/sync.command"
 import { env } from "./env"
@@ -28,6 +29,27 @@ import otelSDK from "./tracing"
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: env.string("LOG_LEVEL", "info"),
+        messageKey: "message",
+        formatters: {
+          level: (label) => ({ level: label }),
+        },
+        customProps: (req) => ({
+          ipAddress: (req as unknown as { ip?: string }).ip,
+        }),
+        transport: env.boolean("LOG_JSON")
+          ? undefined
+          : {
+              target: "pino-pretty",
+              options: {
+                singleLine: env.boolean("LOG_COMPACT"),
+                messageKey: "message",
+              },
+            },
+      },
+    }),
     CacheModule,
     DateTimeModule,
     EventEmitterModule.forRoot({

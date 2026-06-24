@@ -1,4 +1,5 @@
 import { MetricService } from "nestjs-otel"
+import { PinoLogger } from "nestjs-pino"
 import { ConnectionSheddingService } from "src/schedule/connection-shedding.service"
 import { CpuMonitorService } from "src/schedule/cpu-monitor.service"
 import { ScheduleMetricsService } from "src/schedule/schedule-metrics.service"
@@ -26,6 +27,13 @@ describe("ConnectionSheddingService", () => {
       gateway as unknown as ScheduleGateway,
       metricsService as unknown as ScheduleMetricsService,
       metricService as unknown as MetricService,
+      {
+        info: vi.fn(),
+        warn: vi.fn(),
+        debug: vi.fn(),
+        trace: vi.fn(),
+        error: vi.fn(),
+      } as unknown as PinoLogger,
     )
   }
 

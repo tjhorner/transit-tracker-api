@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common"
+import { BadRequestException, Injectable } from "@nestjs/common"
 import { SentryTraced } from "@sentry/nestjs"
 import * as Sentry from "@sentry/node"
 import ms from "ms"
+import { InjectPinoLogger, PinoLogger } from "nestjs-pino"
 import {
   concat,
   defer,
@@ -51,12 +52,12 @@ export interface ScheduleOptions {
 
 @Injectable()
 export class ScheduleService {
-  private readonly logger = new Logger(ScheduleService.name)
-
   constructor(
     private readonly feedService: FeedService,
     private readonly metricsService: ScheduleMetricsService,
     private readonly dateTime: DateTimeService,
+    @InjectPinoLogger(ScheduleService.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   @SentryTraced()
@@ -166,9 +167,7 @@ export class ScheduleService {
     const feedProvider = this.getFeedProvider(subscription)
 
     return defer(() => {
-      this.logger.verbose(
-        `Subscribed to schedule updates: ${JSON.stringify(subscription)}`,
-      )
+      this.logger.trace({ subscription }, "Subscribed to schedule updates")
 
       this.metricsService.add(subscription)
 
@@ -190,8 +189,9 @@ export class ScheduleService {
       ).pipe(
         distinctUntilChanged(this.scheduleUpdatesAreEqual.bind(this)),
         finalize(() => {
-          this.logger.verbose(
-            `Unsubscribed from schedule updates: ${JSON.stringify(subscription)}`,
+          this.logger.trace(
+            { subscription },
+            "Unsubscribed from schedule updates",
           )
 
           this.metricsService.remove(subscription)

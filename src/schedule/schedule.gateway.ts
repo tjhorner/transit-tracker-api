@@ -1,7 +1,7 @@
 import {
   BadRequestException,
-  Logger,
   UseFilters,
+  UseInterceptors,
   UsePipes,
   ValidationPipe,
 } from "@nestjs/common"
@@ -29,6 +29,8 @@ import {
 import { randomUUID, UUID } from "crypto"
 import { IncomingMessage } from "http"
 import ms from "ms"
+import { InjectPinoLogger, PinoLogger } from "nestjs-pino"
+import { storage, Store } from "nestjs-pino/storage"
 import proxyAddr from "proxy-addr"
 import {
   finalize,
@@ -48,6 +50,7 @@ import {
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
 } from "src/filters/ws-exception.filter"
+import { WsLogContextInterceptor } from "src/interceptors/ws-log-context.interceptor"
 import { captureWsException, createConnectionScope } from "src/sentry/websocket"
 import { WebSocket, Server as WsServer } from "ws"
 import { ConnectedClient, parseClientVersions } from "./client"
@@ -83,6 +86,7 @@ export class ScheduleSubscriptionDto {
 }
 
 @WebSocketGateway()
+@UseInterceptors(WsLogContextInterceptor)
 @UseFilters(
   WebSocketExceptionFilter,
   WebSocketHttpExceptionFilter,
@@ -93,7 +97,6 @@ export class ScheduleGateway
     OnGatewayConnection<ConnectedClient>,
     OnGatewayDisconnect<ConnectedClient>
 {
-  private readonly logger = new Logger(ScheduleGateway.name)
   private readonly subscribers: Set<UUID> = new Set()
 
   // Delay before a subscription begins fetching schedule data and registering
@@ -110,6 +113,8 @@ export class ScheduleGateway
   constructor(
     private readonly scheduleService: ScheduleService,
     private readonly metricsService: ScheduleMetricsService,
+    @InjectPinoLogger(ScheduleGateway.name)
+    private readonly logger: PinoLogger,
   ) {}
 
   get connectionCount(): number {
@@ -158,35 +163,69 @@ export class ScheduleGateway
       client.deviceId = Array.isArray(deviceId) ? deviceId[0] : deviceId
     }
 
+    client.logStore = this.createLogStore(client)
     client.sentryScope = createConnectionScope(client)
 
     this.metricsService.recordDeviceConnection(client.versions, 1)
 
     client.on("error", (err) => {
-      this.logger.warn(
-        `WebSocket error for client ${client.sessionId} - ${client.ipAddress}: ${err.message}`,
+      this.logInClientStore(client, () =>
+        this.logger.warn({ err }, "WebSocket client error"),
       )
     })
 
-    const headersString = Object.entries(request.headers)
-      .map(([key, value]) => `${key}: ${value}`)
-      .join("; ")
-
-    this.logger.debug(
-      `Client connected: ${client.sessionId} - ${client.ipAddress} (${headersString})`,
+    this.logInClientStore(client, () =>
+      this.logger.debug(
+        {
+          headers: request.headers,
+          requestUrl: client.requestUrl,
+          versions: client.versions,
+        },
+        "Client connected",
+      ),
     )
   }
 
-  handleDisconnect(client: ConnectedClient) {
-    this.logger.debug(
-      `Client disconnected: ${client.sessionId} - ${client.ipAddress} (code: ${(client as any)._closeCode}, session duration: ${(performance.now() - client.connectedAt) / 1000}s)`,
-    )
-
-    if ((client as any)._closeCode === 1006) {
-      this.logger.warn(
-        `Client ${client.sessionId} - ${client.ipAddress} disconnected unexpectedly (code 1006)`,
-      )
+  private createLogStore(client: ConnectedClient): Store {
+    const bindings: Record<string, string> = {
+      ipAddress: client.ipAddress,
+      sessionId: client.sessionId,
     }
+
+    if (client.deviceId) {
+      bindings.deviceId = client.deviceId
+    }
+
+    return new Store(this.logger.logger.child(bindings))
+  }
+
+  private logInClientStore(client: ConnectedClient, log: () => void) {
+    if (client.logStore) {
+      storage.run(client.logStore, log)
+    } else {
+      log()
+    }
+  }
+
+  handleDisconnect(client: ConnectedClient) {
+    const closeCode = (client as { _closeCode?: number })._closeCode
+    const sessionDurationSeconds =
+      (performance.now() - client.connectedAt) / 1000
+
+    // ugly hack... :(
+    this.logInClientStore(client, () => {
+      this.logger.debug(
+        { closeCode, sessionDurationSeconds },
+        "Client disconnected",
+      )
+
+      if (closeCode === 1006) {
+        this.logger.warn(
+          { closeCode },
+          "Client disconnected unexpectedly (code 1006)",
+        )
+      }
+    })
 
     this.metricsService.recordDeviceConnection(client.versions, -1)
   }
@@ -265,12 +304,8 @@ export class ScheduleGateway
     retryCount: number,
   ): Observable<0> {
     this.logger.warn(
-      {
-        message: "Error in schedule subscription",
-        error: err.message,
-        subscription,
-      },
-      err.stack,
+      { err, subscription, retryCount },
+      "Error in schedule subscription",
     )
 
     // not fatal, but log for troubleshooting and visibility into bad client behavior

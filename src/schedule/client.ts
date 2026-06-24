@@ -1,6 +1,7 @@
 import type * as Sentry from "@sentry/nestjs"
 import { UUID } from "crypto"
 import type { IncomingHttpHeaders } from "http"
+import type { Store } from "nestjs-pino/storage"
 import { WebSocket } from "ws"
 
 export interface ClientVersions {
@@ -18,6 +19,7 @@ export type ConnectedClient = WebSocket & {
   requestUrl?: string
   sentryScope: Sentry.Scope
   versions: ClientVersions
+  logStore?: Store
 }
 
 interface UAVersion {
@@ -43,6 +45,19 @@ function coalesceVersion(version: string): string {
 
 export function parseClientVersions(ua: string): ClientVersions {
   const versions: ClientVersions = {}
+
+  // we know some firmware version ranges based on heuristics
+  // (switched from tinywebsockets to native esp32 websocket client in 3.0.0, then
+  // started reporting UA versions in 3.0.3)
+  switch (ua) {
+    case "TinyWebsockets Client":
+      versions.projectVersion = "<3.0.0"
+      return versions
+    case "ESP32 Websocket Client":
+      versions.projectVersion = "3.0.0-3.0.2"
+      return versions
+  }
+
   for (const { name, version } of parseUserAgent(ua)) {
     switch (name) {
       case "Eastside Urbanism.Transit Tracker":
@@ -56,5 +71,6 @@ export function parseClientVersions(ua: string): ClientVersions {
         break
     }
   }
+
   return versions
 }

@@ -1,11 +1,11 @@
 import {
   BeforeApplicationShutdown,
   Injectable,
-  Logger,
   OnApplicationBootstrap,
 } from "@nestjs/common"
 import { Counter } from "@opentelemetry/api"
 import { MetricService } from "nestjs-otel"
+import { InjectPinoLogger, PinoLogger } from "nestjs-pino"
 import { env } from "../env"
 import { CpuMonitorService } from "./cpu-monitor.service"
 import { ScheduleMetricsService } from "./schedule-metrics.service"
@@ -15,8 +15,6 @@ import { ScheduleGateway } from "./schedule.gateway"
 export class ConnectionSheddingService
   implements OnApplicationBootstrap, BeforeApplicationShutdown
 {
-  private readonly logger = new Logger(ConnectionSheddingService.name)
-
   private readonly enabled = env.boolean("SHED_ENABLED")
   private readonly highWaterUtilization = env.float(
     "SHED_CPU_HIGH_WATER",
@@ -46,6 +44,8 @@ export class ConnectionSheddingService
     private readonly gateway: ScheduleGateway,
     private readonly metricsService: ScheduleMetricsService,
     metricService: MetricService,
+    @InjectPinoLogger(ConnectionSheddingService.name)
+    private readonly logger: PinoLogger,
   ) {
     this.shedCounter = metricService.getCounter("connection_shed_total", {
       description: "Connections closed by the load shedder",
@@ -55,7 +55,7 @@ export class ConnectionSheddingService
 
   onApplicationBootstrap() {
     if (!this.enabled) {
-      this.logger.log("Connection shedding disabled (set SHED_ENABLED=true)")
+      this.logger.info("Connection shedding disabled (set SHED_ENABLED=true)")
       return
     }
 
@@ -64,10 +64,15 @@ export class ConnectionSheddingService
       this.evalIntervalMs,
     )
     this.evalTimer.unref?.()
-    this.logger.log(
-      `Connection shedding enabled: highWater=${(this.highWaterUtilization * 100).toFixed(1)}%, ` +
-        `shareMargin=${this.shareMargin}, batch=${this.batchSize}, floor=${this.minConnections}, ` +
-        `cooldown=${this.cooldownMs}ms`,
+    this.logger.info(
+      {
+        highWaterUtilization: this.highWaterUtilization,
+        shareMargin: this.shareMargin,
+        batchSize: this.batchSize,
+        minConnections: this.minConnections,
+        cooldownMs: this.cooldownMs,
+      },
+      "Connection shedding enabled",
     )
   }
 
@@ -88,12 +93,11 @@ export class ConnectionSheddingService
 
     this.evaluating = true
     try {
-      const hot = `${(utilization * 100).toFixed(1)}%`
-
       const connections = this.gateway.connectionCount
       if (connections <= this.minConnections) {
         this.logger.warn(
-          `Hot (${hot}) at connection floor ${this.minConnections}; not shedding`,
+          { utilization, connections, floor: this.minConnections },
+          "Hot at connection floor; not shedding",
         )
         return
       }
@@ -102,13 +106,15 @@ export class ConnectionSheddingService
       const stats = await this.metricsService.getFleetConnectionStats()
       if (!stats) {
         this.logger.warn(
-          `Hot (${hot}) but no fleet view available; not shedding`,
+          { utilization, connections },
+          "Hot but no fleet view available; not shedding",
         )
         return
       }
       if (stats.instanceCount <= 1) {
         this.logger.warn(
-          `Hot (${hot}) but sole instance; waiting for new machine`,
+          { utilization, connections, instanceCount: stats.instanceCount },
+          "Hot but sole instance; waiting for new machine",
         )
         return
       }
@@ -117,7 +123,8 @@ export class ConnectionSheddingService
       const shareThreshold = fleetAverage * (1 + this.shareMargin)
       if (stats.myCount <= shareThreshold) {
         this.logger.warn(
-          `Hot (${hot}) but balanced (mine=${stats.myCount}, fleet avg=${fleetAverage.toFixed(0)}); waiting for new machine`,
+          { utilization, myCount: stats.myCount, fleetAverage },
+          "Hot but balanced; waiting for new machine",
         )
         return
       }
@@ -136,14 +143,20 @@ export class ConnectionSheddingService
       const closed = this.gateway.shedConnections(target, this.closeCode)
       this.lastShedAt = Date.now()
       this.shedCounter.add(closed, { reason: "rebalance" })
-      this.logger.log(
-        `Shed ${closed}: hot (${hot}) and over fair share (mine=${stats.myCount} > ` +
-          `avg ${fleetAverage.toFixed(0)} ×${1 + this.shareMargin}), ${connections} -> ~${connections - closed}`,
+      this.logger.info(
+        {
+          closed,
+          utilization,
+          myCount: stats.myCount,
+          fleetAverage,
+          shareMargin: this.shareMargin,
+          connectionsBefore: connections,
+          connectionsAfter: connections - closed,
+        },
+        "Shed connections over fair share",
       )
     } catch (err) {
-      this.logger.warn(
-        `Shedding evaluation failed: ${err instanceof Error ? err.message : err}`,
-      )
+      this.logger.warn({ err }, "Shedding evaluation failed")
     } finally {
       this.evaluating = false
     }
@@ -165,7 +178,10 @@ export class ConnectionSheddingService
     }
 
     this.draining = true
-    this.logger.log(`Draining ${total} connection(s) before shutdown`)
+    this.logger.info(
+      { connections: total },
+      "Draining connections before shutdown",
+    )
 
     const deadline = Date.now() + this.drainTimeoutMs
     while (this.gateway.connectionCount > 0 && Date.now() < deadline) {
@@ -182,10 +198,11 @@ export class ConnectionSheddingService
     const remaining = this.gateway.connectionCount
     if (remaining > 0) {
       this.logger.warn(
-        `Drain timed out with ${remaining} connection(s) still open`,
+        { remaining },
+        "Drain timed out with connections still open",
       )
     } else {
-      this.logger.log("Drain complete")
+      this.logger.info("Drain complete")
     }
   }
 }

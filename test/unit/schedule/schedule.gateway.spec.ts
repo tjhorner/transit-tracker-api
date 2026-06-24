@@ -4,6 +4,7 @@ import { Scope } from "@sentry/node"
 import { randomUUID } from "crypto"
 import { IncomingMessage } from "http"
 import ms from "ms"
+import { getLoggerToken, PinoLogger } from "nestjs-pino"
 import { Socket } from "net"
 import { Observable, of } from "rxjs"
 import { ScheduleMetricsService } from "src/schedule/schedule-metrics.service"
@@ -17,7 +18,7 @@ import {
   ScheduleUpdate,
 } from "src/schedule/schedule.service"
 import { vi } from "vitest"
-import { mock, MockProxy } from "vitest-mock-extended"
+import { mock, mockDeep, MockProxy } from "vitest-mock-extended"
 import { WebSocket } from "ws"
 
 // Mock the WebSocket exception filters
@@ -45,6 +46,10 @@ describe("ScheduleGateway", () => {
         {
           provide: ScheduleMetricsService,
           useValue: mock<ScheduleMetricsService>(),
+        },
+        {
+          provide: getLoggerToken(ScheduleGateway.name),
+          useValue: mockDeep<PinoLogger>(),
         },
       ],
     }).compile()

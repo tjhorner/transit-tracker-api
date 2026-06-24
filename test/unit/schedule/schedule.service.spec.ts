@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node"
 import { randomUUID } from "crypto"
+import { PinoLogger } from "nestjs-pino"
 import { firstValueFrom, Observable } from "rxjs"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { FeedService } from "src/modules/feed/feed.service"
@@ -41,6 +42,7 @@ describe("ScheduleService", () => {
       mockFeedService,
       mockMetricsService,
       mockDateTimeService,
+      mock<PinoLogger>(),
     )
   })
 

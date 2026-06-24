@@ -16,6 +16,8 @@ kill_timeout = "1m"
   NODE_OPTIONS = "--max-old-space-size=768"
   GTFS_RT_MIN_CACHE_AGE = "30s"
   LOG_COMPACT = "true"
+  LOG_JSON = "true"
+  LOG_LEVEL = "trace"
 
   # Connection shedding
   SHED_ENABLED = "true"
