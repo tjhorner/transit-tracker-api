@@ -336,6 +336,40 @@ describe("OneBusAwayService", () => {
       )
     })
 
+    it("falls back to scheduled times when predicted times are implausible", async () => {
+      // Arrange & Act
+      const tripId = "1_766488949"
+      const invalidPredictedTime = new Date("2025-12-16T06:00:00Z").getTime()
+      let scheduledArrivalTime = 0
+      let scheduledDepartureTime = 0
+
+      const upcomingTrips = await getUpcomingTripsForTestRoutes((resp) => {
+        const arrivalAndDeparture = resp.data.entry.arrivalsAndDepartures.find(
+          (ad) => ad.tripId === tripId,
+        )
+
+        if (!arrivalAndDeparture) {
+          return resp
+        }
+
+        scheduledArrivalTime = arrivalAndDeparture.scheduledArrivalTime
+        scheduledDepartureTime = arrivalAndDeparture.scheduledDepartureTime
+        arrivalAndDeparture.predicted = true
+        arrivalAndDeparture.predictedArrivalTime = invalidPredictedTime
+        arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
+
+        return resp
+      })
+
+      // Assert
+      const trip = upcomingTrips.find((trip) => trip.tripId === tripId)
+
+      expect(trip).toBeDefined()
+      expect(trip?.isRealtime).toBe(false)
+      expect(trip?.arrivalTime.getTime()).toBe(scheduledArrivalTime)
+      expect(trip?.departureTime.getTime()).toBe(scheduledDepartureTime)
+    })
+
     it("filters out trips which have already departed", async () => {
       // Arrange & Act
       const alreadyDepartedTripId = "1_766488949"

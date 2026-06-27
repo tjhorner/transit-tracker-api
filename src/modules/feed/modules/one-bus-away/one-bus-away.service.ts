@@ -465,19 +465,36 @@ export class OneBusAwayService implements FeedProvider {
           continue
         }
 
-        const departureTime =
-          ad.predicted && ad.predictedDepartureTime
+        const scheduledDepartureTime = new Date(ad.scheduledDepartureTime)
+        const scheduledArrivalTime = new Date(ad.scheduledArrivalTime)
+        const hasPredictedTime =
+          !!ad.predictedArrivalTime || !!ad.predictedDepartureTime
+        let isRealtime = (ad.predicted ?? false) && hasPredictedTime
+        let departureTime =
+          isRealtime && ad.predictedDepartureTime
             ? new Date(ad.predictedDepartureTime)
-            : new Date(ad.scheduledDepartureTime)
+            : scheduledDepartureTime
+        let arrivalTime =
+          isRealtime && ad.predictedArrivalTime
+            ? new Date(ad.predictedArrivalTime)
+            : scheduledArrivalTime
+
+        const maximumDeviationFromSchedule = Math.max(
+          Math.abs(departureTime.getTime() - scheduledDepartureTime.getTime()),
+          Math.abs(arrivalTime.getTime() - scheduledArrivalTime.getTime()),
+        )
+
+        if (maximumDeviationFromSchedule > ms("90m")) {
+          // OneBusAway can occasionally return malformed predicted timestamps.
+          // Treat implausible predictions as low confidence and use the schedule.
+          departureTime = scheduledDepartureTime
+          arrivalTime = scheduledArrivalTime
+          isRealtime = false
+        }
 
         if (departureTime.getTime() < this.dateTime.now().getTime()) {
           continue
         }
-
-        const arrivalTime =
-          ad.predicted && ad.predictedArrivalTime
-            ? new Date(ad.predictedArrivalTime)
-            : new Date(ad.scheduledArrivalTime)
 
         const staticTrip = arrivalsAndDeparturesResp.references.trips[ad.tripId]
         const staticStop = arrivalsAndDeparturesResp.references.stops[stopId]
@@ -500,7 +517,7 @@ export class OneBusAwayService implements FeedProvider {
           ),
           arrivalTime,
           departureTime,
-          isRealtime: ad.predicted ?? false,
+          isRealtime,
         }
 
         if (existing) {
