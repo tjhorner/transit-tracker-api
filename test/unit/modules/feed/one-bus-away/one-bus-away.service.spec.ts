@@ -336,7 +336,7 @@ describe("OneBusAwayService", () => {
       )
     })
 
-    it("uses a plausible schedule deviation when predicted times are implausible", async () => {
+    it("ignores a schedule deviation from a different active trip", async () => {
       // Arrange & Act
       const tripId = "1_766488949"
       const scheduledTime = new Date("2026-06-26T21:50:00-07:00").getTime()
@@ -361,6 +361,48 @@ describe("OneBusAwayService", () => {
         arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
         arrivalAndDeparture.tripStatus = {
           ...arrivalAndDeparture.tripStatus!,
+          activeTripId: "95_128606262621",
+          predicted: true,
+          scheduleDeviation,
+        }
+
+        return resp
+      })
+
+      // Assert
+      const trip = upcomingTrips.find((trip) => trip.tripId === tripId)
+
+      expect(trip).toBeDefined()
+      expect(trip?.isRealtime).toBe(false)
+      expect(trip?.arrivalTime.getTime()).toBe(scheduledTime)
+      expect(trip?.departureTime.getTime()).toBe(scheduledTime)
+    })
+
+    it("uses a plausible schedule deviation from the target trip", async () => {
+      // Arrange & Act
+      const tripId = "1_766488949"
+      const invalidPredictedTime = new Date("2025-12-16T06:00:00Z").getTime()
+      const scheduleDeviation = -420
+      let scheduledArrivalTime = 0
+      let scheduledDepartureTime = 0
+
+      const upcomingTrips = await getUpcomingTripsForTestRoutes((resp) => {
+        const arrivalAndDeparture = resp.data.entry.arrivalsAndDepartures.find(
+          (ad) => ad.tripId === tripId,
+        )
+
+        if (!arrivalAndDeparture) {
+          return resp
+        }
+
+        scheduledArrivalTime = arrivalAndDeparture.scheduledArrivalTime
+        scheduledDepartureTime = arrivalAndDeparture.scheduledDepartureTime
+        arrivalAndDeparture.predicted = true
+        arrivalAndDeparture.predictedArrivalTime = invalidPredictedTime
+        arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
+        arrivalAndDeparture.tripStatus = {
+          ...arrivalAndDeparture.tripStatus!,
+          activeTripId: tripId,
           predicted: true,
           scheduleDeviation,
         }
@@ -374,10 +416,10 @@ describe("OneBusAwayService", () => {
       expect(trip).toBeDefined()
       expect(trip?.isRealtime).toBe(true)
       expect(trip?.arrivalTime.getTime()).toBe(
-        scheduledTime + scheduleDeviation * 1000,
+        scheduledArrivalTime + scheduleDeviation * 1000,
       )
       expect(trip?.departureTime.getTime()).toBe(
-        scheduledTime + scheduleDeviation * 1000,
+        scheduledDepartureTime + scheduleDeviation * 1000,
       )
     })
 

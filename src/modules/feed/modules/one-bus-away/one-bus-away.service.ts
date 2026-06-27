@@ -488,6 +488,7 @@ export class OneBusAwayService implements FeedProvider {
           const scheduleDeviation = ad.tripStatus?.scheduleDeviation
           const hasPlausibleScheduleDeviation =
             ad.tripStatus?.predicted === true &&
+            ad.tripStatus.activeTripId === ad.tripId &&
             typeof scheduleDeviation === "number" &&
             Number.isFinite(scheduleDeviation) &&
             Math.abs(scheduleDeviation * 1000) <= ms("90m")
