@@ -336,7 +336,52 @@ describe("OneBusAwayService", () => {
       )
     })
 
-    it("falls back to scheduled times when predicted times are implausible", async () => {
+    it("uses a plausible schedule deviation when predicted times are implausible", async () => {
+      // Arrange & Act
+      const tripId = "1_766488949"
+      const scheduledTime = new Date("2026-06-26T21:50:00-07:00").getTime()
+      const invalidPredictedTime = new Date(
+        "2026-06-26T00:09:59-07:00",
+      ).getTime()
+      const scheduleDeviation = -420
+
+      const upcomingTrips = await getUpcomingTripsForTestRoutes((resp) => {
+        const arrivalAndDeparture = resp.data.entry.arrivalsAndDepartures.find(
+          (ad) => ad.tripId === tripId,
+        )
+
+        if (!arrivalAndDeparture) {
+          return resp
+        }
+
+        arrivalAndDeparture.predicted = true
+        arrivalAndDeparture.scheduledArrivalTime = scheduledTime
+        arrivalAndDeparture.scheduledDepartureTime = scheduledTime
+        arrivalAndDeparture.predictedArrivalTime = invalidPredictedTime
+        arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
+        arrivalAndDeparture.tripStatus = {
+          ...arrivalAndDeparture.tripStatus!,
+          predicted: true,
+          scheduleDeviation,
+        }
+
+        return resp
+      })
+
+      // Assert
+      const trip = upcomingTrips.find((trip) => trip.tripId === tripId)
+
+      expect(trip).toBeDefined()
+      expect(trip?.isRealtime).toBe(true)
+      expect(trip?.arrivalTime.getTime()).toBe(
+        scheduledTime + scheduleDeviation * 1000,
+      )
+      expect(trip?.departureTime.getTime()).toBe(
+        scheduledTime + scheduleDeviation * 1000,
+      )
+    })
+
+    it("falls back to scheduled times when all predictions are implausible", async () => {
       // Arrange & Act
       const tripId = "1_766488949"
       const invalidPredictedTime = new Date("2025-12-16T06:00:00Z").getTime()
@@ -357,6 +402,7 @@ describe("OneBusAwayService", () => {
         arrivalAndDeparture.predicted = true
         arrivalAndDeparture.predictedArrivalTime = invalidPredictedTime
         arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
+        arrivalAndDeparture.tripStatus = undefined
 
         return resp
       })

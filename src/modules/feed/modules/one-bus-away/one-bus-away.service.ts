@@ -485,11 +485,27 @@ export class OneBusAwayService implements FeedProvider {
         )
 
         if (maximumDeviationFromSchedule > ms("90m")) {
-          // OneBusAway can occasionally return malformed predicted timestamps.
-          // Treat implausible predictions as low confidence and use the schedule.
-          departureTime = scheduledDepartureTime
-          arrivalTime = scheduledArrivalTime
-          isRealtime = false
+          const scheduleDeviation = ad.tripStatus?.scheduleDeviation
+          const hasPlausibleScheduleDeviation =
+            ad.tripStatus?.predicted === true &&
+            typeof scheduleDeviation === "number" &&
+            Number.isFinite(scheduleDeviation) &&
+            Math.abs(scheduleDeviation * 1000) <= ms("90m")
+
+          if (hasPlausibleScheduleDeviation) {
+            // Preserve usable real-time information when OneBusAway returns a
+            // malformed absolute timestamp but a plausible schedule deviation.
+            departureTime = new Date(
+              scheduledDepartureTime.getTime() + scheduleDeviation * 1000,
+            )
+            arrivalTime = new Date(
+              scheduledArrivalTime.getTime() + scheduleDeviation * 1000,
+            )
+          } else {
+            departureTime = scheduledDepartureTime
+            arrivalTime = scheduledArrivalTime
+            isRealtime = false
+          }
         }
 
         if (departureTime.getTime() < this.dateTime.now().getTime()) {
