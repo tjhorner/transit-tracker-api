@@ -336,6 +336,128 @@ describe("OneBusAwayService", () => {
       )
     })
 
+    it("ignores a schedule deviation from a different active trip", async () => {
+      // Arrange & Act
+      const tripId = "1_766488949"
+      const scheduledTime = new Date("2026-06-26T21:50:00-07:00").getTime()
+      const invalidPredictedTime = new Date(
+        "2026-06-26T00:09:59-07:00",
+      ).getTime()
+      const scheduleDeviation = -420
+
+      const upcomingTrips = await getUpcomingTripsForTestRoutes((resp) => {
+        const arrivalAndDeparture = resp.data.entry.arrivalsAndDepartures.find(
+          (ad) => ad.tripId === tripId,
+        )
+
+        if (!arrivalAndDeparture) {
+          return resp
+        }
+
+        arrivalAndDeparture.predicted = true
+        arrivalAndDeparture.scheduledArrivalTime = scheduledTime
+        arrivalAndDeparture.scheduledDepartureTime = scheduledTime
+        arrivalAndDeparture.predictedArrivalTime = invalidPredictedTime
+        arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
+        arrivalAndDeparture.tripStatus = {
+          ...arrivalAndDeparture.tripStatus!,
+          activeTripId: "95_128606262621",
+          predicted: true,
+          scheduleDeviation,
+        }
+
+        return resp
+      })
+
+      // Assert
+      const trip = upcomingTrips.find((trip) => trip.tripId === tripId)
+
+      expect(trip).toBeDefined()
+      expect(trip?.isRealtime).toBe(false)
+      expect(trip?.arrivalTime.getTime()).toBe(scheduledTime)
+      expect(trip?.departureTime.getTime()).toBe(scheduledTime)
+    })
+
+    it("uses a plausible schedule deviation from the target trip", async () => {
+      // Arrange & Act
+      const tripId = "1_766488949"
+      const invalidPredictedTime = new Date("2025-12-16T06:00:00Z").getTime()
+      const scheduleDeviation = -420
+      let scheduledArrivalTime = 0
+      let scheduledDepartureTime = 0
+
+      const upcomingTrips = await getUpcomingTripsForTestRoutes((resp) => {
+        const arrivalAndDeparture = resp.data.entry.arrivalsAndDepartures.find(
+          (ad) => ad.tripId === tripId,
+        )
+
+        if (!arrivalAndDeparture) {
+          return resp
+        }
+
+        scheduledArrivalTime = arrivalAndDeparture.scheduledArrivalTime
+        scheduledDepartureTime = arrivalAndDeparture.scheduledDepartureTime
+        arrivalAndDeparture.predicted = true
+        arrivalAndDeparture.predictedArrivalTime = invalidPredictedTime
+        arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
+        arrivalAndDeparture.tripStatus = {
+          ...arrivalAndDeparture.tripStatus!,
+          activeTripId: tripId,
+          predicted: true,
+          scheduleDeviation,
+        }
+
+        return resp
+      })
+
+      // Assert
+      const trip = upcomingTrips.find((trip) => trip.tripId === tripId)
+
+      expect(trip).toBeDefined()
+      expect(trip?.isRealtime).toBe(true)
+      expect(trip?.arrivalTime.getTime()).toBe(
+        scheduledArrivalTime + scheduleDeviation * 1000,
+      )
+      expect(trip?.departureTime.getTime()).toBe(
+        scheduledDepartureTime + scheduleDeviation * 1000,
+      )
+    })
+
+    it("falls back to scheduled times when all predictions are implausible", async () => {
+      // Arrange & Act
+      const tripId = "1_766488949"
+      const invalidPredictedTime = new Date("2025-12-16T06:00:00Z").getTime()
+      let scheduledArrivalTime = 0
+      let scheduledDepartureTime = 0
+
+      const upcomingTrips = await getUpcomingTripsForTestRoutes((resp) => {
+        const arrivalAndDeparture = resp.data.entry.arrivalsAndDepartures.find(
+          (ad) => ad.tripId === tripId,
+        )
+
+        if (!arrivalAndDeparture) {
+          return resp
+        }
+
+        scheduledArrivalTime = arrivalAndDeparture.scheduledArrivalTime
+        scheduledDepartureTime = arrivalAndDeparture.scheduledDepartureTime
+        arrivalAndDeparture.predicted = true
+        arrivalAndDeparture.predictedArrivalTime = invalidPredictedTime
+        arrivalAndDeparture.predictedDepartureTime = invalidPredictedTime
+        arrivalAndDeparture.tripStatus = undefined
+
+        return resp
+      })
+
+      // Assert
+      const trip = upcomingTrips.find((trip) => trip.tripId === tripId)
+
+      expect(trip).toBeDefined()
+      expect(trip?.isRealtime).toBe(false)
+      expect(trip?.arrivalTime.getTime()).toBe(scheduledArrivalTime)
+      expect(trip?.departureTime.getTime()).toBe(scheduledDepartureTime)
+    })
+
     it("filters out trips which have already departed", async () => {
       // Arrange & Act
       const alreadyDepartedTripId = "1_766488949"
