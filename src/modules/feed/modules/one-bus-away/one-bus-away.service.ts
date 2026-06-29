@@ -446,6 +446,8 @@ export class OneBusAwayService implements FeedProvider {
       { index: number; lastUpdateTime: number }
     >()
 
+    const now = this.dateTime.now().getTime()
+
     for (let i = 0; i < stopIds.length; i++) {
       const stopId = stopIds[i]
       const arrivalsAndDeparturesResp = arrivalsPerStop[i]
@@ -471,7 +473,7 @@ export class OneBusAwayService implements FeedProvider {
         const { departureTime, arrivalTime, isRealtime } =
           this.resolveTripTimes(ad)
 
-        if (departureTime.getTime() < this.dateTime.now().getTime()) {
+        if (departureTime.getTime() < now) {
           continue
         }
 
