@@ -1,4 +1,5 @@
 import ms from "ms"
+import { PinoLogger } from "nestjs-pino"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import {
   FeedContext,
@@ -94,6 +95,7 @@ describe("MvgService", () => {
       mockCacheService,
       mockApiClient,
       mockDateTimeService,
+      mock<PinoLogger>(),
     )
   })
 

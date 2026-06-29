@@ -1,3 +1,4 @@
+import { PinoLogger } from "nestjs-pino"
 import OnebusawaySDK, { APIError } from "onebusaway-sdk"
 import { AgenciesWithCoverageListResponse } from "onebusaway-sdk/resources/agencies-with-coverage.mjs"
 import { ArrivalAndDepartureListResponse } from "onebusaway-sdk/resources/arrival-and-departure.mjs"
@@ -54,6 +55,7 @@ describe("OneBusAwayService", () => {
       mockCacheService,
       mockObaSdk,
       mockDateTimeService,
+      mock<PinoLogger>(),
     )
   })
 

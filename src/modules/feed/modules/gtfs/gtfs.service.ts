@@ -1,7 +1,8 @@
-import { Inject, Logger } from "@nestjs/common"
+import { Inject } from "@nestjs/common"
 import { BBox } from "geojson"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
+import { PinoLogger } from "nestjs-pino"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import type {
   FeedContext,
@@ -44,7 +45,6 @@ type ITripUpdate = GtfsRt.ITripUpdate
 
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider {
-  private logger = new Logger(GtfsService.name)
   private feedCode: string
   private config: GtfsConfig
 
@@ -56,10 +56,11 @@ export class GtfsService implements FeedProvider {
     private readonly realtimeService: GtfsRealtimeService,
     private readonly metricsService: GtfsMetricsService,
     private readonly dateTime: DateTimeService,
+    private readonly logger: PinoLogger,
   ) {
     this.feedCode = feedCode
     this.config = config
-    this.logger = new Logger(`${GtfsService.name}[${feedCode}]`)
+    this.logger.setContext(`${GtfsService.name}[${feedCode}]`)
     this.metricsService.activate()
   }
 
@@ -311,7 +312,8 @@ export class GtfsService implements FeedProvider {
       tripUpdates = await this.realtimeService.getTripUpdates(uniqueRouteIds)
     } catch (e: any) {
       this.logger.warn(
-        `Failed to fetch trip updates; using schedule: ${e.message}\n${e.stack}`,
+        { err: e, routeIds: uniqueRouteIds },
+        "Failed to fetch trip updates; using schedule",
       )
     }
 

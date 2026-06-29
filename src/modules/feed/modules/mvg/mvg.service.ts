@@ -1,6 +1,7 @@
-import { Inject, Logger } from "@nestjs/common"
+import { Inject } from "@nestjs/common"
 import { BBox } from "geojson"
 import ms from "ms"
+import { PinoLogger } from "nestjs-pino"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import type {
   FeedContext,
@@ -19,15 +20,14 @@ import { MvgConfig, MvgConfigSchema } from "./config"
 
 @RegisterFeedProvider("mvg")
 export class MvgService implements FeedProvider {
-  private logger: Logger
-
   constructor(
     @Inject(FEED_CONTEXT) { feedCode }: FeedContext<MvgConfig>,
     private readonly cache: FeedCacheService,
     private readonly apiClient: MvgApiClient,
     private readonly dateTime: DateTimeService,
+    private readonly logger: PinoLogger,
   ) {
-    this.logger = new Logger(`${MvgService.name}[${feedCode}]`)
+    this.logger.setContext(`${MvgService.name}[${feedCode}]`)
   }
 
   static validateConfig(config: unknown): MvgConfig {

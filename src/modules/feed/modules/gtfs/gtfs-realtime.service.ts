@@ -1,9 +1,10 @@
-import { Inject, Injectable, Logger, Scope } from "@nestjs/common"
+import { Inject, Injectable, Scope } from "@nestjs/common"
 import { Counter } from "@opentelemetry/api"
 import { parse as parseCacheControl } from "cache-control-parser"
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
 import ms from "ms"
 import { MetricService } from "nestjs-otel"
+import { PinoLogger } from "nestjs-pino"
 import { env } from "src/env"
 import { DeepReadonly } from "ts-essentials"
 import { FEED_CONTEXT } from "../../feed-context"
@@ -26,7 +27,6 @@ export type TripUpdateIndex = Map<
 export class GtfsRealtimeService {
   private readonly feedCode: string
   private readonly config: GtfsConfig
-  private readonly logger: Logger
   private readonly requestsCounter: Counter
   private readonly failuresCounter: Counter
 
@@ -34,10 +34,11 @@ export class GtfsRealtimeService {
     @Inject(FEED_CONTEXT) { feedCode, config }: FeedContext<GtfsConfig>,
     private readonly cache: FeedCacheService,
     metricService: MetricService,
+    private readonly logger: PinoLogger,
   ) {
     this.feedCode = feedCode
     this.config = config
-    this.logger = new Logger(`${GtfsRealtimeService.name}[${feedCode}]`)
+    this.logger.setContext(`${GtfsRealtimeService.name}[${feedCode}]`)
 
     this.requestsCounter = metricService.getCounter("gtfs_realtime_requests", {
       description: "Number of GTFS-RT fetch requests",
@@ -90,7 +91,10 @@ export class GtfsRealtimeService {
           let maxAgeMs = isNaN(minCacheAgeMs) ? -1 : minCacheAgeMs
 
           const controller = new AbortController()
-          const timeoutId = setTimeout(() => controller.abort(), 5000)
+          const timeoutId = setTimeout(
+            () => controller.abort("request timed out"),
+            5000,
+          )
 
           try {
             const resp = await fetch(config.url, {
@@ -139,14 +143,18 @@ export class GtfsRealtimeService {
       ),
     )
 
-    for (const response of responses) {
+    responses.forEach((response, index) => {
       if (response.status === "rejected") {
-        this.logger.warn(`Failed to fetch trip updates: ${response.reason}`)
+        this.logger.warn(
+          { err: response.reason, url: fetchConfigs[index].url },
+          "Failed to fetch trip updates",
+        )
+
         this.failuresCounter.add(1, {
           feed_code: this.feedCode,
         })
       }
-    }
+    })
 
     const successfulResponses = responses.filter(
       (r) => r.status === "fulfilled",

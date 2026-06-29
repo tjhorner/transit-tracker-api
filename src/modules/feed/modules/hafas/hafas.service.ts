@@ -1,8 +1,9 @@
-import { Inject, Logger } from "@nestjs/common"
+import { Inject } from "@nestjs/common"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import type { DeparturesArrivalsOptions, HafasClient } from "hafas-client"
 import ms from "ms"
+import { PinoLogger } from "nestjs-pino"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
@@ -22,15 +23,14 @@ import { toStopDomainError } from "./hafas.errors"
 
 @RegisterFeedProvider("hafas")
 export class HafasService implements FeedProvider {
-  private readonly logger: Logger
-
   constructor(
     @Inject(FEED_CONTEXT) { feedCode }: FeedContext<HafasConfig>,
     private readonly cache: FeedCacheService,
     @Inject(HAFAS_CLIENT) private readonly hafasClient: HafasClient,
     private readonly dateTime: DateTimeService,
+    private readonly logger: PinoLogger,
   ) {
-    this.logger = new Logger(`${HafasService.name}[${feedCode}]`)
+    this.logger.setContext(`${HafasService.name}[${feedCode}]`)
   }
 
   static validateConfig(config: any): HafasConfig {

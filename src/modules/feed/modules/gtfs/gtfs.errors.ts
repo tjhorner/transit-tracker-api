@@ -9,7 +9,7 @@ export class UpstreamHttpError extends DomainError {
     readonly status: number,
     readonly statusText: string,
   ) {
-    super(`HTTP ${status} ${statusText} for ${method} ${url}`, {
+    super(`HTTP ${status} ${statusText}`, {
       method,
       url,
       status,

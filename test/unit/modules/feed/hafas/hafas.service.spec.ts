@@ -1,5 +1,6 @@
 import type { Alternative, HafasClient } from "hafas-client"
 import ms from "ms"
+import { PinoLogger } from "nestjs-pino"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import { StopNotFoundError } from "src/modules/feed/feed.errors"
 import {
@@ -70,6 +71,7 @@ describe("HafasService", () => {
       mockCacheService,
       mockHafasClient,
       mockDateTime,
+      mock<PinoLogger>(),
     )
   })
 

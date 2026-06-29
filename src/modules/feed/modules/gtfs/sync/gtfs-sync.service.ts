@@ -1,6 +1,7 @@
-import { Inject, Injectable, Logger } from "@nestjs/common"
+import { Inject, Injectable } from "@nestjs/common"
 import * as csv from "fast-csv"
 import * as fs from "fs"
+import { PinoLogger } from "nestjs-pino"
 import { tmpdir } from "node:os"
 import { pipeline } from "node:stream/promises"
 import * as path from "path"
@@ -28,7 +29,6 @@ import { ZipFileService } from "./zip-file.service"
 
 @Injectable()
 export class GtfsSyncService {
-  private readonly logger: Logger
   private readonly feedCode: string
   private readonly config: GtfsConfig
 
@@ -38,8 +38,9 @@ export class GtfsSyncService {
     private readonly gtfsValidatorService: GtfsValidatorService,
     private readonly zipFileService: ZipFileService,
     private readonly db: GtfsDbService,
+    private readonly logger: PinoLogger,
   ) {
-    this.logger = new Logger(`${GtfsSyncService.name}[${feedCode}]`)
+    this.logger.setContext(`${GtfsSyncService.name}[${feedCode}]`)
     this.feedCode = feedCode
     this.config = config
   }
@@ -104,16 +105,15 @@ export class GtfsSyncService {
 
   async import(opts?: SyncOptions) {
     const url = this.config.static.url
-    this.logger.log(
-      `Starting import of feed "${this.feedCode}" from URL ${url}`,
-    )
+    this.logger.info({ url }, "Starting import of feed")
 
     try {
       await this.obtainSyncLock()
     } catch (e: any) {
       if (opts?.force) {
         this.logger.warn(
-          `Could not obtain sync lock, but proceeding because force option was specified: ${e.message}`,
+          { err: e },
+          "Could not obtain sync lock, but proceeding because force option was specified",
         )
       } else {
         throw e
@@ -129,14 +129,19 @@ export class GtfsSyncService {
           this.config.static.headers,
         )
 
-      this.logger.log(
-        `GTFS zip metadata: lastModified=${resourceMetadata.lastModified?.toISOString() ?? "null"} etag=${resourceMetadata.etag ?? "null"} hash=${resourceMetadata.hash ?? "null"}`,
+      this.logger.info(
+        {
+          lastModified: resourceMetadata.lastModified?.toISOString() ?? null,
+          etag: resourceMetadata.etag ?? null,
+          hash: resourceMetadata.hash ?? null,
+        },
+        "GTFS zip metadata",
       )
 
       if (!opts?.force) {
         const isNewer = await this.isResourceNewer(resourceMetadata)
         if (!isNewer) {
-          this.logger.log("Feed is not newer; import not required")
+          this.logger.info("Feed is not newer; import not required")
           return
         }
       }
@@ -149,7 +154,7 @@ export class GtfsSyncService {
 
       const zipDirectory = path.join(directory, "gtfs")
 
-      this.logger.log(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
+      this.logger.info(`Downloading and unzipping GTFS feed to ${zipDirectory}`)
 
       await this.zipFileService.downloadAndExtract(
         this.config.static,
@@ -165,10 +170,10 @@ export class GtfsSyncService {
         throw new FeedValidationError(validationResult.errors)
       }
 
-      this.logger.log("Importing GTFS feed")
+      this.logger.info("Importing GTFS feed")
       await this.importFromDirectory(zipDirectory)
 
-      this.logger.log("Updating import metadata")
+      this.logger.info("Updating import metadata")
       await upsertImportMetadata.run(
         {
           etag: resourceMetadata.etag,
@@ -183,7 +188,7 @@ export class GtfsSyncService {
     } finally {
       await this.releaseSyncLock()
 
-      this.logger.log("Cleaning up")
+      this.logger.info("Cleaning up")
       await fs.promises.rm(directory, { recursive: true, force: true })
     }
   }
@@ -209,7 +214,7 @@ export class GtfsSyncService {
       await client.query("SET LOCAL ROLE gtfs_import")
 
       for (const table of GTFS_TABLES) {
-        this.logger.log(`Deleting existing data from ${table}`)
+        this.logger.info(`Deleting existing data from ${table}`)
         await client.query(`TRUNCATE ONLY ${this.partitionOf(table)}`)
       }
 
@@ -229,14 +234,14 @@ export class GtfsSyncService {
         path.join(directory, "frequencies.txt"),
       )
 
-      this.logger.log("Committing changes to database")
+      this.logger.info("Committing changes to database")
     })
 
-    this.logger.log("Import done")
+    this.logger.info("Import done")
   }
 
   private async runPostProcessors() {
-    this.logger.log("Running post-processing tasks")
+    this.logger.info("Running post-processing tasks")
 
     const postProcessors: SyncPostProcessor[] = [
       new InterpolateEmptyStopTimesPostProcessor(),
@@ -244,7 +249,7 @@ export class GtfsSyncService {
     ]
 
     for (const processor of postProcessors) {
-      this.logger.log(`Running ${processor.constructor.name}`)
+      this.logger.info(`Running ${processor.constructor.name}`)
       await processor.process(this.db, {
         feedCode: this.feedCode,
         config: this.config,
@@ -269,11 +274,14 @@ export class GtfsSyncService {
     mapRow: (row: any) => any,
   ): Promise<void> {
     if (!fs.existsSync(filePath)) {
-      this.logger.warn(`Skipping ${path.basename(filePath)}; file not found`)
+      this.logger.warn(
+        { file: path.basename(filePath) },
+        "Skipping table; file not found",
+      )
       return Promise.resolve()
     }
 
-    this.logger.log(`Importing ${tableName}`)
+    this.logger.info(`Importing ${tableName}`)
 
     const outputRow = (row: any) =>
       this.flushEmptyStrings({
@@ -324,7 +332,8 @@ export class GtfsSyncService {
           ((performance.now() - lastLoggedAt) / 1000),
       )
 
-      this.logger.log(
+      this.logger.info(
+        { tableName, rows: importedRows, rowsPerSecond: rate },
         `Imported ${importedRows.toLocaleString()} ${tableName} rows (${rate.toLocaleString()} rows/s)`,
       )
 
@@ -366,7 +375,13 @@ export class GtfsSyncService {
 
     let completedRows = 0
     const insertRows = async (rows: any[]) => {
-      this.logger.log(
+      this.logger.info(
+        {
+          tableName,
+          rows: rows.length,
+          fromRow: completedRows,
+          toRow: completedRows + rows.length,
+        },
         `Inserting ${rows.length.toLocaleString()} ${tableName} rows ${completedRows.toLocaleString()} - ${(completedRows + rows.length).toLocaleString()}`,
       )
 

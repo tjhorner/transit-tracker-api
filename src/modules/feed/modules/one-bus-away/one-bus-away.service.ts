@@ -1,7 +1,8 @@
-import { Inject, Logger } from "@nestjs/common"
+import { Inject } from "@nestjs/common"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import ms from "ms"
+import { PinoLogger } from "nestjs-pino"
 import OnebusawaySDK from "onebusaway-sdk"
 import { DateTimeService } from "src/modules/datetime/datetime.service"
 import type {
@@ -70,7 +71,6 @@ function latLonSpanToBounds(
 
 @RegisterFeedProvider("onebusaway")
 export class OneBusAwayService implements FeedProvider {
-  private logger: Logger
   private config: Readonly<OneBusAwayConfig>
 
   constructor(
@@ -78,8 +78,9 @@ export class OneBusAwayService implements FeedProvider {
     private readonly cache: FeedCacheService,
     private readonly obaSdk: OnebusawaySDK,
     private readonly dateTime: DateTimeService,
+    private readonly logger: PinoLogger,
   ) {
-    this.logger = new Logger(`${OneBusAwayService.name}[${feedCode}]`)
+    this.logger.setContext(`${OneBusAwayService.name}[${feedCode}]`)
     this.config = config
   }
 
@@ -99,7 +100,7 @@ export class OneBusAwayService implements FeedProvider {
         try {
           obaConfig = await this.obaSdk.config.retrieve()
         } catch (e: any) {
-          this.logger.error(`Error retrieving OneBusAway config: ${e.message}`)
+          this.logger.error({ err: e }, "Error retrieving OneBusAway config")
           return {
             oneBusAwayServer: this.config.baseUrl,
           }
@@ -321,7 +322,8 @@ export class OneBusAwayService implements FeedProvider {
       } catch (e: any) {
         if (e.status === 404) {
           this.logger.warn(
-            `getArrivalsAndDeparturesForStop: Requested stop ${stopId} not found`,
+            { stopId },
+            "getArrivalsAndDeparturesForStop: Requested stop not found",
           )
           return { value: null, ttl: ms("1h") }
         }
@@ -331,7 +333,8 @@ export class OneBusAwayService implements FeedProvider {
 
       if (resp === null) {
         this.logger.warn(
-          `getArrivalsAndDeparturesForStop: Received null response for stop ${stopId}`,
+          { stopId },
+          "getArrivalsAndDeparturesForStop: Received null response",
         )
         return { value: null, ttl: ms("10s") }
       } else if (resp.data.entry.arrivalsAndDepartures.length === 0) {
