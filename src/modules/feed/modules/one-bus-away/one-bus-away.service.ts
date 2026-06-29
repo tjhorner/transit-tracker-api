@@ -35,7 +35,7 @@ export interface Name {
 }
 
 interface ArrivalsAndDeparturesResponse {
-  arrivalsAndDepartures: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data.Entry.ArrivalsAndDeparture[]
+  arrivalsAndDepartures: OBAArrivalsAndDeparture[]
   references: {
     stops: {
       [
@@ -68,6 +68,9 @@ function latLonSpanToBounds(
     latCenter + latSpan / 2,
   ]
 }
+
+type OBAArrivalsAndDeparture =
+  OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data.Entry.ArrivalsAndDeparture
 
 @RegisterFeedProvider("onebusaway")
 export class OneBusAwayService implements FeedProvider {
@@ -465,49 +468,8 @@ export class OneBusAwayService implements FeedProvider {
           continue
         }
 
-        const scheduledDepartureTime = new Date(ad.scheduledDepartureTime)
-        const scheduledArrivalTime = new Date(ad.scheduledArrivalTime)
-        const hasPredictedTime =
-          !!ad.predictedArrivalTime || !!ad.predictedDepartureTime
-        let isRealtime = (ad.predicted ?? false) && hasPredictedTime
-        let departureTime =
-          isRealtime && ad.predictedDepartureTime
-            ? new Date(ad.predictedDepartureTime)
-            : scheduledDepartureTime
-        let arrivalTime =
-          isRealtime && ad.predictedArrivalTime
-            ? new Date(ad.predictedArrivalTime)
-            : scheduledArrivalTime
-
-        const maximumDeviationFromSchedule = Math.max(
-          Math.abs(departureTime.getTime() - scheduledDepartureTime.getTime()),
-          Math.abs(arrivalTime.getTime() - scheduledArrivalTime.getTime()),
-        )
-
-        if (maximumDeviationFromSchedule > ms("90m")) {
-          const scheduleDeviation = ad.tripStatus?.scheduleDeviation
-          const hasPlausibleScheduleDeviation =
-            ad.tripStatus?.predicted === true &&
-            ad.tripStatus.activeTripId === ad.tripId &&
-            typeof scheduleDeviation === "number" &&
-            Number.isFinite(scheduleDeviation) &&
-            Math.abs(scheduleDeviation * 1000) <= ms("90m")
-
-          if (hasPlausibleScheduleDeviation) {
-            // Preserve usable real-time information when OneBusAway returns a
-            // malformed absolute timestamp but a plausible schedule deviation.
-            departureTime = new Date(
-              scheduledDepartureTime.getTime() + scheduleDeviation * 1000,
-            )
-            arrivalTime = new Date(
-              scheduledArrivalTime.getTime() + scheduleDeviation * 1000,
-            )
-          } else {
-            departureTime = scheduledDepartureTime
-            arrivalTime = scheduledArrivalTime
-            isRealtime = false
-          }
-        }
+        const { departureTime, arrivalTime, isRealtime } =
+          this.resolveTripTimes(ad)
 
         if (departureTime.getTime() < this.dateTime.now().getTime()) {
           continue
@@ -551,5 +513,59 @@ export class OneBusAwayService implements FeedProvider {
     }
 
     return tripStops
+  }
+
+  private resolveTripTimes(ad: DeepReadonly<OBAArrivalsAndDeparture>) {
+    const scheduledDepartureTime = new Date(ad.scheduledDepartureTime)
+    const scheduledArrivalTime = new Date(ad.scheduledArrivalTime)
+    const hasPredictedTime =
+      !!ad.predictedArrivalTime || !!ad.predictedDepartureTime
+
+    let isRealtime = (ad.predicted ?? false) && hasPredictedTime
+
+    let departureTime =
+      isRealtime && ad.predictedDepartureTime
+        ? new Date(ad.predictedDepartureTime)
+        : scheduledDepartureTime
+
+    let arrivalTime =
+      isRealtime && ad.predictedArrivalTime
+        ? new Date(ad.predictedArrivalTime)
+        : scheduledArrivalTime
+
+    const maximumDeviationFromSchedule = Math.max(
+      Math.abs(departureTime.getTime() - scheduledDepartureTime.getTime()),
+      Math.abs(arrivalTime.getTime() - scheduledArrivalTime.getTime()),
+    )
+
+    const deviationConfidenceThreshold = ms("90m")
+
+    if (maximumDeviationFromSchedule > deviationConfidenceThreshold) {
+      const scheduleDeviation = ad.tripStatus?.scheduleDeviation
+
+      const hasPlausibleScheduleDeviation =
+        ad.tripStatus?.predicted === true &&
+        ad.tripStatus.activeTripId === ad.tripId &&
+        typeof scheduleDeviation === "number" &&
+        Number.isFinite(scheduleDeviation) &&
+        Math.abs(scheduleDeviation * 1000) <= deviationConfidenceThreshold
+
+      if (hasPlausibleScheduleDeviation) {
+        // Preserve usable real-time information when OneBusAway returns a
+        // malformed absolute timestamp but a plausible schedule deviation.
+        departureTime = new Date(
+          scheduledDepartureTime.getTime() + scheduleDeviation * 1000,
+        )
+        arrivalTime = new Date(
+          scheduledArrivalTime.getTime() + scheduleDeviation * 1000,
+        )
+      } else {
+        departureTime = scheduledDepartureTime
+        arrivalTime = scheduledArrivalTime
+        isRealtime = false
+      }
+    }
+
+    return { departureTime, arrivalTime, isRealtime }
   }
 }
