@@ -65,7 +65,7 @@
     "limiter": "^3.0.0",
     "ms": "^2.1.3",
     "nest-commander": "^3.20.1",
-    "nestjs-otel": "^8.0.3",
+    "nestjs-otel": "^8.1.0",
     "nestjs-pino": "^4.6.1",
     "onebusaway-sdk": "^1.10.12",
     "pg": "^8.20.0",
