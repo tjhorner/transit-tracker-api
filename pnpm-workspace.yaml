@@ -35,3 +35,10 @@ minimumReleaseAgeExclude:
   - multer@2.2.0
   - piscina@4.9.3
   - undici@6.27.0
+  - '@sentry/core@10.63.0'
+  - '@sentry/nestjs@10.63.0'
+  - '@sentry/node-core@10.63.0'
+  - '@sentry/node@10.63.0'
+  - '@sentry/opentelemetry@10.63.0'
+  - '@sentry/profiling-node@10.63.0'
+  - '@sentry/server-utils@10.63.0'
