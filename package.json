@@ -91,8 +91,8 @@
     "@pgtyped/cli": "^2.4.3",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.41",
-    "@testcontainers/postgresql": "^12.0.3",
-    "@testcontainers/redis": "^12.0.3",
+    "@testcontainers/postgresql": "^12.0.4",
+    "@testcontainers/redis": "^12.0.4",
     "@tsconfig/node24": "^24.0.4",
     "@types/archiver": "^7.0.0",
     "@types/express": "^5.0.6",
@@ -109,7 +109,7 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.61.1",
     "@typescript-eslint/parser": "^8.61.1",
-    "@vitest/coverage-v8": "^4.1.9",
+    "@vitest/coverage-v8": "^4.1.10",
     "archiver": "^7.0.1",
     "eslint": "^10.5.0",
     "eslint-config-prettier": "^10.1.8",
@@ -118,7 +118,7 @@
     "fast-check": "^4.8.0",
     "globals": "^17.4.0",
     "husky": "^9.1.7",
-    "msw": "^2.14.6",
+    "msw": "^2.15.0",
     "prettier": "^3.8.4",
     "prettier-plugin-organize-imports": "^4.3.0",
     "source-map-support": "^0.5.21",
@@ -130,7 +130,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "unplugin-swc": "^1.5.9",
-    "vitest": "^4.1.9",
+    "vitest": "^4.1.10",
     "vitest-mock-extended": "^4.0.0"
   }
 }
