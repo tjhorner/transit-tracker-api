@@ -1,4 +1,9 @@
-import { type ArgumentsHost, Catch, HttpException } from "@nestjs/common"
+import {
+  type ArgumentsHost,
+  BadRequestException,
+  Catch,
+  HttpException,
+} from "@nestjs/common"
 import { BaseWsExceptionFilter } from "@nestjs/websockets"
 import { DomainErrorKind } from "src/errors/domain-error"
 import { ConnectedClient } from "src/schedule/client"
@@ -13,7 +18,10 @@ export class WebSocketHttpExceptionFilter extends BaseWsExceptionFilter {
 
   catch(exception: HttpException, host: ArgumentsHost) {
     const client = host.switchToWs().getClient<ConnectedClient>()
-    captureWsException(client, exception)
+    if (!(exception instanceof BadRequestException)) {
+      captureWsException(client, exception)
+    }
+
     client.send(JSON.stringify(this.httpExceptionToWsError(exception)))
     super.catch(exception, host)
   }
