@@ -19,6 +19,8 @@ After installation, you will need to set up a feeds configuration. This will tel
 
 Most transit agencies will support GTFS. [Transitland](https://www.transit.land/operators) keeps an index of all known GTFS/GTFS-rt feeds, so you can use that to find the feed URL for yours.
 
+We also maintain a [list of feed configurations](./docs/configuration/feed-library.md) for the agencies we support on our community instance.
+
 > [!NOTE]  
 > Not all parts of the GTFS specification are supported. For example, [`frequencies.txt`](https://gtfs.org/documentation/schedule/reference/#frequenciestxt) is not supported, so if your transit agency uses it you will see incorrect or missing trips. PRs are welcome to add support for more GTFS features.
 

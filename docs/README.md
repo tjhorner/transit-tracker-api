@@ -19,6 +19,7 @@ This directory contains documentation to help you make changes to, operate, and 
 
 - [Environment Variables](./configuration/environment.md)
 - [GTFS Configuration](./configuration/gtfs.md)
+- [Feed Library](./configuration/feed-library.md)
 
 ### Operations and Maintenance
 
