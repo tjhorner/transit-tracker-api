@@ -16,7 +16,13 @@ primary_region = "sjc"
   # fly_instance_cpu has no process-group label, but fly_instance_cpu_baseline == 1 only for dedicated
   # (performance) machines; shared app machines are < 1. `unless on(instance)` drops
   # those instances (and keeps app machines even if the baseline series has a gap).
-  FAS_PROMETHEUS_QUERY = 'sum(rate(fly_instance_cpu{app="transit-tracker-api",mode!~"idle|iowait"}[10m]) unless on(instance) (fly_instance_cpu_baseline{app="transit-tracker-api"} == 1))'
+  #
+  # increase[10m]/600 instead of rate[10m]: Fly's metrics run on VictoriaMetrics, whose rate()
+  # divides by the actual sample span, so a stopped machine's contribution holds flat for the
+  # whole window and then cliffs. increase()/600 divides by the fixed window, so a stopped
+  # machine decays to zero as its samples age out — a truer "current load" signal.
+  # (Divisor must equal the window in seconds: 600 = 10m.)
+  FAS_PROMETHEUS_QUERY = 'sum(increase(fly_instance_cpu{app="transit-tracker-api",mode!~"idle|iowait"}[10m]) / 600 unless on(instance) (fly_instance_cpu_baseline{app="transit-tracker-api"} == 1))'
 
   # Stop machines with fewest connections first
   FAS_STOP_METRIC_PROMETHEUS_QUERY = 'sum by (instance) (fly_app_concurrency{app="transit-tracker-api"})'
@@ -25,11 +31,12 @@ primary_region = "sjc"
   #   0.05   (~5% headroom)  x 2 vCPU x 99.75 = 9.98   -> 10
   # Baseline (6.25%/vCPU) is ~12.47 jps, so divisor 12 keeps a machine just under baseline.
   #
-  # Split min/max creates a hysteresis band to stop 2<->1 flapping: when a machine
-  # stops, the survivor absorbs its load and the rate[10m] sum briefly double-counts
-  # the stopped machine's decaying tail, bumping cpu_jps to ~12.4 and bouncing back up.
-  # Scale UP only above 14 (clears the observed ~12.36 transient peak with margin, 7%/vCPU);
-  # scale DOWN still at 12. Between 12 and 14 the count is left alone.
+  # Split min/max creates a hysteresis band to stop 2<->1 flapping. The old rate[10m]
+  # query made this worse: VM held a stopped machine's load flat for the full window,
+  # so the sum double-counted it (cpu_jps peaked ~12.4) and bounced the count back up.
+  # increase[10m]/600 decays that tail smoothly, so the survivor's rising load and the
+  # stopped tail roughly cancel and the transient peak is largely gone. Band kept as-is
+  # for now (UP above 14, DOWN at 12)
   FAS_MIN_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 14)))"
   FAS_MAX_STARTED_MACHINE_COUNT = "max(1, min(5, ceil(cpu_jps / 12)))"
 
