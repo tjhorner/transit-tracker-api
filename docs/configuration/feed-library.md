@@ -658,3 +658,20 @@ feeds:
         headers:
           Authorization: YOUR_API_KEY
 ```
+
+## Valley Metro
+
+Phoenix, Arizona, USA
+
+```yaml
+  vmt:
+    name: Valley Metro Transit
+    description: Phoenix, Arizona, USA
+    gtfs:
+      static:
+        url: https://www.phoenixopendata.com/dataset/3eae9a4a-98b9-40c8-8df7-8c00c1756235/resource/28ccc0a5-49c8-495c-b91f-193de5ce2cb7/download/googletransit.zip
+      rtTripUpdates:
+        # The API key below is embedded in the URL directly from the City of Phoenix
+        # open data portal: https://www.phoenixopendata.com/dataset/general-transit-feed-specification
+        url: https://mna.mecatran.com/utw/ws/gtfsfeed/realtime/valleymetro?apiKey=4f22263f69671d7f49726c3011333e527368211f
+```
