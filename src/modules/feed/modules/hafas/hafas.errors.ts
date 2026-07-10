@@ -2,10 +2,7 @@ import { DomainError } from "../../../../errors/domain-error"
 import { StopNotFoundError } from "../../feed.errors"
 
 export type HafasErrorCode =
-  | "ACCESS_DENIED"
-  | "INVALID_REQUEST"
-  | "NOT_FOUND"
-  | "SERVER_ERROR"
+  "ACCESS_DENIED" | "INVALID_REQUEST" | "NOT_FOUND" | "SERVER_ERROR"
 
 interface HafasError extends Error {
   isHafasError: true

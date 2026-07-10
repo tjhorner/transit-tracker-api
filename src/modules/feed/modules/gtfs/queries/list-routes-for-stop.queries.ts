@@ -2,12 +2,7 @@
 import { PreparedQuery } from "@pgtyped/runtime"
 
 export type Json =
-  | null
-  | boolean
-  | number
-  | string
-  | Json[]
-  | { [key: string]: Json }
+  null | boolean | number | string | Json[] | { [key: string]: Json }
 
 /** 'ListRoutesForStop' parameters type */
 export interface IListRoutesForStopParams {
