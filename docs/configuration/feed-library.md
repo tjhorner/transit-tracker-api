@@ -664,6 +664,7 @@ feeds:
 Phoenix, Arizona, USA
 
 ```yaml
+feeds:
   vmt:
     name: Valley Metro Transit
     description: Phoenix, Arizona, USA
@@ -674,4 +675,20 @@ Phoenix, Arizona, USA
         # The API key below is embedded in the URL directly from the City of Phoenix
         # open data portal: https://www.phoenixopendata.com/dataset/general-transit-feed-specification
         url: https://mna.mecatran.com/utw/ws/gtfsfeed/realtime/valleymetro?apiKey=4f22263f69671d7f49726c3011333e527368211f
+```
+
+## Spokane Transit Authority
+
+Spokane, Washington, USA
+
+```yaml
+feeds:
+  sta:
+    name: Spokane Transit Authority
+    description: Spokane, Washington, USA
+    gtfs:
+      static:
+        url: https://www.spokanetransit.com/gtfs
+      rtTripUpdates:
+        url: https://gtfsbridge.spokanetransit.com/realtime/TripUpdate/TripUpdates.pb
 ```
