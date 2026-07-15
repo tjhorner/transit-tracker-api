@@ -90,7 +90,7 @@
     "@nestjs/testing": "11.1.28",
     "@pgtyped/cli": "^2.4.3",
     "@swc/cli": "^0.8.1",
-    "@swc/core": "^1.15.41",
+    "@swc/core": "^1.15.43",
     "@testcontainers/postgresql": "^12.0.4",
     "@testcontainers/redis": "^12.0.4",
     "@tsconfig/node24": "^24.0.4",
