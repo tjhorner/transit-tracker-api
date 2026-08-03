@@ -448,15 +448,14 @@ export class OneBusAwayService implements FeedProvider {
       `${routeShortName}: `,
     ])
   }
-  
+
   private getTripBlockId(
-    arrivalsAndDeparturesResp: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse,
-    ad: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data.Entry.ArrivalsAndDeparture
+    arrivalsAndDeparturesResp: DeepReadonly<ArrivalsAndDeparturesResponse>,
+    ad: DeepReadonly<OBAArrivalsAndDeparture>,
   ): string | null {
-    const trip = arrivalsAndDeparturesResp.data.references.trips.find(
-      (t) => t.id === ad.tripId,
+    return (
+      arrivalsAndDeparturesResp.references.trips[ad.tripId]?.blockId ?? null
     )
-    return trip?.blockId ?? null
   }
 
   async getUpcomingTripsForRoutesAtStops(
