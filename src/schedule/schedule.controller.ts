@@ -93,7 +93,8 @@ export class TripDto {
   @ApiProperty({
     required: true,
     nullable: true,
-    description: "The ID of the vehicle operating the trip, if real-time data is available",
+    description:
+      "The ID of the vehicle operating the trip, if real-time data is available",
     example: "320",
   })
   vehicle!: string | null

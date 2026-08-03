@@ -284,8 +284,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "5097",
-              label: "411"
-            }
+              label: "411",
+            },
           },
           {
             trip: {
@@ -304,8 +304,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "5277",
-              label: "420"
-            }
+              label: "420",
+            },
           },
         ])
 
@@ -343,8 +343,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "5097",
-              label: "411"
-            }
+              label: "411",
+            },
           },
         ])
 
@@ -469,8 +469,8 @@ describe("GTFS E2E test", () => {
               ],
               vehicle: {
                 id: "5097",
-                label: "411"
-              }
+                label: "411",
+              },
             },
           ])
 
@@ -507,8 +507,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "5097",
-              label: "411"
-            }
+              label: "411",
+            },
           },
         ])
 
@@ -543,8 +543,8 @@ describe("GTFS E2E test", () => {
               ],
               vehicle: {
                 id: "5097",
-                label: "411"
-              }
+                label: "411",
+              },
             },
           ])
 
@@ -581,8 +581,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "5097",
-              label: "411"
-            }
+              label: "411",
+            },
           },
         ])
 
@@ -761,8 +761,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "53967",
-              label: "1594"
-            }
+              label: "1594",
+            },
           },
         ])
 
@@ -804,8 +804,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "53967",
-              label: "1594"
-            }
+              label: "1594",
+            },
           },
         ])
 
@@ -841,8 +841,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "53967",
-              label: "1594"
-            }
+              label: "1594",
+            },
           },
         ])
 
@@ -875,8 +875,8 @@ describe("GTFS E2E test", () => {
             ],
             vehicle: {
               id: "53967",
-              label: "1594"
-            }
+              label: "1594",
+            },
           },
         ])
 
