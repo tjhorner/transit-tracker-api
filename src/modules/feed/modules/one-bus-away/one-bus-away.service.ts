@@ -486,7 +486,7 @@ export class OneBusAwayService implements FeedProvider {
     const tripStops: TripStop[] = []
     const seenTripStops = new Map<
       string,
-      { index: number; lastUpdateTime: number }
+      { index: number; lastUpdateTime: number; vehicle: string | null }
     >()
 
     const now = this.dateTime.now().getTime()
@@ -527,12 +527,13 @@ export class OneBusAwayService implements FeedProvider {
 
         const color = staticRoute?.color?.replaceAll("#", "").trim() ?? null
 
-        // When OneBusAway does not have a proper vehicle ID, they set it equal to the trip's block ID
+        // When OneBusAway does not have a proper vehicle ID, they set it equal to the trip's block ID.
+        // In that case, prefer a real vehicle ID from an earlier update over this placeholder.
         const vehicle =
           ad.predicted &&
           ad.vehicleId !== this.getTripBlockId(arrivalsAndDeparturesResp, ad)
             ? ad.vehicleId.slice(ad.vehicleId.indexOf("_") + 1) // Do not include agency prefix
-            : null
+            : (existing?.vehicle ?? null)
 
         const tripStop: TripStop = {
           tripId: ad.tripId,
@@ -555,10 +556,12 @@ export class OneBusAwayService implements FeedProvider {
         if (existing) {
           tripStops[existing.index] = tripStop
           existing.lastUpdateTime = ad.lastUpdateTime ?? 0
+          existing.vehicle = vehicle
         } else {
           seenTripStops.set(tripStopKey, {
             index: tripStops.length,
             lastUpdateTime: ad.lastUpdateTime ?? 0,
+            vehicle,
           })
           tripStops.push(tripStop)
         }

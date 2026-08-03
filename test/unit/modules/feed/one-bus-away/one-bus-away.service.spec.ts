@@ -395,6 +395,20 @@ describe("OneBusAwayService", () => {
       }
     })
 
+    it("keeps a known vehicle ID from an earlier update instead of a later placeholder", async () => {
+      // Arrange & Act
+
+      // Fixture data for stop 1_72476 contains two updates for trip
+      // 1_721019369: an earlier one with a real vehicle ID (1_6023), and a
+      // later one where OneBusAway fell back to reporting the trip's block
+      // ID (1_7896818) as a placeholder vehicle ID.
+      const upcomingTrips = await getUpcomingTripsForTestRoutes()
+
+      // Assert
+      const trip = upcomingTrips.find((t) => t.tripId === "1_721019369")
+      expect(trip?.vehicle).toBe("6023")
+    })
+
     it.for([" ", " - ", ": "])(
       "removes the route name from the headsign if it is present (using separator '%s')",
       async (separator) => {
