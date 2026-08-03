@@ -97,6 +97,7 @@ describe("AllFeedsService", () => {
           stopName: "Stop 1",
           arrivalTime: new Date(),
           departureTime: new Date(),
+          vehicle: null,
           isRealtime: true,
         },
       ]
@@ -112,6 +113,7 @@ describe("AllFeedsService", () => {
           stopName: "Stop 2",
           arrivalTime: new Date(),
           departureTime: new Date(),
+          vehicle: null,
           isRealtime: false,
         },
       ]

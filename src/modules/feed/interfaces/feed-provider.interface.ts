@@ -17,6 +17,7 @@ export interface TripStop {
   directionId: string | null
   arrivalTime: Date
   departureTime: Date
+  vehicle: string | null
   isRealtime: boolean
 }
 

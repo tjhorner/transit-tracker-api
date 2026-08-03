@@ -157,6 +157,7 @@ describe("HafasService", () => {
           headsign: "Flughafen",
           arrivalTime: new Date(inMinutes(5)),
           departureTime: new Date(inMinutes(5)),
+          vehicle: null,
           isRealtime: true,
         },
       ])

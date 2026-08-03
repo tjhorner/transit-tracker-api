@@ -280,6 +280,7 @@ describe("MvgService", () => {
           headsign: "Klinikum Großhadern",
           arrivalTime: new Date(NOW + ms("7m")),
           departureTime: new Date(NOW + ms("7m")),
+          vehicle: null,
           isRealtime: true,
         },
       ])
