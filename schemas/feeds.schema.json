@@ -152,6 +152,14 @@
                     }
                   },
                   "additionalProperties": false
+                },
+                "excludeAgencyIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "A list of OneBusAway agency IDs to exclude from this feed. Stops and routes belonging to these agencies will not appear in stop listings, route listings, or schedules. Defaults to an empty array (no agencies excluded).",
+                  "default": []
                 }
               },
               "required": [

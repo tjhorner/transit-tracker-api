@@ -59,6 +59,22 @@ describe("OneBusAwayService", () => {
     )
   })
 
+  function createServiceExcludingAgencies(excludeAgencyIds: string[]) {
+    return new OneBusAwayService(
+      {
+        ...feedContext,
+        config: OneBusAwayConfigSchema.parse({
+          ...feedContext.config,
+          excludeAgencyIds,
+        }),
+      },
+      mockCacheService,
+      mockObaSdk,
+      mockDateTimeService,
+      mock<PinoLogger>(),
+    )
+  }
+
   it("performs a health check successfully", async () => {
     await oneBusAwayService.healthCheck()
   })
@@ -187,6 +203,52 @@ describe("OneBusAwayService", () => {
       // Assert
       await expect(act).rejects.toBeInstanceOf(APIError)
     })
+
+    it("throws StopNotFoundError when the stop's own agency is excluded", async () => {
+      // Arrange
+      const stopId = "1_71971"
+      const excludingService = createServiceExcludingAgencies(["1"])
+
+      mockObaSdk.stop.retrieve.mockResolvedValueOnce(
+        mockObaResponse(fixture_stop_1_71971),
+      )
+
+      // Act
+      const act = () => excludingService.getRoutesForStop(stopId)
+
+      // Assert
+      await expect(act).rejects.toThrow(new StopNotFoundError(stopId))
+    })
+
+    it("filters out routes belonging to excluded agencies", async () => {
+      // Arrange
+      const excludingService = createServiceExcludingAgencies(["1"])
+
+      const modifiedStop = structuredClone(fixture_stop_1_71971)
+      modifiedStop.entry.id = "40_71971"
+      modifiedStop.references.routes[0].agencyId = "40"
+      modifiedStop.references.routes[0].id = "40_102753"
+
+      mockObaSdk.stop.retrieve.mockResolvedValueOnce(
+        mockObaResponse(modifiedStop),
+      )
+
+      mockObaSdk.stopsForRoute.list.mockImplementation((routeId): any => {
+        if (routeId === "40_102753") {
+          return Promise.resolve(
+            mockObaResponse(fixture_stops_for_route_1_102753),
+          )
+        }
+
+        return Promise.reject(new Error("Route not found"))
+      })
+
+      // Act
+      const routes = await excludingService.getRoutesForStop("40_71971")
+
+      // Assert
+      expect(routes.map((r) => r.routeId)).toEqual(["40_102753"])
+    })
   })
 
   describe("getStop", () => {
@@ -236,6 +298,73 @@ describe("OneBusAwayService", () => {
 
       // Assert
       await expect(act).rejects.toBeInstanceOf(APIError)
+    })
+
+    it("throws StopNotFoundError when the stop's agency is excluded", async () => {
+      // Arrange
+      const stopId = "1_71971"
+      const excludingService = createServiceExcludingAgencies(["1"])
+
+      mockObaSdk.stop.retrieve.mockResolvedValueOnce(
+        mockObaResponse(fixture_stop_1_71971),
+      )
+
+      // Act
+      const act = () => excludingService.getStop(stopId)
+
+      // Assert
+      await expect(act).rejects.toThrow(new StopNotFoundError(stopId))
+    })
+  })
+
+  describe("getStopsInArea", () => {
+    it("excludes stops belonging to excluded agencies", async () => {
+      // Arrange
+      const excludingService = createServiceExcludingAgencies(["40"])
+
+      mockObaSdk.stopsForLocation.list.mockResolvedValueOnce(
+        mockObaResponse<any>({
+          limitExceeded: false,
+          outOfRange: false,
+          list: [
+            {
+              id: "1_71971",
+              lat: 47.674011,
+              lon: -122.13089,
+              locationType: 0,
+              name: "NE Redmond Way & Bear Creek Pkwy",
+              parent: "",
+              routeIds: [],
+              staticRouteIds: [],
+              code: "71971",
+            },
+            {
+              id: "40_100236",
+              lat: 47.674011,
+              lon: -122.13089,
+              locationType: 0,
+              name: "Excluded Agency Stop",
+              parent: "",
+              routeIds: [],
+              staticRouteIds: [],
+              code: "100236",
+            },
+          ],
+          references: {
+            agencies: [],
+            routes: [],
+            situations: [],
+            stops: [],
+            trips: [],
+          },
+        }),
+      )
+
+      // Act
+      const stops = await excludingService.getStopsInArea([-123, 47, -122, 48])
+
+      // Assert
+      expect(stops.map((s) => s.stopId)).toEqual(["1_71971"])
     })
   })
 
@@ -529,6 +658,35 @@ describe("OneBusAwayService", () => {
         (trip) => trip.routeId === "1_102752" && trip.stopId === "1_72476",
       )
       expect(differentStopTrip).toBeUndefined()
+    })
+
+    it("excludes routes and stops belonging to excluded agencies", async () => {
+      // Arrange
+      const excludingService = createServiceExcludingAgencies(["1"])
+
+      mockObaSdk.arrivalAndDeparture.list.mockImplementation((stopId): any => {
+        if (stopId === "1_71971") {
+          return Promise.resolve(
+            mockObaResponse(fixture_arrivals_and_departures_1_71971),
+          )
+        } else if (stopId === "1_72476") {
+          return Promise.resolve(
+            mockObaResponse(fixture_arrivals_and_departures_1_72476),
+          )
+        }
+
+        return Promise.reject(new Error("Stop not found"))
+      })
+
+      // Act
+      const upcomingTrips =
+        await excludingService.getUpcomingTripsForRoutesAtStops(
+          testRoutesAtStops,
+        )
+
+      // Assert
+      expect(upcomingTrips).toEqual([])
+      expect(mockObaSdk.arrivalAndDeparture.list).not.toHaveBeenCalled()
     })
 
     it("requests data for each stop only once even if multiple routes are requested for the same stop", async () => {

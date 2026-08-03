@@ -11,6 +11,7 @@ export const OneBusAwayConfigSchema = z.strictObject({
       interval: z.number().default(200),
     })
     .default({}),
+  excludeAgencyIds: z.array(z.string()).default([]),
 })
 
 export type OneBusAwayConfig = z.infer<typeof OneBusAwayConfigSchema>

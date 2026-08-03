@@ -91,6 +91,15 @@ export class OneBusAwayService implements FeedProvider {
     return OneBusAwayConfigSchema.parse(config)
   }
 
+  // OneBusAway IDs are always formatted as `AgencyId_EntityId`.
+  private agencyIdFromEntityId(entityId: string): string {
+    return entityId.split("_")[0]
+  }
+
+  private isAgencyExcluded(agencyId: string): boolean {
+    return this.config.excludeAgencyIds.includes(agencyId)
+  }
+
   async healthCheck(): Promise<void> {
     await this.obaSdk.currentTime.retrieve()
   }
@@ -198,22 +207,28 @@ export class OneBusAwayService implements FeedProvider {
           throw new StopNotFoundError(stopId)
         }
 
+        if (this.isAgencyExcluded(this.agencyIdFromEntityId(stopId))) {
+          throw new StopNotFoundError(stopId)
+        }
+
         const stopRoutes: StopRoute[] = await Promise.all(
-          stop.data.references.routes.map(async (route) => {
-            const headsigns = await this.getPossibleHeadsignsForRouteAtStop(
-              route.id,
-              stopId,
-            )
+          stop.data.references.routes
+            .filter((route) => !this.isAgencyExcluded(route.agencyId))
+            .map(async (route) => {
+              const headsigns = await this.getPossibleHeadsignsForRouteAtStop(
+                route.id,
+                stopId,
+              )
 
-            const color = route.color?.replaceAll("#", "").trim() ?? null
+              const color = route.color?.replaceAll("#", "").trim() ?? null
 
-            return {
-              routeId: route.id,
-              name: route.shortName ?? "Unnamed Route",
-              color: color?.trim() !== "" ? color : null,
-              headsigns,
-            }
-          }),
+              return {
+                routeId: route.id,
+                name: route.shortName ?? "Unnamed Route",
+                color: color?.trim() !== "" ? color : null,
+                headsigns,
+              }
+            }),
         )
 
         return stopRoutes
@@ -235,13 +250,17 @@ export class OneBusAwayService implements FeedProvider {
       lonSpan,
     })
 
-    return stops.data.list.map<Stop>((stop) => ({
-      stopId: stop.id,
-      stopCode: stop.code ?? null,
-      name: stop.name,
-      lat: stop.lat,
-      lon: stop.lon,
-    }))
+    return stops.data.list
+      .filter(
+        (stop) => !this.isAgencyExcluded(this.agencyIdFromEntityId(stop.id)),
+      )
+      .map<Stop>((stop) => ({
+        stopId: stop.id,
+        stopCode: stop.code ?? null,
+        name: stop.name,
+        lat: stop.lat,
+        lon: stop.lon,
+      }))
   }
 
   async listStops(): Promise<ReadonlyArray<DeepReadonly<Stop>>> {
@@ -261,13 +280,18 @@ export class OneBusAwayService implements FeedProvider {
           lonSpan,
         })
 
-        const allStops: Stop[] = stops.data.list.map<Stop>((stop) => ({
-          stopId: stop.id,
-          stopCode: stop.code ?? null,
-          name: stop.name,
-          lat: stop.lat,
-          lon: stop.lon,
-        }))
+        const allStops: Stop[] = stops.data.list
+          .filter(
+            (stop) =>
+              !this.isAgencyExcluded(this.agencyIdFromEntityId(stop.id)),
+          )
+          .map<Stop>((stop) => ({
+            stopId: stop.id,
+            stopCode: stop.code ?? null,
+            name: stop.name,
+            lat: stop.lat,
+            lon: stop.lon,
+          }))
 
         return allStops
       },
@@ -288,6 +312,10 @@ export class OneBusAwayService implements FeedProvider {
           }
 
           throw e
+        }
+
+        if (this.isAgencyExcluded(this.agencyIdFromEntityId(stopId))) {
+          throw new StopNotFoundError(stopId)
         }
 
         return {
@@ -424,7 +452,13 @@ export class OneBusAwayService implements FeedProvider {
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
-    const stopRouteMap = routes.reduce(
+    const includedRoutes = routes.filter(
+      ({ routeId, stopId }) =>
+        !this.isAgencyExcluded(this.agencyIdFromEntityId(stopId)) &&
+        !this.isAgencyExcluded(this.agencyIdFromEntityId(routeId)),
+    )
+
+    const stopRouteMap = includedRoutes.reduce(
       (acc, { routeId, stopId }) => {
         if (!acc[stopId]) {
           acc[stopId] = []
