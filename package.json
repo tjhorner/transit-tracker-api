@@ -55,7 +55,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "cron": "^4.4.0",
-    "dbmate": "^2.32.0",
+    "dbmate": "^2.34.1",
     "fast-csv": "^5.0.7",
     "gtfs-realtime-bindings": "^1.1.1",
     "hafas-client": "^6.3.6",
