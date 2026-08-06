@@ -692,3 +692,35 @@ feeds:
       rtTripUpdates:
         url: https://gtfsbridge.spokanetransit.com/realtime/TripUpdate/TripUpdates.pb
 ```
+
+## Hamburger Verkehrsverbund (HVV)
+
+Hamburg, Germany
+
+```yaml
+feeds:
+  hvv:
+    name: Hamburger Verkehrsverbund (HVV)
+    description: Hamburg, Germany
+    gtfs:
+      static:
+        url: https://suche.transparenz.hamburg.de/dataset?q=hvv+GTFS
+      rtTripUpdates:
+        url: https://realtime.gtfs.de/realtime-free.pb
+```
+
+## Deutsche Bahn (DB)
+
+Germany
+
+```yaml
+feeds:
+  db:
+    name: Deutsche Bahn (DB)
+    description: Germany
+    gtfs:
+      static:
+        url: https://gtfs.de/feeds/2026/
+      rtTripUpdates:
+        url: https://realtime.gtfs.de/realtime-free.pb
+```
