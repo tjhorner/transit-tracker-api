@@ -91,8 +91,8 @@
     "@pgtyped/cli": "^2.4.3",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.47",
-    "@testcontainers/postgresql": "^12.0.4",
-    "@testcontainers/redis": "^12.0.4",
+    "@testcontainers/postgresql": "^12.1.0",
+    "@testcontainers/redis": "^12.1.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/archiver": "^7.0.0",
     "@types/express": "^5.0.6",
@@ -131,6 +131,6 @@
     "typescript": "^5.9.3",
     "unplugin-swc": "^1.5.9",
     "vitest": "^4.1.10",
-    "vitest-mock-extended": "^5.0.0"
+    "vitest-mock-extended": "^5.1.1"
   }
 }
