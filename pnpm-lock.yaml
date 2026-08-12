@@ -84,8 +84,8 @@ importers:
         specifier: ^4.4.0
         version: 4.4.0
       dbmate:
-        specifier: ^2.32.0
-        version: 2.32.0
+        specifier: ^2.34.1
+        version: 2.35.0
       fast-csv:
         specifier: ^5.0.7
         version: 5.0.7
@@ -399,38 +399,38 @@ packages:
     resolution: {integrity: sha512-IchNf6dN4tHoMFIn/7OE8LWZ19Y6q/67Bmf6vnGREv8RSbBVb9LPJxEcnwrcwX6ixSvaiGoomAUvu4YSxXrVgw==}
     engines: {node: '>=12'}
 
-  '@dbmate/darwin-arm64@2.32.0':
-    resolution: {integrity: sha512-1qIf1xXnf/u/heEmQYdHrhyiefsKGIR38QWedQri41OAbgLqk7oyZWQDXncJ8sqfPVZxE9+SuOZEcujXb+i7Eg==}
+  '@dbmate/darwin-arm64@2.35.0':
+    resolution: {integrity: sha512-0a6TsWVGTy62X46PpsDYp7hgh9Sdd8Yox8TvPWUSj82Ol5F+7fHaOrDvajSx9KYu1fFOAdacXRDQ+0hd7QA1qA==}
     cpu: [arm64]
     os: [darwin]
 
-  '@dbmate/darwin-x64@2.32.0':
-    resolution: {integrity: sha512-Nuv0UDE8qOro1rzUWhzLXzpnJ6h/Y0MNlzlGSUpCfvN8KVWulnxL/pJipKoDXh+IW7UZGsQw5GHoR6ZRraZcuw==}
+  '@dbmate/darwin-x64@2.35.0':
+    resolution: {integrity: sha512-oN8Z7hh8ShNowo2JRCMK2QTaOZpyZCA7X0Pe0ZLt2cS1W+AJ3lDC7bx2/KxSvHdyo4xZQP8LxoGPZj/YT3RwhQ==}
     cpu: [x64]
     os: [darwin]
 
-  '@dbmate/linux-arm64@2.32.0':
-    resolution: {integrity: sha512-TnmUEwXMyo3nvyBWfdjhCCHs+7YdKXgE+gck/pa29Dk1SlKbVyguz3DDB0Fi1+YEZ2LTVekee18/Lp6UnUN8JQ==}
+  '@dbmate/linux-arm64@2.35.0':
+    resolution: {integrity: sha512-B6NKjr2Dqiv78lCutyaWvhXXjxJUsFUENiIoOofFa+RpUyOEAWRYbdcIvHhK3Wyi1pA8TJ4tceQa3bSUXfC/bw==}
     cpu: [arm64]
     os: [linux]
 
-  '@dbmate/linux-arm@2.32.0':
-    resolution: {integrity: sha512-j4UqqXZeK54hU24cXlhlZg+RUpMkAA4zsFoLmFMKWVNlGz7MzSwnFzB/blZR2q7+4E+o/DoPp+rt11no/jS+Rg==}
+  '@dbmate/linux-arm@2.35.0':
+    resolution: {integrity: sha512-MxcaSAoXoQKowN/VxktEayLwTimiYTw0dStbYssleYhleKHsmqTzkfIvh8oR6BOWB4l9F3Og+0wuxLqlqhQ06w==}
     cpu: [arm]
     os: [linux]
 
-  '@dbmate/linux-ia32@2.32.0':
-    resolution: {integrity: sha512-fOTCnIbejqDHCu6J4DuBSakYexEszqQfmVwlabScG+nhbrKMOCV4ugkbkBhdjIRaH+ulIiFFSDwRQ6xmJ91dDQ==}
+  '@dbmate/linux-ia32@2.35.0':
+    resolution: {integrity: sha512-xyvckTGsP+o7k7aJubQHScFRJf7zcz1rqin0QNMYDVCpPUTVMHL/2Vhjjgls50BvwQKOVlVNCC4/nLuOX9+iQA==}
     cpu: [ia32]
     os: [linux]
 
-  '@dbmate/linux-x64@2.32.0':
-    resolution: {integrity: sha512-PPmRSfAcy20jku/p0bhnmKZi/R8cFRPIWeDVOhuZPFM9s06FM+EtwhtO21ZORqYN3hvExhZ6y3dbY8fkNf616Q==}
+  '@dbmate/linux-x64@2.35.0':
+    resolution: {integrity: sha512-oF88oEwEX8pZGuU6f1Zqevqrz0rH2tiUQG7cUmCfJ/VTkWmWVzEQ8yleMwvL8iWJUHgcXotPnQy++JSQhuaB9Q==}
     cpu: [x64]
     os: [linux]
 
-  '@dbmate/win32-x64@2.32.0':
-    resolution: {integrity: sha512-rG0oMjOrPagGq9S/LY79hdEx3fNGiysFo5qrZmMELr3Cb/uxswY8elK3vKKiGsIFMX7NUby49RpxD1pCjE+zRQ==}
+  '@dbmate/win32-x64@2.35.0':
+    resolution: {integrity: sha512-/etcU66AA/kLnyhj098SlD9dkDhurDdybjPty3yhdp41Aymoi3oEu9lcoGzj+zPDeND4dJfJG95hV0+bQ4ZiwQ==}
     cpu: [x64]
     os: [win32]
 
@@ -3253,8 +3253,8 @@ packages:
   dateformat@4.6.3:
     resolution: {integrity: sha512-2P0p0pFGzHS5EMnhdxQi7aJN+iMheud0UhG4dlE1DLAlvL8JHjJJTX/CSm4JXwV0Ka5nGk3zC5mcb5bUQUxxMA==}
 
-  dbmate@2.32.0:
-    resolution: {integrity: sha512-UxIXGs8aRKMEhotn9mzOOI+Cswfazy/zE52xQNsLz+OM5nn5C+H/Av/SnHyUsRG/nhelbgv9mXBS76ish1AyNw==}
+  dbmate@2.35.0:
+    resolution: {integrity: sha512-BqVpyxFZyaCOOHfB1LHgh5FzgthU719lzaWKPRhXj8s3rJtCseeVw5WfzYm8haF9Dx0UhNu0RtCaEouoexW1Gg==}
     hasBin: true
 
   debug@4.4.3:
@@ -5961,25 +5961,25 @@ snapshots:
     dependencies:
       '@jridgewell/trace-mapping': 0.3.9
 
-  '@dbmate/darwin-arm64@2.32.0':
+  '@dbmate/darwin-arm64@2.35.0':
     optional: true
 
-  '@dbmate/darwin-x64@2.32.0':
+  '@dbmate/darwin-x64@2.35.0':
     optional: true
 
-  '@dbmate/linux-arm64@2.32.0':
+  '@dbmate/linux-arm64@2.35.0':
     optional: true
 
-  '@dbmate/linux-arm@2.32.0':
+  '@dbmate/linux-arm@2.35.0':
     optional: true
 
-  '@dbmate/linux-ia32@2.32.0':
+  '@dbmate/linux-ia32@2.35.0':
     optional: true
 
-  '@dbmate/linux-x64@2.32.0':
+  '@dbmate/linux-x64@2.35.0':
     optional: true
 
-  '@dbmate/win32-x64@2.32.0':
+  '@dbmate/win32-x64@2.35.0':
     optional: true
 
   '@derhuerst/br2nl@1.0.0': {}
@@ -9601,15 +9601,15 @@ snapshots:
 
   dateformat@4.6.3: {}
 
-  dbmate@2.32.0:
+  dbmate@2.35.0:
     optionalDependencies:
-      '@dbmate/darwin-arm64': 2.32.0
-      '@dbmate/darwin-x64': 2.32.0
-      '@dbmate/linux-arm': 2.32.0
-      '@dbmate/linux-arm64': 2.32.0
-      '@dbmate/linux-ia32': 2.32.0
-      '@dbmate/linux-x64': 2.32.0
-      '@dbmate/win32-x64': 2.32.0
+      '@dbmate/darwin-arm64': 2.35.0
+      '@dbmate/darwin-x64': 2.35.0
+      '@dbmate/linux-arm': 2.35.0
+      '@dbmate/linux-arm64': 2.35.0
+      '@dbmate/linux-ia32': 2.35.0
+      '@dbmate/linux-x64': 2.35.0
+      '@dbmate/win32-x64': 2.35.0
 
   debug@4.4.3(supports-color@8.1.1):
     dependencies:
