@@ -55,7 +55,7 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
     "cron": "^4.4.0",
-    "dbmate": "^2.32.0",
+    "dbmate": "^2.34.1",
     "fast-csv": "^5.0.7",
     "gtfs-realtime-bindings": "^1.1.1",
     "hafas-client": "^6.3.6",
@@ -77,8 +77,8 @@
     "proxy-addr": "^2.0.7",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
-    "unzipper": "^0.12.3",
-    "ws": "^8.21.0",
+    "unzipper": "^0.12.5",
+    "ws": "^8.21.1",
     "zod": "^3.25.76",
     "zod-validation-error": "^5.0.0"
   },
@@ -91,8 +91,8 @@
     "@pgtyped/cli": "^2.4.3",
     "@swc/cli": "^0.8.1",
     "@swc/core": "^1.15.47",
-    "@testcontainers/postgresql": "^12.0.4",
-    "@testcontainers/redis": "^12.0.4",
+    "@testcontainers/postgresql": "^12.1.0",
+    "@testcontainers/redis": "^12.1.0",
     "@tsconfig/node24": "^24.0.4",
     "@types/archiver": "^7.0.0",
     "@types/express": "^5.0.6",
@@ -116,7 +116,7 @@
     "eslint-plugin-prettier": "^5.5.6",
     "express": "^5.2.1",
     "fast-check": "^4.8.0",
-    "globals": "^17.4.0",
+    "globals": "^17.9.0",
     "husky": "^9.1.7",
     "msw": "^2.15.0",
     "prettier": "^3.9.5",
@@ -131,6 +131,6 @@
     "typescript": "^5.9.3",
     "unplugin-swc": "^1.5.9",
     "vitest": "^4.1.10",
-    "vitest-mock-extended": "^5.0.0"
+    "vitest-mock-extended": "^5.1.1"
   }
 }
