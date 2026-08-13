@@ -692,3 +692,19 @@ feeds:
       rtTripUpdates:
         url: https://gtfsbridge.spokanetransit.com/realtime/TripUpdate/TripUpdates.pb
 ```
+
+## Metro Transit
+
+Minneapolis-St. Paul, Minnesota, USA
+
+```yaml
+feeds:
+  msp:
+    name: Metro Transit
+    description: Minneapolis-St. Paul, Minnesota, USA
+    gtfs:
+      static:
+        url: https://svc.metrotransit.org/mtgtfs/gtfs.zip
+      rtTripUpdates:
+        url: https://svc.metrotransit.org/mtgtfs/tripupdates.pb
+```
