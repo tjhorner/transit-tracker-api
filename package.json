@@ -90,7 +90,7 @@
     "@nestjs/testing": "11.1.28",
     "@pgtyped/cli": "^2.4.3",
     "@swc/cli": "^0.8.1",
-    "@swc/core": "^1.15.47",
+    "@swc/core": "^1.16.0",
     "@testcontainers/postgresql": "^12.1.0",
     "@testcontainers/redis": "^12.1.0",
     "@tsconfig/node24": "^24.0.4",
@@ -129,7 +129,7 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
-    "unplugin-swc": "^1.5.9",
+    "unplugin-swc": "^1.5.11",
     "vitest": "^4.1.10",
     "vitest-mock-extended": "^5.1.1"
   }
