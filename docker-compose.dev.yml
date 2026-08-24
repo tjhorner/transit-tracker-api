@@ -1,6 +1,8 @@
 services:
   postgres:
-    image: postgres:18
+    build:
+      context: .
+      dockerfile: deploy/db/Dockerfile
     ports:
       - "5432:5432"
     environment:
