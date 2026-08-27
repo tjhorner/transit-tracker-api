@@ -108,7 +108,7 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.67.0",
     "@typescript-eslint/parser": "^8.67.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitest/coverage-v8": "^4.1.11",
     "archiver": "^7.0.1",
     "eslint": "^10.9.0",
     "eslint-config-prettier": "^10.1.8",
@@ -129,7 +129,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "unplugin-swc": "^1.5.11",
-    "vitest": "^4.1.10",
+    "vitest": "^4.1.11",
     "vitest-mock-extended": "^5.1.1"
   }
 }
