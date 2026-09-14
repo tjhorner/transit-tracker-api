@@ -1,4 +1,6 @@
 import { transit_realtime as GtfsRt } from "gtfs-realtime-bindings"
+import { readFileSync } from "node:fs"
+import { join } from "node:path"
 import { decodeTripUpdatesOnly } from "src/modules/feed/modules/gtfs/decode-trip-updates"
 import { describe, expect, it } from "vitest"
 
@@ -33,15 +35,16 @@ describe("decodeTripUpdatesOnly", () => {
       },
     ])
 
-    const result = decodeTripUpdatesOnly(data)
-    expect(result).toHaveLength(1)
-    expect(result[0].trip?.tripId).toBe("trip-1")
-    expect(result[0].trip?.startDate).toBe("20260331")
-    expect(result[0].stopTimeUpdate).toHaveLength(1)
-    expect(result[0].stopTimeUpdate![0].stopSequence).toBe(5)
-    expect(result[0].stopTimeUpdate![0].stopId).toBe("stop-A")
-    expect(result[0].stopTimeUpdate![0].arrival?.delay).toBe(120)
-    expect(result[0].stopTimeUpdate![0].departure?.delay).toBe(130)
+    const { tripUpdates, truncated } = decodeTripUpdatesOnly(data)
+    expect(truncated).toBe(false)
+    expect(tripUpdates).toHaveLength(1)
+    expect(tripUpdates[0].trip?.tripId).toBe("trip-1")
+    expect(tripUpdates[0].trip?.startDate).toBe("20260331")
+    expect(tripUpdates[0].stopTimeUpdate).toHaveLength(1)
+    expect(tripUpdates[0].stopTimeUpdate![0].stopSequence).toBe(5)
+    expect(tripUpdates[0].stopTimeUpdate![0].stopId).toBe("stop-A")
+    expect(tripUpdates[0].stopTimeUpdate![0].arrival?.delay).toBe(120)
+    expect(tripUpdates[0].stopTimeUpdate![0].departure?.delay).toBe(130)
   })
 
   it("should skip vehicle position entities", () => {
@@ -55,8 +58,8 @@ describe("decodeTripUpdatesOnly", () => {
       },
     ])
 
-    const result = decodeTripUpdatesOnly(data)
-    expect(result).toHaveLength(0)
+    const { tripUpdates } = decodeTripUpdatesOnly(data)
+    expect(tripUpdates).toHaveLength(0)
   })
 
   it("should skip alert entities", () => {
@@ -71,8 +74,8 @@ describe("decodeTripUpdatesOnly", () => {
       },
     ])
 
-    const result = decodeTripUpdatesOnly(data)
-    expect(result).toHaveLength(0)
+    const { tripUpdates } = decodeTripUpdatesOnly(data)
+    expect(tripUpdates).toHaveLength(0)
   })
 
   it("should extract only trip updates from a mixed feed", () => {
@@ -117,16 +120,17 @@ describe("decodeTripUpdatesOnly", () => {
       },
     ])
 
-    const result = decodeTripUpdatesOnly(data)
-    expect(result).toHaveLength(2)
-    expect(result[0].trip?.tripId).toBe("tu-1")
-    expect(result[1].trip?.tripId).toBe("tu-2")
+    const { tripUpdates } = decodeTripUpdatesOnly(data)
+    expect(tripUpdates).toHaveLength(2)
+    expect(tripUpdates[0].trip?.tripId).toBe("tu-1")
+    expect(tripUpdates[1].trip?.tripId).toBe("tu-2")
   })
 
   it("should return empty array for an empty feed", () => {
     const data = encodeFeedMessage([])
-    const result = decodeTripUpdatesOnly(data)
-    expect(result).toHaveLength(0)
+    const { tripUpdates, truncated } = decodeTripUpdatesOnly(data)
+    expect(tripUpdates).toHaveLength(0)
+    expect(truncated).toBe(false)
   })
 
   it("should handle absolute time values as numbers", () => {
@@ -149,11 +153,15 @@ describe("decodeTripUpdatesOnly", () => {
       },
     ])
 
-    const result = decodeTripUpdatesOnly(data)
-    expect(result).toHaveLength(1)
-    expect(result[0].stopTimeUpdate![0].arrival?.time).toBe(arrivalTime)
-    expect(result[0].stopTimeUpdate![0].departure?.time).toBe(departureTime)
-    expect(typeof result[0].stopTimeUpdate![0].arrival?.time).toBe("number")
+    const { tripUpdates } = decodeTripUpdatesOnly(data)
+    expect(tripUpdates).toHaveLength(1)
+    expect(tripUpdates[0].stopTimeUpdate![0].arrival?.time).toBe(arrivalTime)
+    expect(tripUpdates[0].stopTimeUpdate![0].departure?.time).toBe(
+      departureTime,
+    )
+    expect(typeof tripUpdates[0].stopTimeUpdate![0].arrival?.time).toBe(
+      "number",
+    )
   })
 
   it("should handle schedule relationship fields", () => {
@@ -177,13 +185,26 @@ describe("decodeTripUpdatesOnly", () => {
       },
     ])
 
-    const result = decodeTripUpdatesOnly(data)
-    expect(result).toHaveLength(1)
-    expect(result[0].trip?.scheduleRelationship).toBe(
+    const { tripUpdates } = decodeTripUpdatesOnly(data)
+    expect(tripUpdates).toHaveLength(1)
+    expect(tripUpdates[0].trip?.scheduleRelationship).toBe(
       GtfsRt.TripDescriptor.ScheduleRelationship.CANCELED,
     )
-    expect(result[0].stopTimeUpdate![0].scheduleRelationship).toBe(
+    expect(tripUpdates[0].stopTimeUpdate![0].scheduleRelationship).toBe(
       GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED,
     )
+  })
+
+  it("should recover complete entities and flag truncation for a truncated feed response", () => {
+    const data = readFileSync(
+      join(__dirname, "__fixtures__/sta-trip-updates-truncated.pb"),
+    )
+
+    const { tripUpdates, truncated } = decodeTripUpdatesOnly(
+      new Uint8Array(data),
+    )
+    expect(truncated).toBe(true)
+    expect(tripUpdates.length).toBe(357)
+    expect(tripUpdates.every((tu) => tu.trip?.tripId)).toBe(true)
   })
 })

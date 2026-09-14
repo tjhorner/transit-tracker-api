@@ -29,6 +29,7 @@ export class GtfsRealtimeService {
   private readonly config: GtfsConfig
   private readonly requestsCounter: Counter
   private readonly failuresCounter: Counter
+  private readonly partialDecodesCounter: Counter
 
   constructor(
     @Inject(FEED_CONTEXT) { feedCode, config }: FeedContext<GtfsConfig>,
@@ -49,6 +50,15 @@ export class GtfsRealtimeService {
       description: "Number of GTFS-RT fetch failures",
       unit: "failures",
     })
+
+    this.partialDecodesCounter = metricService.getCounter(
+      "gtfs_realtime_partial_decodes",
+      {
+        description:
+          "Number of GTFS-RT responses that were truncated and only partially decoded",
+        unit: "decodes",
+      },
+    )
   }
 
   async getTripUpdates(
@@ -128,9 +138,19 @@ export class GtfsRealtimeService {
             }
 
             const arrayBuffer = await resp.arrayBuffer()
-            const tripUpdates = decodeTripUpdatesOnly(
+            const { tripUpdates, truncated } = decodeTripUpdatesOnly(
               new Uint8Array(arrayBuffer),
             )
+
+            if (truncated) {
+              this.logger.warn(
+                { url: config.url, entitiesRecovered: tripUpdates.length },
+                "GTFS-RT response was truncated; using partially decoded trip updates",
+              )
+              this.partialDecodesCounter.add(1, {
+                feed_code: this.feedCode,
+              })
+            }
 
             return {
               value: tripUpdates,

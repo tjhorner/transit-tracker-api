@@ -8,41 +8,65 @@ type ITripUpdate = GtfsRt.ITripUpdate
 const FEED_MESSAGE_ENTITY = 2 // FeedMessage.entity
 const FEED_ENTITY_TRIP_UPDATE = 3 // FeedEntity.trip_update
 
+export interface DecodeTripUpdatesResult {
+  tripUpdates: ITripUpdate[]
+  truncated: boolean
+}
+
 /**
  * Selectively decodes only TripUpdate entities from a GTFS-RT FeedMessage,
  * skipping VehiclePosition and Alert entities at the wire format level to
  * avoid unnecessary deserialization.
  */
-export function decodeTripUpdatesOnly(data: Uint8Array): ITripUpdate[] {
+export function decodeTripUpdatesOnly(
+  data: Uint8Array,
+): DecodeTripUpdatesResult {
   const reader = protobuf.Reader.create(data)
   const end = reader.len
   const tripUpdates: ITripUpdate[] = []
+  let truncated = false
 
   while (reader.pos < end) {
-    const tag = reader.uint32()
-    const fieldNumber = tag >>> 3
-    const wireType = tag & 7
+    const fieldStart = reader.pos
 
-    switch (fieldNumber) {
-      case FEED_MESSAGE_ENTITY: {
-        const entityLength = reader.uint32()
-        const entityEnd = reader.pos + entityLength
-        const tripUpdate = decodeEntityTripUpdate(reader, entityEnd)
-        if (tripUpdate) {
-          tripUpdates.push(tripUpdate)
+    try {
+      const tag = reader.uint32()
+      const fieldNumber = tag >>> 3
+      const wireType = tag & 7
+
+      switch (fieldNumber) {
+        case FEED_MESSAGE_ENTITY: {
+          const entityLength = reader.uint32()
+          const entityEnd = reader.pos + entityLength
+          if (entityEnd > end) {
+            throw new RangeError("entity length runs past end of buffer")
+          }
+          const tripUpdate = decodeEntityTripUpdate(reader, entityEnd)
+          if (tripUpdate) {
+            tripUpdates.push(tripUpdate)
+          }
+          // Ensure we're at the end of this entity even if decoding stopped early
+          reader.pos = entityEnd
+          break
         }
-        // Ensure we're at the end of this entity even if decoding stopped early
-        reader.pos = entityEnd
-        break
+        default:
+          // Skip header (field 1) and any unknown fields
+          reader.skipType(wireType)
+          break
       }
-      default:
-        // Skip header (field 1) and any unknown fields
-        reader.skipType(wireType)
-        break
+    } catch (err) {
+      if (!(err instanceof RangeError)) {
+        throw err
+      }
+      // The buffer ended mid-field. Everything decoded before fieldStart
+      // is still complete, valid data, so stop here and use that.
+      reader.pos = fieldStart
+      truncated = true
+      break
     }
   }
 
-  return tripUpdates
+  return { tripUpdates, truncated }
 }
 
 function decodeEntityTripUpdate(
