@@ -676,6 +676,52 @@ describe("GTFS E2E test", () => {
         ).toBe(false)
       })
 
+      test("with fallback stop time update having NO_DATA", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "CITY1",
+              startDate: "20080104",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopSequence: 1,
+                arrival: {
+                  delay: 60,
+                },
+              },
+              {
+                stopSequence: 2,
+                scheduleRelationship:
+                  GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA,
+                arrival: {
+                  delay: 90, // More recent delay
+                },
+              },
+            ],
+            vehicle: {
+              id: "53967",
+              label: "1594",
+            },
+          },
+        ])
+
+        const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
+        const trip = trips.find((trip) => trip.tripId === "testfeed:CITY1")
+        expect(trip).toBeDefined()
+
+        // Should use the 60s delay from stop sequence 1
+        // since stop sequence 2 has NO_DATA and should be ignored
+        const scheduledTimeArrivalTime = 1199455920
+        const scheduledDepartureTime = 1199456040
+        expect(trip!.arrivalTime).toBe(scheduledTimeArrivalTime + 60)
+        expect(trip!.departureTime).toBe(scheduledDepartureTime + 60)
+        expect(trip!.vehicle).toBe("1594")
+        expect(trip!.isRealtime).toBe(true)
+      })
+
       test("with skipped stop by stop_id", async () => {
         fakeGtfs.setTripUpdates([
           {
