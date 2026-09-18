@@ -332,6 +332,13 @@ export class GtfsRealtimeService {
       }
     }
 
+    if (
+      stopTimeUpdate?.scheduleRelationship ===
+      GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA
+    ) {
+      stopTimeUpdate = undefined
+    }
+
     const vehicle = tripUpdate?.vehicle?.label ?? null
 
     return { tripUpdate, stopTimeUpdate, vehicle }

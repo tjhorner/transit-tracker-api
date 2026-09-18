@@ -651,6 +651,31 @@ describe("GTFS E2E test", () => {
         expect(overnightTrips[1].isRealtime).toBe(false)
       })
 
+      test("with stop time update having NO_DATA", async () => {
+        fakeGtfs.setTripUpdates([
+          {
+            trip: {
+              tripId: "AAMV2",
+              startDate: "20080105",
+              scheduleRelationship:
+                GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+            },
+            stopTimeUpdate: [
+              {
+                stopId: "BEATTY_AIRPORT",
+                scheduleRelationship:
+                  GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA,
+              },
+            ],
+          },
+        ])
+
+        const trips = await getTripSchedule()
+        expect(
+          trips.find((trip) => trip.tripId === "testfeed:AAMV2")?.isRealtime,
+        ).toBe(false)
+      })
+
       test("with skipped stop by stop_id", async () => {
         fakeGtfs.setTripUpdates([
           {
