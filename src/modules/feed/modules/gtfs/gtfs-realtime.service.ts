@@ -303,8 +303,10 @@ export class GtfsRealtimeService {
 
     let stopTimeUpdate = tripUpdate?.stopTimeUpdate?.find(
       (update) =>
-        update.stopSequence === trip.stop_sequence ||
-        update.stopId === trip.stop_id,
+        update.scheduleRelationship !==
+          GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA &&
+        (update.stopSequence === trip.stop_sequence ||
+          update.stopId === trip.stop_id),
     )
 
     // If no exact match, find the latest stop update before our stop as fallback
@@ -312,6 +314,8 @@ export class GtfsRealtimeService {
       const previousStopUpdates = tripUpdate.stopTimeUpdate
         .filter(
           (update) =>
+            update.scheduleRelationship !==
+              GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA &&
             typeof update.stopSequence === "number" &&
             update.stopSequence < trip.stop_sequence,
         )
@@ -330,13 +334,6 @@ export class GtfsRealtimeService {
           },
         }
       }
-    }
-
-    if (
-      stopTimeUpdate?.scheduleRelationship ===
-      GtfsRt.TripUpdate.StopTimeUpdate.ScheduleRelationship.NO_DATA
-    ) {
-      stopTimeUpdate = undefined
     }
 
     const vehicle = tripUpdate?.vehicle?.label ?? null
