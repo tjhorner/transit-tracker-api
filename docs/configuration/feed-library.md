@@ -708,3 +708,231 @@ feeds:
       rtTripUpdates:
         url: https://svc.metrotransit.org/mtgtfs/tripupdates.pb
 ```
+
+## CapMetro
+
+Austin, Texas, USA
+
+```yaml
+feeds:
+  capmetro:
+    name: CapMetro
+    description: Austin, Texas, USA
+    gtfs:
+      static:
+        url: https://data.texas.gov/download/r4v4-vz24/application/zip
+      rtTripUpdates:
+        url: https://data.texas.gov/download/rmk2-acnw/application%2Foctet-stream
+```
+
+## MTA Metro-North Railroad
+
+New York, USA
+
+```yaml
+feeds:
+  mnr:
+    name: MTA Metro-North Railroad
+    description: New York, USA
+    gtfs:
+      static:
+        url: https://rrgtfsfeeds.s3.amazonaws.com/gtfsmnr.zip
+      rtTripUpdates:
+        url: https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/mnr%2Fgtfs-mnr
+```
+
+## MTA Long Island Rail Road
+
+New York, USA
+
+```yaml
+feeds:
+  lirr:
+    name: MTA Long Island Rail Road
+    description: New York, USA
+    gtfs:
+      static:
+        url: https://rrgtfsfeeds.s3.amazonaws.com/gtfslirr.zip
+      rtTripUpdates:
+        url: https://api-endpoint.mta.info/Dataservice/mtagtfsfeeds/lirr%2Fgtfs-lirr
+```
+
+## Champaign-Urbana Mass Transit District
+
+Champaign, Illinois, USA
+
+```yaml
+feeds:
+  cumtd:
+    name: Champaign-Urbana Mass Transit District
+    description: Champaign, Illinois, USA
+    gtfs:
+      static:
+        url: http://developer.cumtd.com/gtfs/google_transit.zip
+```
+
+## Maryland Transit Administration - Local Bus
+
+Maryland, USA
+
+> **Requires an API key.** [Request one with Swiftly's form](https://docs.google.com/forms/d/e/1FAIpQLScy9Jye91QPSTS3WVEU-13es0A1rT9Ep5JhAmXUZEiop7fmIw/viewform).
+
+```yaml
+feeds:
+  mdtabus:
+    name: Maryland Transit Administration - Local Bus
+    description: Maryland, USA
+    gtfs:
+      static:
+        url: https://feeds.mta.maryland.gov/gtfs/local-bus
+      rtTripUpdates:
+        url: https://api.goswift.ly/real-time/mta-maryland/gtfs-rt-trip-updates
+        headers:
+          Authorization: YOUR_API_KEY
+```
+
+## Maryland Transit Administration - Commuter Bus
+
+Maryland, USA
+
+> **Requires an API key.** [Request one with Swiftly's form](https://docs.google.com/forms/d/e/1FAIpQLScy9Jye91QPSTS3WVEU-13es0A1rT9Ep5JhAmXUZEiop7fmIw/viewform).
+
+```yaml
+feeds:
+  mdtacbus:
+    name: Maryland Transit Administration - Commuter Bus
+    description: Maryland, USA
+    gtfs:
+      static:
+        url: https://feeds.mta.maryland.gov/gtfs/commuter-bus
+      rtTripUpdates:
+        url: https://api.goswift.ly/real-time/mta-maryland-commuter-bus/gtfs-rt-trip-updates
+        headers:
+          Authorization: YOUR_API_KEY
+```
+
+## Maryland Transit Administration - MARC Train
+
+Maryland, USA
+
+```yaml
+feeds:
+  mdtamarc:
+    name: Maryland Transit Administration - MARC Train
+    description: Maryland, USA
+    gtfs:
+      static:
+        url: https://feeds.mta.maryland.gov/gtfs/marc
+      rtTripUpdates:
+        url: https://mdotmta-gtfs-rt.s3.amazonaws.com/MARC%20RT/marc-tu.pb
+```
+
+## Maryland Transit Administration - Metro SubwayLink
+
+Maryland, USA
+
+> **Requires an API key.** [Request one with Swiftly's form](https://docs.google.com/forms/d/e/1FAIpQLScy9Jye91QPSTS3WVEU-13es0A1rT9Ep5JhAmXUZEiop7fmIw/viewform).
+
+```yaml
+feeds:
+  mdtametro:
+    name: Maryland Transit Administration - Metro SubwayLink
+    description: Maryland, USA
+    gtfs:
+      static:
+        url: https://feeds.mta.maryland.gov/gtfs/metro
+      rtTripUpdates:
+        url: https://api.goswift.ly/real-time/mta-maryland-metro/gtfs-rt-trip-updates
+        headers:
+          Authorization: YOUR_API_KEY
+```
+
+## Maryland Transit Administration - Light RailLink
+
+Maryland, USA
+
+> **Requires an API key.** [Request one with Swiftly's form](https://docs.google.com/forms/d/e/1FAIpQLScy9Jye91QPSTS3WVEU-13es0A1rT9Ep5JhAmXUZEiop7fmIw/viewform).
+
+```yaml
+feeds:
+  mdtalr:
+    name: Maryland Transit Administration - Light RailLink
+    description: Maryland, USA
+    gtfs:
+      static:
+        url: https://feeds.mta.maryland.gov/gtfs/light-rail
+      rtTripUpdates:
+        url: https://api.goswift.ly/real-time/mta-maryland-light-rail/gtfs-rt-trip-updates
+        headers:
+          Authorization: YOUR_API_KEY
+```
+
+## The Bus
+
+Prince George's County, Maryland, USA
+
+> **Requires an API key.** [Request one with Swiftly's form](https://docs.google.com/forms/d/e/1FAIpQLScy9Jye91QPSTS3WVEU-13es0A1rT9Ep5JhAmXUZEiop7fmIw/viewform).
+
+```yaml
+feeds:
+  pgcthebus:
+    name: The Bus
+    description: Prince George's County, Maryland, USA
+    gtfs:
+      static:
+        url: https://data.trilliumtransit.com/gtfs/princegeorgescounty-md-us/princegeorgescounty-md-us.zip
+      rtTripUpdates:
+        url: https://api.goswift.ly/real-time/prince-george-thebus/gtfs-rt-trip-updates
+        headers:
+          Authorization: YOUR_API_KEY
+```
+
+## Ride On
+
+Montgomery County, Maryland, USA
+
+```yaml
+feeds:
+  rideon:
+    name: Ride On
+    description: Montgomery County, Maryland, USA
+    gtfs:
+      static:
+        url: https://www.montgomerycountymd.gov/DOT-Transit/Resources/Files/GTFS/RideOnGTFS.zip
+```
+
+## Regional Transportation Agency of Central Maryland
+
+Central Maryland, USA
+
+> **Requires an API key.** [Request one with Swiftly's form](https://docs.google.com/forms/d/e/1FAIpQLScy9Jye91QPSTS3WVEU-13es0A1rT9Ep5JhAmXUZEiop7fmIw/viewform).
+
+```yaml
+feeds:
+  rtacmd:
+    name: Regional Transportation Agency of Central Maryland
+    description: Central Maryland, USA
+    gtfs:
+      static:
+        url: https://data.trilliumtransit.com/gtfs/centralmarylandrta-md-us/centralmarylandrta-md-us.zip
+      rtTripUpdates:
+        url: https://api.goswift.ly/real-time/rtamaryland/gtfs-rt-trip-updates
+        headers:
+          Authorization: YOUR_API_KEY
+```
+
+## Charm City Circulator
+
+Baltimore, Maryland, USA
+
+```yaml
+feeds:
+  charmcity:
+    name: Charm City Circulator
+    description: Baltimore, Maryland, USA
+    gtfs:
+      static:
+        url: https://passio3.com/charmcity/passioTransit/gtfs/google_transit.zip
+      rtTripUpdates:
+        url: https://passio3.com/charmcity/passioTransit/gtfs/realtime/tripUpdates
+```
