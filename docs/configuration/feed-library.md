@@ -768,7 +768,9 @@ feeds:
     description: Champaign, Illinois, USA
     gtfs:
       static:
-        url: http://developer.cumtd.com/gtfs/google_transit.zip
+        url: https://mtd.dev/gtfs.zip
+      rtTripUpdates:
+        url: https://gtfs-rt.mtd.org/trip-updates
 ```
 
 ## Maryland Transit Administration - Local Bus
