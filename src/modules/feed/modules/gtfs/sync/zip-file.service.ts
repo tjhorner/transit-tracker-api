@@ -1,8 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common"
+import { createWriteStream } from "fs"
 import fs from "fs/promises"
 import { tmpdir } from "node:os"
 import path from "node:path"
 import { Readable } from "node:stream"
+import { pipeline } from "node:stream/promises"
 import * as unzipper from "unzipper"
 import { FetchConfig } from "../config"
 import { EmptyResponseBodyError, UpstreamHttpError } from "../gtfs.errors"
@@ -65,25 +67,22 @@ export class ZipFileService {
       throw new EmptyResponseBodyError()
     }
 
-    const nodeStream = Readable.fromWeb(response.body as any)
-    const extractor = unzipper.Extract({ path: destinationPath })
+    const zipTempPath = path.join(
+      tmpdir(),
+      `gtfs-zip-${Date.now()}-${Math.random().toString(36).substring(2, 15)}.zip`,
+    )
 
-    await new Promise<void>((resolve, reject) => {
-      nodeStream.pipe(extractor)
+    try {
+      await pipeline(
+        Readable.fromWeb(response.body as any),
+        createWriteStream(zipTempPath),
+      )
 
-      let error: any = null
-      extractor.on("error", (err) => {
-        error = err
-        extractor.end()
-        reject(err)
-      })
-
-      extractor.on("close", () => {
-        if (!error) {
-          resolve()
-        }
-      })
-    })
+      const archive = await unzipper.Open.file(zipTempPath)
+      await archive.extract({ path: destinationPath })
+    } finally {
+      await fs.rm(zipTempPath, { force: true })
+    }
 
     await this.flattenDirectory(destinationPath)
   }
