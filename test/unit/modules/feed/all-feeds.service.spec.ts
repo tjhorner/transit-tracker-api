@@ -38,7 +38,7 @@ describe("AllFeedsService", () => {
       async (feedCode: string) =>
         mockFeedProviders[feedCode]?.getAgencyBounds
           ? turf.bboxPolygon(
-              await mockFeedProviders[feedCode].getAgencyBounds(),
+              (await mockFeedProviders[feedCode].getAgencyBounds()) as BBox,
             )
           : Promise.resolve(turf.bboxPolygon([-180, -90, 180, 90])),
     )
@@ -97,6 +97,7 @@ describe("AllFeedsService", () => {
           stopName: "Stop 1",
           arrivalTime: new Date(),
           departureTime: new Date(),
+          directionId: null,
           vehicle: null,
           isRealtime: true,
         },
@@ -113,6 +114,7 @@ describe("AllFeedsService", () => {
           stopName: "Stop 2",
           arrivalTime: new Date(),
           departureTime: new Date(),
+          directionId: null,
           vehicle: null,
           isRealtime: false,
         },

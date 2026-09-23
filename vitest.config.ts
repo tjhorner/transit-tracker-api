@@ -15,6 +15,10 @@ export default defineConfig({
         test: {
           name: "unit",
           include: ["test/unit/**/*.spec.ts"],
+          typecheck: {
+            enabled: true,
+            include: ["test/unit/**/*.spec.ts"],
+          },
           setupFiles: ["./test/unit/setup.ts"],
         },
       },
@@ -23,6 +27,10 @@ export default defineConfig({
         test: {
           name: "e2e",
           include: ["test/e2e/**/*.spec.ts"],
+          typecheck: {
+            enabled: true,
+            include: ["test/e2e/**/*.spec.ts"],
+          },
         },
       },
     ],

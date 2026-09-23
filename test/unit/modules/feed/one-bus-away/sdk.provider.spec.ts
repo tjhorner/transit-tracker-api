@@ -2,7 +2,10 @@ import { Test } from "@nestjs/testing"
 import OnebusawaySDK from "onebusaway-sdk"
 import { FEED_CONTEXT } from "src/modules/feed/feed-context"
 import { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface"
-import { OneBusAwayConfig } from "src/modules/feed/modules/one-bus-away/config"
+import {
+  OneBusAwayConfig,
+  OneBusAwayConfigSchema,
+} from "src/modules/feed/modules/one-bus-away/config"
 import { OneBusAwayInstrumentationService } from "src/modules/feed/modules/one-bus-away/instrumentation.service"
 import { oneBusAwaySdkProvider } from "src/modules/feed/modules/one-bus-away/sdk.provider"
 import { mock } from "vitest-mock-extended"
@@ -10,10 +13,10 @@ import { mock } from "vitest-mock-extended"
 describe("oneBusAwaySdkProvider", () => {
   const feedContext: FeedContext<OneBusAwayConfig> = {
     feedCode: "testfeed",
-    config: {
+    config: OneBusAwayConfigSchema.parse({
       apiKey: "TEST_API_KEY",
       baseUrl: "https://api.example.com/api",
-    },
+    }),
   }
 
   it("creates a OnebusawaySDK instance with correct configuration", async () => {
