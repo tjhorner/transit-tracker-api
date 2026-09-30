@@ -108,7 +108,7 @@
     "@types/ws": "^8.18.1",
     "@typescript-eslint/eslint-plugin": "^8.70.0",
     "@typescript-eslint/parser": "^8.70.0",
-    "@vitest/coverage-v8": "^4.1.11",
+    "@vitest/coverage-v8": "^5.0.2",
     "archiver": "^7.0.1",
     "eslint": "^10.10.0",
     "eslint-config-prettier": "^10.1.8",
@@ -121,7 +121,7 @@
     "prettier": "^3.9.6",
     "prettier-plugin-organize-imports": "^4.3.0",
     "source-map-support": "^0.5.21",
-    "supertest": "^7.2.2",
+    "supertest": "^7.3.0",
     "superwstest": "^3.0.0",
     "ts-essentials": "^10.2.1",
     "ts-loader": "^9.6.2",
@@ -129,7 +129,7 @@
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.9.3",
     "unplugin-swc": "^1.6.0",
-    "vitest": "^4.1.11",
+    "vitest": "^5.0.2",
     "vitest-mock-extended": "^5.1.1"
   }
 }
