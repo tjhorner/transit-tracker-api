@@ -309,16 +309,6 @@ export class GtfsSyncService {
       ),
     )
 
-    const outputCsv = fs
-      .createReadStream(filePath)
-      .pipe(csv.parse(CSV_PARSE_OPTIONS))
-      .pipe(
-        csv.format({
-          headers: true,
-          transform: mapRow,
-        }),
-      )
-
     let importedRows = 0
     let lastLoggedCount = 0
     let lastLoggedAt = performance.now()
@@ -348,7 +338,12 @@ export class GtfsSyncService {
 
     try {
       await pipeline(
-        outputCsv,
+        fs.createReadStream(filePath),
+        csv.parse(CSV_PARSE_OPTIONS),
+        csv.format({
+          headers: true,
+          transform: mapRow,
+        }),
         async function* (source) {
           for await (const chunk of source) {
             const rows = chunk.toString().split("\n").length - 1
@@ -408,7 +403,8 @@ export class GtfsSyncService {
 
     const batch: any[] = []
     await pipeline(
-      fs.createReadStream(filePath).pipe(csv.parse(CSV_PARSE_OPTIONS)),
+      fs.createReadStream(filePath),
+      csv.parse(CSV_PARSE_OPTIONS),
       async (rows: AsyncIterable<any>) => {
         for await (const item of rows) {
           batch.push(mapRow(item))
