@@ -1,6 +1,6 @@
 FROM node:24-alpine AS base
 
-RUN npm i -g pnpm@11
+RUN npm i -g pnpm@11.28.6
 
 FROM base AS dependencies
 
