@@ -3,10 +3,24 @@ import { Counter, Histogram, ValueType } from "@opentelemetry/api"
 import { SentryTraced } from "@sentry/nestjs"
 import * as Sentry from "@sentry/node"
 import { Cacheable } from "cacheable"
+import ms from "ms"
 import { MetricService } from "nestjs-otel"
 import { DeepReadonly } from "ts-essentials"
 import { FEED_CONTEXT } from "../../feed-context"
 import type { FeedContext } from "../../interfaces/feed-provider.interface"
+
+const MIN_TTL_FOR_JITTER_MS = ms("1h")
+const TTL_JITTER_RATIO = 0.1
+
+/** Spreads out long TTLs so entries filled together don't all expire together (prevents query storms) */
+function withExpiryJitter(ttl: number | undefined): number | undefined {
+  if (ttl === undefined || ttl < MIN_TTL_FOR_JITTER_MS) {
+    return ttl
+  }
+
+  const jitterFactor = 1 + (Math.random() * 2 - 1) * TTL_JITTER_RATIO
+  return Math.round(ttl * jitterFactor)
+}
 
 @Injectable({ scope: Scope.REQUEST })
 export class FeedCacheService {
@@ -83,7 +97,11 @@ export class FeedCacheService {
       const result = await fn()
       if (result instanceof Object && "value" in result && "ttl" in result) {
         if (result.ttl > 0) {
-          this.cacheManager.set(cacheKey, result.value, result.ttl)
+          this.cacheManager.set(
+            cacheKey,
+            result.value,
+            withExpiryJitter(result.ttl),
+          )
         }
 
         this.cacheTtlMetric?.record(result.ttl, {
@@ -93,7 +111,7 @@ export class FeedCacheService {
         return result.value
       }
 
-      this.cacheManager.set(cacheKey, result, ttl)
+      this.cacheManager.set(cacheKey, result, withExpiryJitter(ttl))
 
       this.cacheTtlMetric?.record(ttl ?? 0, {
         feed_code: this.feedCode,
@@ -102,13 +120,9 @@ export class FeedCacheService {
       return result
     }
 
-    const promise = getValue()
+    const promise = getValue().finally(() => this.pendingCache.delete(key))
     this.pendingCache.set(key, promise)
 
-    try {
-      return promise as Promise<DeepReadonly<T>>
-    } finally {
-      this.pendingCache.delete(key)
-    }
+    return promise as Promise<DeepReadonly<T>>
   }
 }

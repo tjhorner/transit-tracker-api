@@ -22,7 +22,7 @@ export const oneBusAwaySdkProvider: FactoryProvider<OnebusawaySDK> = {
       apiKey: config.apiKey,
       baseURL: config.baseUrl,
       timeout: config.timeout,
-      maxRetries: 5,
+      maxRetries: 1,
       defaultQuery: {
         version: "2",
       },

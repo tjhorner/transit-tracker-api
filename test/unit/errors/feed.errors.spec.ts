@@ -1,5 +1,6 @@
 import { DomainError } from "src/errors/domain-error"
 import {
+  AllFeedsFailedError,
   FeedNotFoundError,
   FeedProviderNotFoundError,
   InvalidGlobalIdError,
@@ -25,6 +26,13 @@ describe("feed errors", () => {
 
   it("sets the error name to the subclass name", () => {
     expect(new StopNotFoundError("a:1").name).toBe("StopNotFoundError")
+  })
+
+  it("classifies every feed failing as an upstream error", () => {
+    const error = new AllFeedsFailedError(["sdmts", "nctd"])
+
+    expect(error.kind).toBe("upstream")
+    expect(error.message).toBe("All feeds failed to respond: sdmts, nctd")
   })
 
   it("classifies malformed input as invalidInput", () => {

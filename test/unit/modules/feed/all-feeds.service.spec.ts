@@ -1,6 +1,7 @@
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import { AllFeedsService } from "src/modules/feed/all-feeds.service"
+import { AllFeedsFailedError } from "src/modules/feed/feed.errors"
 import { FeedService } from "src/modules/feed/feed.service"
 import {
   FeedProvider,
@@ -256,6 +257,57 @@ describe("AllFeedsService", () => {
       expect(result).toHaveLength(2)
       expect(result[0].stopId).toBe("feed1:stop1")
       expect(result[1].stopId).toBe("feed2:stop2")
+    })
+
+    describe("when some feeds are unavailable", () => {
+      const bbox: BBox = [-123, 37, -122, 38]
+      const stop: Stop = {
+        stopId: "stop1",
+        stopCode: "S1",
+        name: "Stop 1",
+        lat: 37.5,
+        lon: -122.5,
+      }
+
+      it("should return stops from the remaining feeds when one fails", async () => {
+        // Arrange
+        mockFeedProvider1.getStopsInArea.mockResolvedValue([stop])
+        mockFeedProvider2.getStopsInArea.mockRejectedValue(
+          new Error("Request timed out."),
+        )
+
+        // Act
+        const result = await allFeedsService.getStopsInArea(bbox)
+
+        // Assert
+        expect(result.map(({ stopId }) => stopId)).toEqual(["feed1:stop1"])
+      })
+
+      it("should throw AllFeedsFailedError naming the feeds when every feed fails", async () => {
+        // Arrange
+        mockFeedProvider1.getStopsInArea.mockRejectedValue(new Error("down"))
+        mockFeedProvider2.getStopsInArea.mockRejectedValue(new Error("down"))
+
+        // Act
+        const error = await allFeedsService
+          .getStopsInArea(bbox)
+          .catch((thrown) => thrown)
+
+        // Assert
+        expect(error).toBeInstanceOf(AllFeedsFailedError)
+        expect(error.feedCodes).toEqual(["feed1", "feed2"])
+      })
+
+      it("should return no stops when no feeds are in bounds", async () => {
+        // Arrange
+        mockFeedService.getFeedProvidersInBounds.mockResolvedValue([])
+
+        // Act
+        const result = await allFeedsService.getStopsInArea(bbox)
+
+        // Assert
+        expect(result).toEqual([])
+      })
     })
   })
 

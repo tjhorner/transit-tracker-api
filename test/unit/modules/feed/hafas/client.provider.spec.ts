@@ -5,8 +5,30 @@ import { FeedContext } from "src/modules/feed/interfaces/feed-provider.interface
 import {
   HAFAS_CLIENT,
   hafasClientProvider,
+  withRequestTimeout,
 } from "src/modules/feed/modules/hafas/client.provider"
 import { HafasConfig } from "src/modules/feed/modules/hafas/config"
+
+describe("withRequestTimeout", () => {
+  it("adds an abort signal and keeps the profile's own request transform", () => {
+    const profile = withRequestTimeout({
+      transformReq: (_ctx: unknown, req: object) => ({ ...req, custom: true }),
+    } as never)
+
+    const req = profile.transformReq!({}, { method: "post" })
+
+    expect(req).toMatchObject({ method: "post", custom: true })
+    expect((req as { signal: AbortSignal }).signal).toBeInstanceOf(AbortSignal)
+  })
+
+  it("adds an abort signal when the profile has no request transform", () => {
+    const profile = withRequestTimeout({} as never)
+
+    const req = profile.transformReq!({}, { method: "post" })
+
+    expect((req as { signal: AbortSignal }).signal).toBeInstanceOf(AbortSignal)
+  })
+})
 
 describe("hafasClientProvider", () => {
   const feedContext: FeedContext<HafasConfig> = {

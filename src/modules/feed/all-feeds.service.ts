@@ -1,7 +1,9 @@
+import { Logger } from "@nestjs/common"
 import * as Sentry from "@sentry/node"
 import * as turf from "@turf/turf"
 import { BBox } from "geojson"
 import {
+  AllFeedsFailedError,
   FeedProviderNotFoundError,
   InvalidGlobalIdError,
   MismatchedFeedCodeError,
@@ -18,6 +20,8 @@ import {
 type GlobalId = `${string}:${string}`
 
 export class AllFeedsService implements FeedProvider {
+  private readonly logger = new Logger(AllFeedsService.name)
+
   constructor(private readonly feedService: FeedService) {}
 
   private onAllProviders<T>(
@@ -158,7 +162,7 @@ export class AllFeedsService implements FeedProvider {
     const providersInBounds =
       await this.feedService.getFeedProvidersInBounds(bbox)
 
-    return Promise.all(
+    const results = await Promise.allSettled(
       providersInBounds.map(async ({ feedCode, provider }) => {
         const stops = await provider.getStopsInArea(bbox)
         return stops.map((stop) => ({
@@ -166,7 +170,29 @@ export class AllFeedsService implements FeedProvider {
           stopId: this.toGlobalId(feedCode, stop.stopId),
         }))
       }),
-    ).then((results) => results.flat())
+    )
+
+    const failedFeedCodes: string[] = []
+    results.forEach((result, index) => {
+      if (result.status === "rejected") {
+        const { feedCode } = providersInBounds[index]
+        failedFeedCodes.push(feedCode)
+        this.logger.warn(
+          `Failed to get stops in area for feed "${feedCode}": ${result.reason}`,
+        )
+      }
+    })
+
+    if (
+      providersInBounds.length > 0 &&
+      failedFeedCodes.length === providersInBounds.length
+    ) {
+      throw new AllFeedsFailedError(failedFeedCodes)
+    }
+
+    return results.flatMap((result) =>
+      result.status === "fulfilled" ? result.value : [],
+    )
   }
 
   async getAgencyBounds(): Promise<BBox> {

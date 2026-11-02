@@ -166,6 +166,24 @@ describe("FeedService", () => {
         await feedService.getFeedProvidersInBounds(withinNoBounds)
       expect(providersWithinNoBounds).toHaveLength(0)
     })
+
+    it("should leave out feeds whose service area can't be determined", async () => {
+      const withinBothBounds: BBox = [
+        -122.3266587983685, 47.80443569961645, -122.29271150592635,
+        47.82369516703511,
+      ]
+      const secondFeedProvider = feedService.getFeedProvider("second")!
+      vi.spyOn(secondFeedProvider, "getAgencyBounds").mockRejectedValue(
+        new Error("upstream down"),
+      )
+
+      const providersInBounds =
+        await feedService.getFeedProvidersInBounds(withinBothBounds)
+
+      expect(providersInBounds.map(({ feedCode }) => feedCode)).toEqual([
+        "first",
+      ])
+    })
   })
 })
 

@@ -224,23 +224,32 @@ export class FeedService implements OnModuleInit {
       provider: FeedProvider
     }[]
   > {
-    const providersInBounds = await Promise.all(
-      Array.from(this.feedProviders.entries()).map(
-        async ([feedCode, provider]) => {
-          const serviceArea = await this.getServiceArea(feedCode)
+    const providers = Array.from(this.feedProviders.entries())
 
-          if (
-            serviceArea &&
-            turf.booleanIntersects(serviceArea, turf.bboxPolygon(targetBbox))
-          ) {
-            return { feedCode, provider }
-          }
+    const providersInBounds = await Promise.allSettled(
+      providers.map(async ([feedCode, provider]) => {
+        const serviceArea = await this.getServiceArea(feedCode)
 
-          return null
-        },
-      ),
+        if (
+          serviceArea &&
+          turf.booleanIntersects(serviceArea, turf.bboxPolygon(targetBbox))
+        ) {
+          return { feedCode, provider }
+        }
+
+        return null
+      }),
     )
 
-    return providersInBounds.filter((e) => e !== null)
+    return providersInBounds.flatMap((result, index) => {
+      if (result.status === "rejected") {
+        this.logger.warn(
+          `Failed to get service area for feed "${providers[index][0]}": ${result.reason}`,
+        )
+        return []
+      }
+
+      return result.value ?? []
+    })
   }
 }

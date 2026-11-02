@@ -38,6 +38,16 @@ export class FeedProviderNotFoundError extends DomainError {
   }
 }
 
+export class AllFeedsFailedError extends DomainError {
+  readonly kind = "upstream"
+
+  constructor(readonly feedCodes: string[]) {
+    super(`All feeds failed to respond: ${feedCodes.join(", ")}`, {
+      feedCodes,
+    })
+  }
+}
+
 export class StopNotFoundError extends DomainError {
   readonly kind = "notFound"
 

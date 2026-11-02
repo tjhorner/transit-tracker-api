@@ -26,4 +26,22 @@ describe("mvgApiClientProvider", () => {
     expect(apiClient).toBeInstanceOf(MvgApiClient)
     expect(apiClient.baseUrl).toBe("https://mvg.example.com/api")
   })
+
+  it("sends requests with a timeout signal", async () => {
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("[]", { status: 200 }))
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        { provide: FEED_CONTEXT, useValue: feedContext },
+        mvgApiClientProvider,
+      ],
+    }).compile()
+
+    await moduleRef.get(MvgApiClient).getNearbyStations(48.1, 11.5)
+
+    expect(fetchSpy.mock.calls[0][1]?.signal).toBeInstanceOf(AbortSignal)
+
+    fetchSpy.mockRestore()
+  })
 })

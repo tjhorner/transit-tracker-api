@@ -1,5 +1,8 @@
+import ms from "ms"
 import { DomainError } from "../../../../errors/domain-error"
 import { StopNotFoundError } from "../../feed.errors"
+
+const MVG_REQUEST_TIMEOUT_MS = ms("10s")
 
 export interface MvgDeparture {
   plannedDepartureTime: number
@@ -87,7 +90,10 @@ export class MvgApiClient {
     url: string,
     notFound?: () => DomainError,
   ): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${url}`)
+    const response = await fetch(`${this.baseUrl}${url}`, {
+      signal: AbortSignal.timeout(MVG_REQUEST_TIMEOUT_MS),
+    })
+
     if (!response.ok) {
       if (response.status === 404 && notFound) {
         throw notFound()

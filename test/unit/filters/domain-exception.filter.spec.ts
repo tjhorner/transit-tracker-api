@@ -9,6 +9,7 @@ import {
   toHttpException,
 } from "src/filters/domain-exception.filter"
 import {
+  AllFeedsFailedError,
   FeedProviderNotFoundError,
   InvalidGlobalIdError,
   StopNotFoundError,
@@ -29,6 +30,12 @@ describe("toHttpException", () => {
     expect(result).toBeInstanceOf(BadRequestException)
     expect(result.getStatus()).toBe(400)
     expect(result.message).toBe("Invalid global ID: nope")
+  })
+
+  it("maps upstream errors to a 502", () => {
+    const result = toHttpException(new AllFeedsFailedError(["sdmts"]))
+
+    expect(result.getStatus()).toBe(502)
   })
 
   it("preserves the original message in the response body", () => {

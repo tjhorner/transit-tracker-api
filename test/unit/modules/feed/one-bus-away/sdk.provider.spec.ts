@@ -35,6 +35,7 @@ describe("oneBusAwaySdkProvider", () => {
     expect(obaSdk).toBeInstanceOf(OnebusawaySDK)
     expect(obaSdk.apiKey).toBe("TEST_API_KEY")
     expect(obaSdk.baseURL).toBe("https://api.example.com/api")
+    expect(obaSdk.maxRetries).toBe(1)
   })
 
   it("creates a OnebusawaySDK instance with instrumented fetch if available", async () => {
