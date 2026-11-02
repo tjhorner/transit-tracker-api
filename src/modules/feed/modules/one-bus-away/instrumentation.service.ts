@@ -9,6 +9,7 @@ import { OneBusAwayConfig } from "./config"
 
 @Injectable()
 export class OneBusAwayInstrumentationService {
+  private readonly pathOffset: number
   private feedCode: string
   private obaRequestCounter: Counter
   private obaResponseCounter: Counter
@@ -20,6 +21,9 @@ export class OneBusAwayInstrumentationService {
     metricService: MetricService,
   ) {
     this.feedCode = feedCode
+    this.pathOffset = new URL(config.baseUrl).pathname
+      .split("/")
+      .filter(Boolean).length
 
     if (config.rateLimiter?.enabled !== false) {
       this.obaRateLimiter = new RateLimiter({
@@ -68,7 +72,9 @@ export class OneBusAwayInstrumentationService {
       )
     }
 
-    const methodName = new URL(url).pathname.split("/")[3].split(".")[0]
+    const methodName = new URL(url).pathname
+      .split("/")
+      [3 + this.pathOffset].split(".")[0]
 
     this.obaRequestCounter.add(1, {
       feed_code: this.feedCode,
