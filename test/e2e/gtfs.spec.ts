@@ -264,6 +264,27 @@ describe("GTFS E2E test", () => {
       })
     })
 
+    test("with a trip that is still running two service days after it started", async () => {
+      // LONGHAUL1 reaches BULLFROG at 58:00:00, so the trip with service date
+      // 2008-01-04 arrives on 2008-01-06 at 10:00 local time
+      mockDateTimeNow.mockReturnValue(new Date("2008-01-06T17:00:00Z"))
+
+      const trips = await getTripSchedule("testfeed:LONGHAUL,testfeed:BULLFROG")
+
+      expect(
+        trips.slice(0, 2).map((trip) => [trip.tripId, trip.arrivalTime]),
+      ).toEqual([
+        [
+          "testfeed:LONGHAUL1",
+          new Date("2008-01-06T18:00:00Z").getTime() / 1000,
+        ],
+        [
+          "testfeed:LONGHAUL1",
+          new Date("2008-01-07T18:00:00Z").getTime() / 1000,
+        ],
+      ])
+    })
+
     test("with interpolated stop_times", async () => {
       const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
 

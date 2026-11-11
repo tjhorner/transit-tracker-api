@@ -12,6 +12,7 @@ export interface IGetImportMetadataResult {
   hash: string | null
   imported_at: Date
   last_modified: Date | null
+  max_stop_time_seconds: number | null
 }
 
 /** 'GetImportMetadata' query type */
@@ -27,11 +28,11 @@ const getImportMetadataIR: any = {
       name: "feedCode",
       required: true,
       transform: { type: "scalar" },
-      locs: [{ a: 97, b: 106 }],
+      locs: [{ a: 164, b: 173 }],
     },
   ],
   statement:
-    "SELECT\n  last_modified,\n  etag,\n  hash,\n  imported_at\nFROM\n  import_metadata\nWHERE\n  feed_code = :feedCode!",
+    "SELECT\n  last_modified,\n  etag,\n  hash,\n  imported_at,\n  EXTRACT(EPOCH FROM max_stop_time)::int AS max_stop_time_seconds\nFROM\n  import_metadata\nWHERE\n  feed_code = :feedCode!",
 }
 
 /**
@@ -41,7 +42,8 @@ const getImportMetadataIR: any = {
  *   last_modified,
  *   etag,
  *   hash,
- *   imported_at
+ *   imported_at,
+ *   EXTRACT(EPOCH FROM max_stop_time)::int AS max_stop_time_seconds
  * FROM
  *   import_metadata
  * WHERE

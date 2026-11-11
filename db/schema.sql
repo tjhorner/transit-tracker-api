@@ -1,6 +1,6 @@
 \restrict dbmate
 
--- Dumped from database version 18.3 (Debian 18.3-1.pgdg13+1)
+-- Dumped from database version 18.6 (Debian 18.6-1.pgdg13+2)
 -- Dumped by pg_dump version 18.3
 
 SET statement_timeout = 0;
@@ -121,7 +121,8 @@ CREATE TABLE public.import_metadata (
     feed_code text NOT NULL,
     etag text,
     imported_at timestamp with time zone DEFAULT now() NOT NULL,
-    hash text
+    hash text,
+    max_stop_time interval
 );
 
 
@@ -459,4 +460,5 @@ INSERT INTO public.schema_migrations (version) VALUES
     ('20251118045713'),
     ('20251120062000'),
     ('20260331100000'),
-    ('20260331100001');
+    ('20260331100001'),
+    ('20261111054327');

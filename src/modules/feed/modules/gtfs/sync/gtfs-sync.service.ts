@@ -20,6 +20,7 @@ import { CSV_PARSE_OPTIONS } from "./const"
 import { GtfsValidatorService } from "./gtfs-validator.service"
 import { SyncPostProcessor } from "./interface/sync-post-processor.interface"
 import { InterpolateEmptyStopTimesPostProcessor } from "./postprocessors/interpolate-stop-times"
+import { RecordMaxStopTimePostProcessor } from "./postprocessors/record-max-stop-time"
 import { VacuumTablesPostProcessor } from "./postprocessors/vacuum-tables"
 import { getImportMetadataCount } from "./queries/get-import-metadata-count.queries"
 import { getImportMetadata } from "./queries/get-import-metadata.queries"
@@ -245,6 +246,7 @@ export class GtfsSyncService {
 
     const postProcessors: SyncPostProcessor[] = [
       new InterpolateEmptyStopTimesPostProcessor(),
+      new RecordMaxStopTimePostProcessor(),
       new VacuumTablesPostProcessor(),
     ]
 

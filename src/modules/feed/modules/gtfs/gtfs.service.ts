@@ -46,6 +46,8 @@ const StopTimeScheduleRelationship =
 
 type ITripUpdate = GtfsRt.ITripUpdate
 
+const SECONDS_PER_DAY = 24 * 60 * 60
+
 @RegisterFeedProvider("gtfs")
 export class GtfsService implements FeedProvider {
   private feedCode: string
@@ -306,10 +308,36 @@ export class GtfsService implements FeedProvider {
     )
   }
 
+  /**
+   * How many service days before today can still have trips running. A stop
+   * time of 24:00:00 or later belongs to an earlier service day, so a feed
+   * whose trips run past 48:00:00 needs more than one day.
+   */
+  private async getServiceDaysToLookBack(): Promise<number> {
+    return this.cache.cached(
+      "serviceDaysToLookBack",
+      async () => {
+        const [metadata] = await getImportMetadata.run(
+          { feedCode: this.feedCode },
+          this.db,
+        )
+
+        const maxStopTimeSeconds = metadata?.max_stop_time_seconds ?? 0
+        return Math.max(1, Math.floor(maxStopTimeSeconds / SECONDS_PER_DAY))
+      },
+      ms("5m"),
+    )
+  }
+
   async getUpcomingTripsForRoutesAtStops(
     routes: RouteAtStop[],
   ): Promise<TripStop[]> {
-    const scheduleDates = [-1, 0, 1]
+    const serviceDaysToLookBack = await this.getServiceDaysToLookBack()
+    const scheduleDates = Array.from(
+      { length: serviceDaysToLookBack + 2 },
+      (_, index) => index - serviceDaysToLookBack,
+    )
+
     const now = this.dateTime.now().getTime()
 
     const uniqueRouteIds = Array.from(new Set(routes.map((r) => r.routeId)))
