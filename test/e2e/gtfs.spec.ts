@@ -145,6 +145,22 @@ describe("GTFS E2E test", () => {
     expect(response.body).toMatchSnapshot()
   })
 
+  test.each([
+    ["a query string", "/feeds/service-areas?unused=1"],
+    ["different letter case", "/feeds/SERVICE-areas"],
+    ["a trailing slash", "/feeds/service-areas/"],
+  ])(
+    "GET /feeds/service-areas with %s is served from the same cache entry",
+    async (_, url) => {
+      await request(app.getHttpServer()).get("/feeds/service-areas").expect(200)
+
+      await request(app.getHttpServer())
+        .get(url)
+        .expect(200)
+        .expect("X-Cache", "HIT")
+    },
+  )
+
   test("GET /stops/within/:bbox", async () => {
     const response = await request(app.getHttpServer())
       .get("/stops/within/-116.774095,36.909629,-116.760877,36.917066")

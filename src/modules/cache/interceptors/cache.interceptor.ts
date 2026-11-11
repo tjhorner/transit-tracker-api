@@ -17,6 +17,7 @@ import { HttpAdapterHost, Reflector } from "@nestjs/core"
 import { Cacheable } from "cacheable"
 import { Observable, of } from "rxjs"
 import { tap } from "rxjs/operators"
+import { CACHE_QUERY_PARAMS_METADATA } from "../decorators/cache-query-params.decorator"
 import { CACHE_TTL_METADATA } from "../decorators/cache-ttl.decorator"
 
 @Injectable()
@@ -79,13 +80,25 @@ export class CacheInterceptor implements NestInterceptor {
   }
 
   protected trackBy(context: ExecutionContext): string | undefined {
-    const httpAdapter = this.httpAdapterHost?.httpAdapter
-
-    const request = context.getArgByIndex(0)
     if (!this.isRequestCacheable(context)) {
       return undefined
     }
-    return httpAdapter?.getRequestUrl(request)
+
+    const request = context.switchToHttp().getRequest()
+    const routePath = request.route?.path
+    if (!routePath) {
+      return undefined
+    }
+
+    const queryParamNames: string[] =
+      this.reflector.get(CACHE_QUERY_PARAMS_METADATA, context.getHandler()) ??
+      []
+
+    const keyedQueryParams = queryParamNames
+      .toSorted()
+      .map((name) => [name, request.query?.[name]])
+
+    return JSON.stringify([routePath, request.params ?? {}, keyedQueryParams])
   }
 
   protected isRequestCacheable(context: ExecutionContext): boolean {
