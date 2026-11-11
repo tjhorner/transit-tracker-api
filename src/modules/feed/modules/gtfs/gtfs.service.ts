@@ -17,7 +17,10 @@ import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FEED_CONTEXT } from "../../feed-context"
 import { StopNotFoundError } from "../../feed.errors"
-import { FeedCacheService } from "../feed-cache/feed-cache.service"
+import {
+  cacheKeyFromParts,
+  FeedCacheService,
+} from "../feed-cache/feed-cache.service"
 import { GtfsConfigSchema, type GtfsConfig } from "./config"
 import { GtfsDbService } from "./gtfs-db.service"
 import { GtfsMetricsService } from "./gtfs-metrics.service"
@@ -183,7 +186,12 @@ export class GtfsService implements FeedProvider {
     dateKey.setDate(dateKey.getDate() + dayOffset)
     dateKey.setHours(12 % (dateKey.getHours() + 1), 0, 0, 0)
 
-    const cacheKey = `schedule-${routeId}-${stopId}-${dateKey.getTime()}`
+    const cacheKey = cacheKeyFromParts(
+      "schedule",
+      routeId,
+      stopId,
+      dateKey.getTime(),
+    )
     return this.cache.cached(
       cacheKey,
       async () => {

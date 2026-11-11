@@ -22,6 +22,12 @@ function withExpiryJitter(ttl: number | undefined): number | undefined {
   return Math.round(ttl * jitterFactor)
 }
 
+export function cacheKeyFromParts(
+  ...parts: ReadonlyArray<string | number>
+): string {
+  return JSON.stringify(parts)
+}
+
 @Injectable({ scope: Scope.REQUEST })
 export class FeedCacheService {
   private readonly feedCode: string

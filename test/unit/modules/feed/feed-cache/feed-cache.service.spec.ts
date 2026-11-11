@@ -1,7 +1,37 @@
 import { Cacheable } from "cacheable"
 import ms from "ms"
-import { FeedCacheService } from "src/modules/feed/modules/feed-cache/feed-cache.service"
+import {
+  cacheKeyFromParts,
+  FeedCacheService,
+} from "src/modules/feed/modules/feed-cache/feed-cache.service"
 import { mock, MockProxy } from "vitest-mock-extended"
+
+describe("cacheKeyFromParts", () => {
+  it("returns the same key for the same parts", () => {
+    expect(cacheKeyFromParts("schedule", "Green-B", "70107", 1)).toBe(
+      cacheKeyFromParts("schedule", "Green-B", "70107", 1),
+    )
+  })
+
+  it.each([
+    [
+      ["schedule", "Green-B", "70107"],
+      ["schedule", "Green", "B-70107"],
+    ],
+    [
+      ["schedule", 'a","b', "c"],
+      ["schedule", "a", 'b","c'],
+    ],
+    [
+      ["schedule", "a", "1"],
+      ["schedule", "a", 1],
+    ],
+  ])("returns different keys for %j and %j", (firstParts, secondParts) => {
+    expect(cacheKeyFromParts(...firstParts)).not.toBe(
+      cacheKeyFromParts(...secondParts),
+    )
+  })
+})
 
 describe("FeedCacheService", () => {
   let cacheManager: MockProxy<Cacheable>

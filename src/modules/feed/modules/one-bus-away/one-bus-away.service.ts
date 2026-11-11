@@ -17,7 +17,10 @@ import { DeepReadonly } from "ts-essentials"
 import { RegisterFeedProvider } from "../../decorators/feed-provider.decorator"
 import { FEED_CONTEXT } from "../../feed-context"
 import { StopNotFoundError } from "../../feed.errors"
-import { FeedCacheService } from "../feed-cache/feed-cache.service"
+import {
+  cacheKeyFromParts,
+  FeedCacheService,
+} from "../feed-cache/feed-cache.service"
 import { OneBusAwayConfig, OneBusAwayConfigSchema } from "./config"
 
 export interface StopGroup {
@@ -164,7 +167,7 @@ export class OneBusAwayService implements FeedProvider {
     stopId: string,
   ): Promise<DeepReadonly<string[]>> {
     return this.cache.cached(
-      `headsigns-${routeId}-${stopId}`,
+      cacheKeyFromParts("headsigns", routeId, stopId),
       async () => {
         const stopsForRoute = await this.obaSdk.stopsForRoute.list(routeId, {
           includePolylines: false,
