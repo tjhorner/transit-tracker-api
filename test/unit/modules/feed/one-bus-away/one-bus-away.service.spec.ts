@@ -746,6 +746,98 @@ describe("OneBusAwayService", () => {
     }
   })
 
+  describe("caller-provided IDs", () => {
+    const implausibleIds = [
+      ["has no agency separator", "71971"],
+      ["has an empty agency part", "_71971"],
+      ["has an empty entity part", "1_"],
+      ["contains a slash", "1_x/../../other-endpoint"],
+      ["contains a backslash", "1_x\\y"],
+      ["contains a control character", "1_x\u0000y"],
+    ]
+
+    it.each(implausibleIds)(
+      "getRoutesForStop treats an ID that %s as not found without calling the API",
+      async (_, stopId) => {
+        const act = () => oneBusAwayService.getRoutesForStop(stopId)
+
+        await expect(act).rejects.toThrow(new StopNotFoundError(stopId))
+        expect(mockObaSdk.stop.retrieve).not.toHaveBeenCalled()
+        expect(mockCacheService.cached).not.toHaveBeenCalled()
+      },
+    )
+
+    it.each(implausibleIds)(
+      "getStop treats an ID that %s as not found without calling the API",
+      async (_, stopId) => {
+        const act = () => oneBusAwayService.getStop(stopId)
+
+        await expect(act).rejects.toThrow(new StopNotFoundError(stopId))
+        expect(mockObaSdk.stop.retrieve).not.toHaveBeenCalled()
+        expect(mockCacheService.cached).not.toHaveBeenCalled()
+      },
+    )
+
+    it.each(implausibleIds)(
+      "getUpcomingTripsForRoutesAtStops returns no trips for a stop ID that %s without calling the API",
+      async (_, stopId) => {
+        mockDateTimeService.now.mockReturnValue(
+          new Date("2025-12-17T04:00:00Z"),
+        )
+
+        const upcomingTrips =
+          await oneBusAwayService.getUpcomingTripsForRoutesAtStops([
+            { stopId, routeId: "1_102704" },
+          ])
+
+        expect(upcomingTrips).toEqual([])
+        expect(mockObaSdk.arrivalAndDeparture.list).not.toHaveBeenCalled()
+        expect(mockCacheService.cached).not.toHaveBeenCalled()
+      },
+    )
+
+    it("keeps an ID with query and fragment characters inside its path segment", async () => {
+      // Arrange
+      const requestedUrls: URL[] = []
+      const recordRequestAndRespondNotFound = async (url: unknown) => {
+        requestedUrls.push(new URL(String(url)))
+        return new Response("null", {
+          headers: { "content-type": "application/json" },
+        })
+      }
+
+      const sdkWithRecordedRequests = new OnebusawaySDK({
+        apiKey: "testApiKey",
+        baseURL: "https://api.example.com",
+        maxRetries: 0,
+        fetch: recordRequestAndRespondNotFound as any,
+      })
+
+      const service = new OneBusAwayService(
+        feedContext,
+        mockCacheService,
+        sdkWithRecordedRequests,
+        mockDateTimeService,
+        mock<PinoLogger>(),
+      )
+
+      const stopId = "1_71971.json?minutesAfter=99999&x=#"
+
+      // Act
+      const act = () => service.getRoutesForStop(stopId)
+
+      // Assert
+      await expect(act).rejects.toThrow(new StopNotFoundError(stopId))
+
+      expect(requestedUrls).toHaveLength(1)
+      expect(requestedUrls[0].pathname).toBe(
+        `/api/where/stop/${encodeURIComponent(stopId)}.json`,
+      )
+      expect(requestedUrls[0].searchParams.has("minutesAfter")).toBe(false)
+      expect(requestedUrls[0].hash).toBe("")
+    })
+  })
+
   function mockObaResponse<T>(data: Partial<T>) {
     return {
       code: 200,

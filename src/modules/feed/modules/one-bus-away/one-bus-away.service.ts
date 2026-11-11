@@ -72,6 +72,19 @@ function latLonSpanToBounds(
   ]
 }
 
+export function isPlausibleEntityId(entityId: string): boolean {
+  const separatorIndex = entityId.indexOf("_")
+  const hasAgencyAndEntityParts =
+    separatorIndex > 0 && separatorIndex < entityId.length - 1
+
+  return hasAgencyAndEntityParts && !/[/\\\p{Cc}]/u.test(entityId)
+}
+
+/** The SDK places IDs into the request path without encoding them */
+function asPathSegment(entityId: string): string {
+  return encodeURIComponent(entityId)
+}
+
 type OBAArrivalsAndDeparture =
   OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse.Data.Entry.ArrivalsAndDeparture
 
@@ -169,9 +182,10 @@ export class OneBusAwayService implements FeedProvider {
     return this.cache.cached(
       cacheKeyFromParts("headsigns", routeId, stopId),
       async () => {
-        const stopsForRoute = await this.obaSdk.stopsForRoute.list(routeId, {
-          includePolylines: false,
-        })
+        const stopsForRoute = await this.obaSdk.stopsForRoute.list(
+          asPathSegment(routeId),
+          { includePolylines: false },
+        )
 
         const stopGrouping = stopsForRoute.data.entry.stopGroupings?.[0]
         if (!stopGrouping) {
@@ -192,12 +206,16 @@ export class OneBusAwayService implements FeedProvider {
   async getRoutesForStop(
     stopId: string,
   ): Promise<ReadonlyArray<DeepReadonly<StopRoute>>> {
+    if (!isPlausibleEntityId(stopId)) {
+      throw new StopNotFoundError(stopId)
+    }
+
     return this.cache.cached(
       `routesForStop-${stopId}`,
       async () => {
         let stop: OnebusawaySDK.Stop.StopRetrieveResponse
         try {
-          stop = await this.obaSdk.stop.retrieve(stopId)
+          stop = await this.obaSdk.stop.retrieve(asPathSegment(stopId))
         } catch (e: any) {
           if (e.status === 404) {
             throw new StopNotFoundError(stopId)
@@ -303,12 +321,16 @@ export class OneBusAwayService implements FeedProvider {
   }
 
   async getStop(stopId: string): Promise<Stop> {
+    if (!isPlausibleEntityId(stopId)) {
+      throw new StopNotFoundError(stopId)
+    }
+
     return this.cache.cached(
       `stop-${stopId}`,
       async () => {
         let stop: OnebusawaySDK.Stop.StopRetrieveResponse
         try {
-          stop = await this.obaSdk.stop.retrieve(stopId)
+          stop = await this.obaSdk.stop.retrieve(asPathSegment(stopId))
         } catch (e: any) {
           if (e.status === 404) {
             throw new StopNotFoundError(stopId)
@@ -336,16 +358,20 @@ export class OneBusAwayService implements FeedProvider {
   async getArrivalsAndDeparturesForStop(
     stopId: string,
   ): Promise<DeepReadonly<ArrivalsAndDeparturesResponse> | null> {
+    if (!isPlausibleEntityId(stopId)) {
+      return null
+    }
+
     return this.cache.cached(`arrivalsAndDepartures-${stopId}`, async () => {
       let resp!: OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
       try {
         // OneBusAway will sometimes intermittently return `null` for
         // arrivalAndDeparture, so we try a few times before giving up
         for (let nullRetries = 0; nullRetries < 3; nullRetries++) {
-          resp = (await this.obaSdk.arrivalAndDeparture.list(stopId, {
-            minutesBefore: 0,
-            minutesAfter: 120,
-          })) as OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
+          resp = (await this.obaSdk.arrivalAndDeparture.list(
+            asPathSegment(stopId),
+            { minutesBefore: 0, minutesAfter: 120 },
+          )) as OnebusawaySDK.ArrivalAndDeparture.ArrivalAndDepartureListResponse | null
 
           if (resp !== null) {
             break
