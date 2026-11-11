@@ -1,12 +1,10 @@
 /** Types generated for queries found in "src/modules/feed/modules/gtfs/queries/list-schedule-for-route.sql" */
 import { PreparedQuery } from "@pgtyped/runtime"
 
-export type DateOrString = Date | string
-
 /** 'GetScheduleForRouteAtStop' parameters type */
 export interface IGetScheduleForRouteAtStopParams {
+  dayOffset: number
   nowUnixTime: number
-  offset: DateOrString
   routeId: string
   stopId: string
 }
@@ -37,7 +35,7 @@ const getScheduleForRouteAtStopIR: any = {
   usedParamSet: {
     routeId: true,
     nowUnixTime: true,
-    offset: true,
+    dayOffset: true,
     stopId: true,
   },
   params: [
@@ -47,7 +45,7 @@ const getScheduleForRouteAtStopIR: any = {
       transform: { type: "scalar" },
       locs: [
         { a: 151, b: 159 },
-        { a: 1816, b: 1824 },
+        { a: 1814, b: 1822 },
       ],
     },
     {
@@ -57,20 +55,20 @@ const getScheduleForRouteAtStopIR: any = {
       locs: [{ a: 265, b: 277 }],
     },
     {
-      name: "offset",
+      name: "dayOffset",
       required: true,
       transform: { type: "scalar" },
-      locs: [{ a: 282, b: 289 }],
+      locs: [{ a: 284, b: 294 }],
     },
     {
       name: "stopId",
       required: true,
       transform: { type: "scalar" },
-      locs: [{ a: 3393, b: 3400 }],
+      locs: [{ a: 3391, b: 3398 }],
     },
   ],
   statement:
-    'WITH agency_timezone AS (\n    SELECT agency_timezone AS tz\n    FROM "routes" r\n    JOIN "agency" a ON r.agency_id = a.agency_id\n    WHERE r.route_id = :routeId!\n    LIMIT 1\n),\ncurrent_day AS (\n    SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(:nowUnixTime!) + :offset!::interval)) AS today\n),\nactive_services AS (\n    -- Services active according to the calendar table\n    SELECT service_id\n    FROM "calendar", current_day\n    WHERE today BETWEEN start_date AND end_date\n      AND CASE\n          WHEN EXTRACT(DOW FROM today) = 0 THEN sunday\n          WHEN EXTRACT(DOW FROM today) = 1 THEN monday\n          WHEN EXTRACT(DOW FROM today) = 2 THEN tuesday\n          WHEN EXTRACT(DOW FROM today) = 3 THEN wednesday\n          WHEN EXTRACT(DOW FROM today) = 4 THEN thursday\n          WHEN EXTRACT(DOW FROM today) = 5 THEN friday\n          WHEN EXTRACT(DOW FROM today) = 6 THEN saturday\n          END = 1\n),\noverride_services AS (\n    -- Services added on specific dates\n    SELECT service_id\n    FROM "calendar_dates", current_day\n    WHERE date = today\n      AND exception_type = 1\n),\nremoved_services AS (\n    -- Services removed on specific dates\n    SELECT service_id\n    FROM "calendar_dates", current_day\n    WHERE date = today\n      AND exception_type = 2\n),\nfinal_active_services AS (\n    -- Combine active services, accounting for overrides\n    SELECT DISTINCT service_id\n    FROM active_services\n    UNION\n    SELECT service_id\n    FROM override_services\n    EXCEPT\n    SELECT service_id\n    FROM removed_services\n),\nroute_trips AS (\n    -- Fetch trips for the specific route and active services\n    SELECT t.trip_id, t.trip_headsign, t.direction_id, r.route_short_name, r.route_long_name, r.route_id\n    FROM "trips" t\n    JOIN "routes" r ON t.route_id = r.route_id\n    WHERE t.route_id = :routeId!\n      AND t.service_id IN (SELECT service_id FROM final_active_services)\n      -- TODO: support frequency-based trips\n      AND NOT EXISTS (\n        SELECT 1 FROM "frequencies" f\n        WHERE f.trip_id = t.trip_id\n      )\n)\n-- Fetch stop_times with stop_timezone and route_short_name\nSELECT \n    st.trip_id,\n    st.stop_id,\n    st.stop_sequence,\n    rt.direction_id::text,\n    rt.route_id,\n    CASE\n        WHEN coalesce(TRIM(rt.route_short_name), \'\') = \'\' THEN rt.route_long_name\n        ELSE rt.route_short_name\n    END AS route_name,\n    r.route_color,\n    s.stop_name,\n    CASE\n        WHEN coalesce(TRIM(st.stop_headsign), \'\') = \'\' THEN\n            CASE\n                WHEN coalesce(TRIM(rt.trip_headsign), \'\') = \'\' THEN ls.last_stop_name\n                ELSE rt.trip_headsign\n            END\n        ELSE\n            st.stop_headsign\n    END AS stop_headsign,\n    TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time) as "arrival_time!",\n    TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time) as "departure_time!",\n    to_char(current_day.today, \'YYYYMMDD\') as start_date\nFROM "stop_times" st\nJOIN route_trips rt ON st.trip_id = rt.trip_id\nJOIN "routes" r ON rt.route_id = r.route_id\nJOIN "stops" s ON st.stop_id = s.stop_id\nJOIN current_day ON true\nJOIN agency_timezone ON true\nLEFT JOIN LATERAL (\n    SELECT s2.stop_name AS last_stop_name\n    FROM "stop_times" st2\n    JOIN "stops" s2 ON st2.stop_id = s2.stop_id\n    WHERE st2.trip_id = st.trip_id\n    ORDER BY st2.stop_sequence DESC\n    LIMIT 1\n) ls ON true\nWHERE st.stop_id = :stopId!\nAND st.arrival_time IS NOT NULL\nAND st.departure_time IS NOT NULL\nORDER BY st.arrival_time',
+    'WITH agency_timezone AS (\n    SELECT agency_timezone AS tz\n    FROM "routes" r\n    JOIN "agency" a ON r.agency_id = a.agency_id\n    WHERE r.route_id = :routeId!\n    LIMIT 1\n),\ncurrent_day AS (\n    SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(:nowUnixTime!))) + :dayOffset!::int AS today\n),\nactive_services AS (\n    -- Services active according to the calendar table\n    SELECT service_id\n    FROM "calendar", current_day\n    WHERE today BETWEEN start_date AND end_date\n      AND CASE\n          WHEN EXTRACT(DOW FROM today) = 0 THEN sunday\n          WHEN EXTRACT(DOW FROM today) = 1 THEN monday\n          WHEN EXTRACT(DOW FROM today) = 2 THEN tuesday\n          WHEN EXTRACT(DOW FROM today) = 3 THEN wednesday\n          WHEN EXTRACT(DOW FROM today) = 4 THEN thursday\n          WHEN EXTRACT(DOW FROM today) = 5 THEN friday\n          WHEN EXTRACT(DOW FROM today) = 6 THEN saturday\n          END = 1\n),\noverride_services AS (\n    -- Services added on specific dates\n    SELECT service_id\n    FROM "calendar_dates", current_day\n    WHERE date = today\n      AND exception_type = 1\n),\nremoved_services AS (\n    -- Services removed on specific dates\n    SELECT service_id\n    FROM "calendar_dates", current_day\n    WHERE date = today\n      AND exception_type = 2\n),\nfinal_active_services AS (\n    -- Combine active services, accounting for overrides\n    SELECT DISTINCT service_id\n    FROM active_services\n    UNION\n    SELECT service_id\n    FROM override_services\n    EXCEPT\n    SELECT service_id\n    FROM removed_services\n),\nroute_trips AS (\n    -- Fetch trips for the specific route and active services\n    SELECT t.trip_id, t.trip_headsign, t.direction_id, r.route_short_name, r.route_long_name, r.route_id\n    FROM "trips" t\n    JOIN "routes" r ON t.route_id = r.route_id\n    WHERE t.route_id = :routeId!\n      AND t.service_id IN (SELECT service_id FROM final_active_services)\n      -- TODO: support frequency-based trips\n      AND NOT EXISTS (\n        SELECT 1 FROM "frequencies" f\n        WHERE f.trip_id = t.trip_id\n      )\n)\n-- Fetch stop_times with stop_timezone and route_short_name\nSELECT \n    st.trip_id,\n    st.stop_id,\n    st.stop_sequence,\n    rt.direction_id::text,\n    rt.route_id,\n    CASE\n        WHEN coalesce(TRIM(rt.route_short_name), \'\') = \'\' THEN rt.route_long_name\n        ELSE rt.route_short_name\n    END AS route_name,\n    r.route_color,\n    s.stop_name,\n    CASE\n        WHEN coalesce(TRIM(st.stop_headsign), \'\') = \'\' THEN\n            CASE\n                WHEN coalesce(TRIM(rt.trip_headsign), \'\') = \'\' THEN ls.last_stop_name\n                ELSE rt.trip_headsign\n            END\n        ELSE\n            st.stop_headsign\n    END AS stop_headsign,\n    TIMEZONE(agency_timezone.tz, current_day.today + st.arrival_time) as "arrival_time!",\n    TIMEZONE(agency_timezone.tz, current_day.today + st.departure_time) as "departure_time!",\n    to_char(current_day.today, \'YYYYMMDD\') as start_date\nFROM "stop_times" st\nJOIN route_trips rt ON st.trip_id = rt.trip_id\nJOIN "routes" r ON rt.route_id = r.route_id\nJOIN "stops" s ON st.stop_id = s.stop_id\nJOIN current_day ON true\nJOIN agency_timezone ON true\nLEFT JOIN LATERAL (\n    SELECT s2.stop_name AS last_stop_name\n    FROM "stop_times" st2\n    JOIN "stops" s2 ON st2.stop_id = s2.stop_id\n    WHERE st2.trip_id = st.trip_id\n    ORDER BY st2.stop_sequence DESC\n    LIMIT 1\n) ls ON true\nWHERE st.stop_id = :stopId!\nAND st.arrival_time IS NOT NULL\nAND st.departure_time IS NOT NULL\nORDER BY st.arrival_time',
 }
 
 /**
@@ -84,7 +82,7 @@ const getScheduleForRouteAtStopIR: any = {
  *     LIMIT 1
  * ),
  * current_day AS (
- *     SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(:nowUnixTime!) + :offset!::interval)) AS today
+ *     SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(:nowUnixTime!))) + :dayOffset!::int AS today
  * ),
  * active_services AS (
  *     -- Services active according to the calendar table

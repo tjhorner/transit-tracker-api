@@ -195,13 +195,12 @@ export class GtfsService implements FeedProvider {
     return this.cache.cached(
       cacheKey,
       async () => {
-        const interval = `${dayOffset} days`
         const result = await getScheduleForRouteAtStop.run(
           {
             nowUnixTime: this.dateTime.now().getTime() / 1000,
             routeId,
             stopId,
-            offset: interval,
+            dayOffset,
           },
           this.db,
         )

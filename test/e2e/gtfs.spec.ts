@@ -227,6 +227,43 @@ describe("GTFS E2E test", () => {
       ).toBe(1)
     })
 
+    describe("around the 23-hour day when daylight saving time starts", () => {
+      // Daylight saving time started on Sunday 2008-03-09 in America/Los_Angeles
+      const targetSchedule = "testfeed:STBA,testfeed:STAGECOACH"
+
+      test("includes the previous service day's trips just after midnight on the following day", async () => {
+        // Monday 00:10 PDT
+        mockDateTimeNow.mockReturnValue(new Date("2008-03-10T07:10:00Z"))
+
+        const trips = await getTripSchedule(targetSchedule)
+
+        // Sunday's STBA_OVERNIGHT arrives at 24:30:00, which is Monday 00:30 PDT
+        expect(trips[0].tripId).toBe("testfeed:STBA_OVERNIGHT")
+        expect(trips[0].arrivalTime).toBe(
+          new Date("2008-03-10T07:30:00Z").getTime() / 1000,
+        )
+      })
+
+      test("includes the next service day's trips just before midnight on the preceding day", async () => {
+        // Saturday 23:30 PST
+        mockDateTimeNow.mockReturnValue(new Date("2008-03-09T07:30:00Z"))
+
+        const trips = await getTripSchedule(targetSchedule)
+
+        // Saturday's STBA_OVERNIGHT arrives Sunday 00:30 PST, then Sunday's
+        // STBA arrives at 06:00 PDT
+        expect(
+          trips.slice(0, 2).map((trip) => [trip.tripId, trip.arrivalTime]),
+        ).toEqual([
+          [
+            "testfeed:STBA_OVERNIGHT",
+            new Date("2008-03-09T08:30:00Z").getTime() / 1000,
+          ],
+          ["testfeed:STBA", new Date("2008-03-09T13:00:00Z").getTime() / 1000],
+        ])
+      })
+    })
+
     test("with interpolated stop_times", async () => {
       const trips = await getTripSchedule("testfeed:CITY,testfeed:NADAV")
 

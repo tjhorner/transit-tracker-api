@@ -7,7 +7,7 @@ WITH agency_timezone AS (
     LIMIT 1
 ),
 current_day AS (
-    SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(:nowUnixTime!) + :offset!::interval)) AS today
+    SELECT DATE(TIMEZONE((SELECT tz FROM agency_timezone), to_timestamp(:nowUnixTime!))) + :dayOffset!::int AS today
 ),
 active_services AS (
     -- Services active according to the calendar table
