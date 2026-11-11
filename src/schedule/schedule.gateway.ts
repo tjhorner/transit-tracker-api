@@ -24,6 +24,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   Min,
 } from "class-validator"
 import { randomUUID, UUID } from "crypto"
@@ -62,12 +63,18 @@ import {
   ScheduleUpdate,
 } from "./schedule.service"
 
+// A subscription with the maximum 25 route-stop pairs fits well within both limits
+export const MAX_MESSAGE_BYTES = 16 * 1024
+export const MAX_ROUTE_STOP_PAIRS_LENGTH = 4096
+
 export class ScheduleSubscriptionDto {
   @IsString()
   @IsOptional()
   feedCode?: string
 
+  @IsString()
   @IsNotEmpty()
+  @MaxLength(MAX_ROUTE_STOP_PAIRS_LENGTH)
   routeStopPairs!: string
 
   @IsInt()
@@ -85,7 +92,7 @@ export class ScheduleSubscriptionDto {
   listMode?: "sequential" | "nextPerRoute"
 }
 
-@WebSocketGateway()
+@WebSocketGateway({ maxPayload: MAX_MESSAGE_BYTES })
 @UseInterceptors(WsLogContextInterceptor)
 @UseFilters(
   WebSocketExceptionFilter,
