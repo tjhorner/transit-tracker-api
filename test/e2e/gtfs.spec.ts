@@ -651,6 +651,77 @@ describe("GTFS E2E test", () => {
         expect(overnightTrips[1].isRealtime).toBe(false)
       })
 
+      describe("with start_date on an overnight trip's stop after midnight", () => {
+        // STBA_OVERNIGHT reaches STAGECOACH at 24:30:00, so the trip with
+        // service date 2008-01-04 arrives on 2008-01-05 at 00:30 local time
+        const arrivalForServiceDate = {
+          "20080104": 1199521800,
+          "20080105": 1199608200,
+        }
+
+        async function getOvernightTrips() {
+          const trips = await getTripSchedule()
+          return trips.filter(
+            (trip) => trip.tripId === "testfeed:STBA_OVERNIGHT",
+          )
+        }
+
+        beforeEach(() => {
+          mockDateTimeNow.mockReturnValue(new Date("2008-01-05T08:25:00.000Z"))
+        })
+
+        test("applies the update to the trip with that service date", async () => {
+          fakeGtfs.setTripUpdates([
+            {
+              trip: {
+                tripId: "STBA_OVERNIGHT",
+                startDate: "20080104",
+                scheduleRelationship:
+                  GtfsRt.TripDescriptor.ScheduleRelationship.SCHEDULED,
+              },
+              stopTimeUpdate: [
+                {
+                  stopId: "STAGECOACH",
+                  arrival: { delay: 300 },
+                  departure: { delay: 300 },
+                },
+              ],
+            },
+          ])
+
+          const overnightTrips = await getOvernightTrips()
+
+          expect(overnightTrips[0].arrivalTime).toBe(
+            arrivalForServiceDate["20080104"] + 300,
+          )
+          expect(overnightTrips[0].isRealtime).toBe(true)
+
+          expect(overnightTrips[1].arrivalTime).toBe(
+            arrivalForServiceDate["20080105"],
+          )
+          expect(overnightTrips[1].isRealtime).toBe(false)
+        })
+
+        test("cancels only the trip with that service date", async () => {
+          fakeGtfs.setTripUpdates([
+            {
+              trip: {
+                tripId: "STBA_OVERNIGHT",
+                startDate: "20080105",
+                scheduleRelationship:
+                  GtfsRt.TripDescriptor.ScheduleRelationship.CANCELED,
+              },
+            },
+          ])
+
+          const overnightTrips = await getOvernightTrips()
+
+          const arrivalTimes = overnightTrips.map((trip) => trip.arrivalTime)
+          expect(arrivalTimes).toContain(arrivalForServiceDate["20080104"])
+          expect(arrivalTimes).not.toContain(arrivalForServiceDate["20080105"])
+        })
+      })
+
       test("with stop time update having NO_DATA", async () => {
         fakeGtfs.setTripUpdates([
           {
